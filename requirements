@@ -1,3 +1,5 @@
 pyvcf
+numpy
+matplotlib
 HTSeq
 Cheetah.Template
