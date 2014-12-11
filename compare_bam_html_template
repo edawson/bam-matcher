@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<style>
+  body {background-color:white;
+  		font-size:12px;
+  		}
+  h1   {color:blue;
+  		font-size:20px;
+       }
+  p    {color:black;
+  		font-size:16px}
+  table {font-size:12px}
+  th   {text-align:left}
+
+  #b  {text-align:center;
+       border-width:1px;
+       border-style:solid;
+       border-color:black;
+       }
+  
+  #c  {text-align:center;
+       color:blue}
+
+  #d  {text-align:center}
+  
+</style>
+</head>
+
+<body>
+  <h1>Compare BAM files using common SNPs</h1>
+ 
+  <h2>Input files and parameters</h2>
+  <table>
+  	<tr><th>BAM1:</th><td>${BAM1}&nbsp&nbsp&nbsp</td><td>(${bam1_cached})</td></tr>
+  	<tr><th>BAM2:</th><td>${BAM2}&nbsp&nbsp&nbsp</td><td>(${bam2_cached})</td></tr>
+  	<tr><th>Minimum depth:&nbsp&nbsp&nbsp</th><td>${DP_THRESH}</td></tr>
+  	<tr><th>Caller</th><td>${caller}</td></tr>
+  	<tr><th>Variants compared</th><td>${variants}</td></tr>
+  </table>
+
+  <hr width="80%" align="center">
+  
+  <h2>Results</h2>
+  <table>
+    <tr><th>Total number of positions compared:&nbsp&nbsp&nbsp&nbsp</th><td>${total}</td></tr>
+    <tr><th>Percentage of common genotypes:</th><td>${frac_common}</td></tr>
+    <tr><th># positions with same genotype:</th><td>${ct_common} (hom: ${comm_hom_ct}, het: ${comm_het_ct})</td></tr>
+    <tr><th># positions with different genotype:</th><td>${ct_diff}</td></tr>
+  </table>
+
+  <h3>Break-down of different genotypes</h3>
+  <table id="b">
+    <tr><td colspan="2" rowspan="2" bgcolor="grey"></td>
+        <th id="c" colspan="3" style="height:30px" bgcolor="lightgrey">BAM 1</th>
+        </tr>
+    <tr><th style="height:30px; width:60px" id="d">het</th>
+        <th style="width:60px" id="d">hom</th>
+        <th style="width:60px" id="d">subset</th>
+        </tr>
+    <tr><th id="c" rowspan="3" bgcolor="lightgrey">BAM 2</th>
+        <th style="height:30px" id="d">het</th>
+        <td id="d">${diff_het_ct}</td>
+        <td id="d">${diff_hom_het_ct}</td>
+        <td id="d">${diff_1sub2_ct}</td>
+        </tr>
+    <tr><th style="height:30px" id="d">hom</th>
+        <td id="d">${diff_het_hom_ct}</td>
+        <td id="d">${diff_hom_ct}</td>
+        <td id="d">-</td>
+        </tr>
+    <tr><th style="height:30px" id="d">subset</th>
+        <td id="d">${diff_2sub1_ct}</td>
+        <td id="d">-</td>
+        <td id="d">-</td>
+        </tr>
+  </table>
+
+  <hr width="80%" align="center">
+
+  <h2>Judgement</h2>
+  <p>${judgement}
+
+
+
+
+</body>
+
+</html>
