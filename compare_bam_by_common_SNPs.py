@@ -34,7 +34,7 @@ from hashlib import md5
 def handle_args():
     parser = ArgumentParser(description="Compare two BAM files to see if \
     they are from the same samples, using frequently occuring SNPs \
-    reported in 1KG database")
+    reported in the 1000Genome database")
 
     # these are always required
     parser_grp1 = parser.add_argument_group("REQUIRED")
@@ -42,11 +42,6 @@ def handle_args():
                              help="First BAM file")
     parser_grp1.add_argument("--bam2",           "-B2", required=True,  
                              help="Second BAM file")
-    parser_grp1.add_argument("--caller",         "-CL", required=False, 
-                             default="gatk", 
-                             choices=('gatk', 'freebayes', 'varscan'), 
-                             help="Specify which caller to use (default \
-                                   = 'gatk')")
 
     # if not specified, will always look into the same location
     parser_grp2 = parser.add_argument_group("CONFIGURATION")
@@ -66,82 +61,62 @@ def handle_args():
                              default = False, action="store_true",
                              help="Short output mode (tab-separated).")
     parser_grp3.add_argument("--html",           "-H",  required=False, 
-                             action="store_true", help="Enable HTML output. \
-HTML file name = report + '.html'")
+                             action="store_true", help="Enable HTML output. HTML file name = report + '.html'")
     parser_grp3.add_argument("--no-report",      "-n",  required=False, 
-                             action="store_true", help="Don't write output \
-                             to file. Results output to command line only.")
+                             action="store_true", help="Don't write output to file. Results output to command line only.")
     parser_grp3.add_argument("--scratch-dir",    "-s",  required=False, 
-                             help="Scratch directory for temporary files. \
-                             If not specified, the report output directory \
-                             will be used (default = /tmp/[random_string])")
+                             help="Scratch directory for temporary files. If not specified, the report output directory will be used (default = /tmp/[random_string])")
     
     # Usually defined in 
     parser_grp4 = parser.add_argument_group("VARIANTS")
     parser_grp4.add_argument("--vcf",            "-V",  required=False, 
-                             help="VCF file containing SNPs to check \
-                             (default can be specified in config file \
-                             instead)")
+                             help="VCF file containing SNPs to check (default can be specified in config file instead)")
     parser_grp4.add_argument("--filter-vcf",      "-FT", required=False, 
-                             action="store_true", help="Enable filtering \
-                             of the input VCF file")
+                             action="store_true", help="Enable filtering of the input VCF file")
 
     # Specifying these values here will override config values
     parser_grp5 = parser.add_argument_group("CALLERS AND SETTINGS (will override config values)")
+    parser_grp5.add_argument("--caller",         "-CL", required=False, 
+                             default="gatk", 
+                             choices=('gatk', 'freebayes', 'varscan'), 
+                             help="Specify which caller to use (default = 'gatk')")
     parser_grp5.add_argument("--dp-threshold",   "-DP", required=False, 
-                             type=int, help="Minimum required depth for \
-                             comparing variants")
+                             type=int, help="Minimum required depth for comparing variants")
     parser_grp5.add_argument("--number_of_snps", "-N", required=False, 
                              type=int, help="Number of SNPs to compare.")
     parser_grp5.add_argument("--fastfreebayes",  "-FF", required=False, 
-                             action="store_true", help="Use --targets \
-                             option for Freebayes.")
+                             action="store_true", help="Use --targets option for Freebayes.")
     parser_grp5.add_argument("--gatk-mem-gb" ,   "-GM", required=False, 
-                             type=int, help="Specify Java heap size for \
-                             GATK (GB, int)")
+                             type=int, help="Specify Java heap size for GATK (GB, int)")
     parser_grp5.add_argument("--gatk-nt" ,       "-GT", required=False, 
-                             type=int, help="Specify number of threads \
-                             for GATK UnifiedGenotyper (-nt option)")
+                             type=int, help="Specify number of threads for GATK UnifiedGenotyper (-nt option)")
     parser_grp5.add_argument("--varscan-mem-gb", "-VM", required=False, 
-                             type=int, help="Specify Java heap size for \
-                             VarScan2 (GB, int)")
+                             type=int, help="Specify Java heap size for VarScan2 (GB, int)")
+
 
     # overriding reference matching
     parser_grp6 = parser.add_argument_group("REFERENCES")
     parser_grp6.add_argument("--reference",      "-R",  required=False, 
                              help="Default reference fasta file. Needs to be indexed with samtools faidx")
     parser_grp6.add_argument("--ref_noChr",      "-Rn", required=False, 
-                             help="Reference fasta file, no 'chr' in \
-                             chromosome names. Needs to be indexed with \
-                             samtools faidx")
+                             help="Reference fasta file, no 'chr' in chromosome names. Needs to be indexed with samtools faidx")
     parser_grp6.add_argument("--ref_wChr",       "-Rw",  required=False, 
-                             help="Reference fasta file, has 'chr' in \
-                             chromosome names. Needs to be indexed with \
-                             samtools faidx")
+                             help="Reference fasta file, has 'chr' in chromosome names. Needs to be indexed with samtools faidx")
     parser_grp6.add_argument("--bam1-reference", "-B1R", required=False, 
-                             help="Reference fasta file for BAM1. Requires \
-                             --bam2-reference/-B2R, overrides other settings")
+                             help="Reference fasta file for BAM1. Requires --bam2-reference/-B2R, overrides other settings")
     parser_grp6.add_argument("--bam2-reference", "-B2R", required=False, 
-                             help="Reference fasta file for BAM2. Requires \
-                             --bam1-reference/-B1R, overrides other settings")
+                             help="Reference fasta file for BAM2. Requires --bam1-reference/-B1R, overrides other settings")
 
     # for batch operations
     parser_grp7 = parser.add_argument_group("BATCH OPERATIONS")
-#    parser_grp7.add_argument("--use-cached",     "-CU", required=False, 
-#                             default=True, help="Use cached variant calling \
-#                             data (VCF) if available. Default = True")
     parser_grp7.add_argument("--do-not-cache",    "-NC", required=False, 
                              default=False, action="store_true",
-                             help="Do not keep variant-calling output for \
-future comparison. By default (False) data is \
-written to /bam/filepath/without/dotbam.GT_compare_data")
+                             help="Do not keep variant-calling output for future comparison. By default (False) data is written to /bam/filepath/without/dotbam.GT_compare_data")
     parser_grp7.add_argument("--recalculate",    "-RC", required=False, 
                              default=False, action="store_true", 
-                             help="Don't use cached variant calling \
-data, redo variant-calling. Will overwrite cached data unless told not to")
+                             help="Don't use cached variant calling data, redo variant-calling. Will overwrite cached data unless told not to")
     parser_grp7.add_argument("--cache-dir",      "-CD", required=False,
-                             help="Specify directory for cached data. \
-                             Overrides configuration")
+                             help="Specify directory for cached data. Overrides configuration")
 
     # optional, not in config
     parser.add_argument("--debug", "-d", required=False, action="store_true", 
@@ -250,11 +225,9 @@ def VCFtoTSV(invcf, outtsv, caller):
                 ad_str = str(var.samples[0]["AO"])
             gt_ = var.samples[0].gt_bases
 
-
         data_bits = [chrom_, pos_, ref_, alt_str, qual_, dp_, ad_str, gt_]
         fout.write("%s\n" % "\t".join(data_bits))
     fout.close()
-
 
 #-------------------------------------------------------------------------------
 # GENOTYPE COMPARISON FUNCTIONS
@@ -918,40 +891,48 @@ VARSCAN_MEM value ('%s') in the config file is not a valid integer.
 
 #-------------------------------------------
 # References
-
 bam1_ref = ""
 bam2_ref = ""
 bam1_haschr = False
 bam2_haschr = False
 AVAILABLE_REFERENCES = []
 
-if REFERENCE == "" and REF_noChr == "" and REF_wChr == "":
-    print "No reference was specified in the configuration file"
-    sys.exit(1)
 
-for ref in [REFERENCE, REF_noChr, REF_wChr]:
-    if ref == "":
-        continue
-    else:
-        if os.access(ref, os.R_OK) == False:
-            print "Specified reference fasta file ('%s') is either not \
-present or readable" % ref
-            sys.exit(1)
+# if any of the reference options are used, disable all config REFERENCE settings
+if args.reference != None or args.ref_noChr != None or args.ref_wChr != None or args.bam1_reference != None or args.bam2_reference != None:
+    
+    REFERENCE = ""
+    REF_noChr = ""
+    REF_wChr  = ""
+    if args.reference != None:
+        REFERENCE = args.reference
+    if args.ref_noChr != None:
+        REF_noChr = args.ref_noChr
+    if args.ref_wChr != None:
+        REF_wChr = args.ref_wChr
 
-    # check that the references are indexed 
-    ref_idx = ref + ".fai"
-    if os.access(ref_idx, os.R_OK) == False:
-        print "Make sure that the reference file ('%s') has been indexed \
-by samtools." % ref
-        sys.exit(1)
-
-    # if all checks pass, add to list
-    AVAILABLE_REFERENCES.append(ref)
-
-if args.verbose:
-    print "Available references:\n%s" % "\n  ".join(AVAILABLE_REFERENCES)
 
 if args.bam1_reference == None and args.bam2_reference == None:
+    if REFERENCE == "" and REF_noChr == "" and REF_wChr == "": # and bam1_ref == "" and bam2_ref == "":
+        print "No genome reference files were specified!"
+        sys.exit(1)
+    for ref in [REFERENCE, REF_noChr, REF_wChr]:
+        if ref == "":
+            continue
+        else:
+            if os.access(ref, os.R_OK) == False:
+                print "Specified reference fasta file ('%s') is either not present or readable" % ref
+                sys.exit(1)
+        # check that the references are indexed 
+        ref_idx = ref + ".fai"
+        if os.access(ref_idx, os.R_OK) == False:
+            print "Make sure that the reference file ('%s') has been indexed by samtools." % ref
+            sys.exit(1)
+        # if all checks pass, add to list
+        AVAILABLE_REFERENCES.append(ref)
+    if args.verbose:
+        print "Available references:\n%s" % "\n  ".join(AVAILABLE_REFERENCES)
+
     # ----------
     # compare chromosomes between reference and bam files
     bam1_chrlist = []
@@ -1018,10 +999,18 @@ elif args.bam1_reference == None or args.bam2_reference == None:
 --bam1-reference/--bam2-reference, \
 BOTH need to be specified separately."
     sys.exit(1)
+
+elif args.bam1_reference == None or args.bam2_reference == None:
+    print "both --bam1-reference and --bam2-reference must be specified when using these options"
+    sys.exit(1)
+
 else:
     # both have been supplied
     bam1_ref = args.bam1_reference
     bam2_ref = args.bam2_reference
+
+
+
 
     # check reference file and index    
     for ref in [bam1_ref, bam2_ref]:
@@ -1034,6 +1023,34 @@ readable" % ref
             print "Reference fasta file ('%s') needs to be indexed by \
 samtools" % ref
             sys.exit(1)
+
+
+    # need to know whether these references have chr or not
+    
+
+
+
+    # ----------
+    # compare chromosomes between reference and bam files
+
+    bam1_haschr = False
+    # get bam1 chromosomes
+    bam_in = HTSeq.BAM_Reader(args.bam1)
+    bam_header = bam_in.get_header_dict()["SQ"]
+    for headline in bam_header:
+        chr_name = headline["SN"]
+        if "chr" in chr_name:
+            bam1_haschr = True
+
+    bam2_haschr = False
+    # get bam2 chromosomes
+    bam_in = HTSeq.BAM_Reader(args.bam2)
+    bam_header = bam_in.get_header_dict()["SQ"]
+    for headline in bam_header:
+        chr_name = headline["SN"]
+        if "chr" in chr_name:
+            bam2_haschr = True
+
 
 #-------------------------------------------
 # Batch operations
@@ -1313,7 +1330,7 @@ here, but should be fine in actual call command)"
         old_vcf = out_vcf + ".bak"
         new_vcf = out_vcf
         os.rename(out_vcf, old_vcf)
-        ref_idx = REF_wChr + ".fai"
+        ref_idx = ref + ".fai"
         sort_vcf_by_chrom_order(old_vcf, new_vcf, ref_idx)
 
 if args.verbose:
@@ -1329,15 +1346,6 @@ Variant-calling finished
 #===============================================================================
 
 #-------------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
 
 
 
