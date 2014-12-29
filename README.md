@@ -1,4 +1,4 @@
-# BAM-compare #
+# BAM-match #
 
 A tool for determining whether two BAM files were sequenced from the same sample or patient. 
 
