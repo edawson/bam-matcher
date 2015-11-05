@@ -156,8 +156,7 @@ CONFIGURATION:
                         Specify where to generate configuration file template
 ```
 
-
-
+By default, BAM-matcher looks for the config file ("bam-matcher.conf") in the same directory as the script itself. The --config option can be used to specify a different config file. 
 
 
 ```
@@ -173,7 +172,14 @@ OUTPUT REPORT:
                         Scratch directory for temporary files. If not
                         specified, the report output directory will be used
                         (default = /tmp/[random_string])
+```
 
+
+
+
+
+
+```
 VARIANTS:
   --vcf VCF, -V VCF     VCF file containing SNPs to check (default can be
                         specified in config file instead)
