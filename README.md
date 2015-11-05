@@ -104,8 +104,7 @@ Settings for BAM-matcher comparison.
 
 * **fast_freebayes**: When using Freebayes for genotype calling, by default, each position is called separately (with --region). This is less efficient, but as Freebayes' --targets sometimes fails in our testing, this is a safer option. Set this option to "True" will enable using "--targets" during when running Freebayes. (Recommended: False. Slower but safer).
 
-* **VCF_file**: If you are using the same VCF file most of the time, then just set this option here, then you won't need to specify the VCF path every time you run BAM-matcher.
-
+* **VCF_file**: If you are using the same VCF file most of the time, you should put the path to the VCF file here and then you won't need to specify the VCF path every time you run BAM-matcher.
 
 
 **[VariantCallerParameters]**
