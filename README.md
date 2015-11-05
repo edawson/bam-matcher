@@ -132,8 +132,9 @@ bam-matcher.py -B1 BAM_FILE_1 -B2 BAM_FILE_2
 
 This assumes that the configuration is in the same directory as bam-matcher.py and is called bam-matcher.conf.
 
-Run ```bam-matcher.py -h```  to see the full help message.
+As no output options are specified, the output is written to standard-output, and also to a text file in current working directory. 
 
+Run ```bam-matcher.py -h```  to see the full help message.
 
 ```
 REQUIRED:
@@ -141,14 +142,25 @@ REQUIRED:
                         First BAM file
   --bam2 BAM2, -B2 BAM2
                         Second BAM file
+```
 
+Minimum required input, if the configuration file is set up.
+
+
+```
 CONFIGURATION:
   --config CONFIG, -c CONFIG
                         Specify configuration file (default =
                         /dir/where/script/is/located/bam-matcher.conf)
   --generate-config GENERATE_CONFIG, -G GENERATE_CONFIG
                         Specify where to generate configuration file template
+```
 
+
+
+
+
+```
 OUTPUT REPORT:
   --output OUTPUT, -o OUTPUT
                         Specify output report path (default =
