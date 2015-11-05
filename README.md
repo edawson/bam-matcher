@@ -43,6 +43,8 @@ git clone https://bitbucket.org/sacgf/bam-matcher.git
 
 Either include the path to BAM-matcher to the environment variable PATH, or move ```bam-matcher.py```, ```bam-matcher.conf``` and ```bam_matcher_html_template``` to a directory that is in the PATH already.
 
+The repository also includes a VCF file (```1KG_1500_exon_variants_noX.vcf```) with variants extracted from 1000 Genomes project which are all exonic and have high likelihood of switching between REF and ALT alleles. 
+
 
 ## Dependencies ##
 
