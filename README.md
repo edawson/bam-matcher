@@ -2,7 +2,7 @@
 
 A simple tool for determining whether two BAM files were sequenced from the same sample or patient. 
 
-Once configuration file is setup, to compare two bam files, just run:
+Once configuration file is setup, to compare two bam files (sample1.bam and sample2.bam) just run:
 ```
 bam-matcher.py -B1 sample1.bam -B2 sample2.bam
 ```
