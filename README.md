@@ -242,15 +242,14 @@ BATCH OPERATIONS:
                         comparison. By default (False) data is written to
                         /bam/filepath/without/dotbam.GT_compare_data
   --recalculate, -RC    Don't use cached variant calling data, redo variant-
-                        calling. Will overwrite cached data unless told not to
+                        calling. Will overwrite cached data unless told not to 
+                        (-NC)
   --cache-dir CACHE_DIR, -CD CACHE_DIR
                         Specify directory for cached data. Overrides
                         configuration
 ```
 
-
-
-
+Alter caching parameters at run time.
 
 
 
@@ -271,21 +270,6 @@ optional arguments:
 
 
 
-## Running tests ##
-
-
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
-
-### Contribution guidelines ###
-
-* Writing tests
-* Code review
-* Other guidelines
 
 ### Who do I talk to? ###
 
