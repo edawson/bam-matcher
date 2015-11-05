@@ -1,6 +1,38 @@
-# BAM-match #
+# BAM-matcher #
 
-A tool for determining whether two BAM files were sequenced from the same sample or patient. 
+A simple tool for determining whether two BAM files were sequenced from the same sample or patient. 
+
+Once configuration file is setup, to compare two bam files (sample1.bam and sample2.bam) just run:
+```
+bam-matcher.py -B1 sample1.bam -B2 sample2.bam
+```
+
+which will give an output like:
+```
+bam1:	sample1.bam
+bam2:	sample2.bam
+DP threshold: 15
+-----------------
+positions with same genotype:     234    (hom: 50, het: 184)
+positions with diff genotype:     176
+
+                       BAM 1
+
+               | het  | hom  | subset
+        -------+------+------+-------
+         het   |    0 |    0 |   79 |
+        -------+------+------+-------
+BAM 2    hom   |    0 |    0 |   -  |
+        -------+------+------+-------
+         subset|   97 |   -  |   -  |
+
+fraction of common: 0.570732
+
+judgement: Different
+```
+
+
+
 
 ## Installation ##
 
@@ -10,6 +42,8 @@ git clone https://bitbucket.org/sacgf/bam-matcher.git
 ```
 
 Either include the path to BAM-matcher to the environment variable PATH, or move ```bam-matcher.py```, ```bam-matcher.conf``` and ```bam_matcher_html_template``` to a directory that is in the PATH already.
+
+The repository also includes a VCF file ```(1KG_1500_exon_variants_noX.vcf)``` with variants extracted from 1000 Genomes project which are all exonic and have high likelihood of switching between REF and ALT alleles. 
 
 
 ## Dependencies ##
@@ -104,8 +138,7 @@ Settings for BAM-matcher comparison.
 
 * **fast_freebayes**: When using Freebayes for genotype calling, by default, each position is called separately (with --region). This is less efficient, but as Freebayes' --targets sometimes fails in our testing, this is a safer option. Set this option to "True" will enable using "--targets" during when running Freebayes. (Recommended: False. Slower but safer).
 
-* **VCF_file**: If you are using the same VCF file most of the time, then just set this option here, then you won't need to specify the VCF path every time you run BAM-matcher.
-
+* **VCF_file**: If you are using the same VCF file most of the time, you should put the path to the VCF file here and then you won't need to specify the VCF path every time you run BAM-matcher.
 
 
 **[VariantCallerParameters]**
@@ -132,8 +165,9 @@ bam-matcher.py -B1 BAM_FILE_1 -B2 BAM_FILE_2
 
 This assumes that the configuration is in the same directory as bam-matcher.py and is called bam-matcher.conf.
 
-Run ```bam-matcher.py -h```  to see the full help message.
+As no output options are specified, the output is written to standard-output, and also to a text file in current working directory. 
 
+Run ```bam-matcher.py -h```  to see the full help message.
 
 ```
 REQUIRED:
@@ -141,14 +175,24 @@ REQUIRED:
                         First BAM file
   --bam2 BAM2, -B2 BAM2
                         Second BAM file
+```
 
+Minimum required input, if the configuration file is set up.
+
+
+```
 CONFIGURATION:
   --config CONFIG, -c CONFIG
                         Specify configuration file (default =
                         /dir/where/script/is/located/bam-matcher.conf)
   --generate-config GENERATE_CONFIG, -G GENERATE_CONFIG
                         Specify where to generate configuration file template
+```
 
+By default, BAM-matcher looks for the config file ("bam-matcher.conf") in the same directory as the script itself. The --config option can be used to specify a different config file. 
+
+
+```
 OUTPUT REPORT:
   --output OUTPUT, -o OUTPUT
                         Specify output report path (default =
@@ -161,12 +205,27 @@ OUTPUT REPORT:
                         Scratch directory for temporary files. If not
                         specified, the report output directory will be used
                         (default = /tmp/[random_string])
+```
 
+If no output settings are specified, BAM-matcher will print out results to standard output and write results to bam_matcher.SUBFIX in the current working directory, where SUBFIX includes the BAM file names and a random string.
+
+The scratch directory is usually deleted at the end of a successful run, unless --debug option is set, then the temporary files will be kept. If you are using the --scratch-dir option, the specified path must not exist already (although its parent directory should exist).
+
+
+
+```
 VARIANTS:
   --vcf VCF, -V VCF     VCF file containing SNPs to check (default can be
                         specified in config file instead)
   --filter-vcf, -FT     Enable filtering of the input VCF file
+```
 
+Use --vcf to specify the variants to compare. This will override the setting in the config file.
+
+--filter-vcf is the same as filter_VCF setting in config file.
+
+
+```
 CALLERS AND SETTINGS (will override config values):
   --caller {gatk,freebayes,varscan}, -CL {gatk,freebayes,varscan}
                         Specify which caller to use (default = 'gatk')
@@ -182,7 +241,13 @@ CALLERS AND SETTINGS (will override config values):
                         (-nt option)
   --varscan-mem-gb VARSCAN_MEM_GB, -VM VARSCAN_MEM_GB
                         Specify Java heap size for VarScan2 (GB, int)
+```
 
+These are all the same as the settings in config file. Specifying values here will override config settings.
+
+
+
+```
 REFERENCES:
   --reference REFERENCE, -R REFERENCE
                         Default reference fasta file. Needs to be indexed with
@@ -199,17 +264,33 @@ REFERENCES:
   --bam2-reference BAM2_REFERENCE, -B2R BAM2_REFERENCE
                         Reference fasta file for BAM2. Requires
                         --bam1-reference/-B1R, overrides other settings
+```
 
+These are all the same as the settings in config file. Specifying values here will override config settings.
+
+
+```
 BATCH OPERATIONS:
   --do-not-cache, -NC   Do not keep variant-calling output for future
                         comparison. By default (False) data is written to
                         /bam/filepath/without/dotbam.GT_compare_data
   --recalculate, -RC    Don't use cached variant calling data, redo variant-
-                        calling. Will overwrite cached data unless told not to
+                        calling. Will overwrite cached data unless told not to 
+                        (-NC)
   --cache-dir CACHE_DIR, -CD CACHE_DIR
                         Specify directory for cached data. Overrides
                         configuration
+```
 
+Alter caching parameters at run time.
+
+
+
+```
+optional arguments:
+  -h, --help            show this help message and exit
+  --debug, -d           Debug mode. Temporary files are not removed
+  --verbose, -v         Verbose reporting. Default = False
 ```
 
 
@@ -223,25 +304,6 @@ BATCH OPERATIONS:
 
 
 
-
-
-## Running tests ##
-
-
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
-
-### Contribution guidelines ###
-
-* Writing tests
-* Code review
-* Other guidelines
-
 ### Who do I talk to? ###
 
-* Repo owner or admin
-* Other community or team contact
+Paul (paul.wang @ sa.gov.au)
