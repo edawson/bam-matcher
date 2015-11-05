@@ -4,6 +4,14 @@ A tool for determining whether two BAM files were sequenced from the same sample
 
 ## Installation ##
 
+```
+cd /directory/path/where/bam-matcher/is/to/be/installed/
+git clone https://bitbucket.org/sacgf/bam-matcher.git
+```
+
+Either include the path to BAM-matcher to the environment variable PATH, or move ```bam-matcher.py```, ```bam-matcher.conf``` and ```bam_matcher_html_template``` to a directory that is in the PATH already.
+
+
 ## Dependencies ##
 
 **Python** 
@@ -27,6 +35,9 @@ A tool for determining whether two BAM files were sequenced from the same sample
 
 
 ## Configuration ##
+
+
+
 
 ## Running tests ##
 
