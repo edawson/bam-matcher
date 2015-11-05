@@ -231,7 +231,12 @@ BATCH OPERATIONS:
 ```
 
 
-
+```
+optional arguments:
+  -h, --help            show this help message and exit
+  --debug, -d           Debug mode. Temporary files are not removed
+  --verbose, -v         Verbose reporting. Default = False
+```
 
 
 
