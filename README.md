@@ -119,6 +119,7 @@ Set path(s) to the genome reference file. **REFERENCE** should always be set. **
 
 **[BatchOperations]**
 
+BAM-matcher caches the genotype data of BAM files that it has processed previously. The **CACHE_DIR** sets the location of the cache directory. 
 
 
 ## Running BAM-matcher ##
