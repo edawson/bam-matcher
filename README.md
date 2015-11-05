@@ -110,7 +110,7 @@ Settings for BAM-matcher comparison.
 
 **[VariantCallerParameters]**
 
-Set memory (Java VM) requirements and number of processing threads (GATK only).
+Set memory requirements (Java VM) and number of processing threads (GATK only).
 
 **[GenomeReference]**
 
