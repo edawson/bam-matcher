@@ -304,5 +304,4 @@ optional arguments:
 
 ### Who do I talk to? ###
 
-* Repo owner or admin
-* Other community or team contact
+Paul (paul.wang@sa.gov.au)
