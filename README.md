@@ -6,6 +6,22 @@ A tool for determining whether two BAM files were sequenced from the same sample
 
 ## Dependencies ##
 
+**Python** 
+version 2.7
+
+**Python libraries**
+PyVCF
+HTSeq
+ConfigParser
+Cheetah
+
+**Variant Callers**
+(Require at least one)
+GATK (requires Java)
+VarScan2 (requires Java and Samtools)
+Freebayes
+
+
 ## Configuration ##
 
 ## Running tests ##
