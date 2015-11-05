@@ -4,13 +4,13 @@ Created on 09/12/2014
 
 @author: paul
 
-This is the pretty-formatted version for general release. 
+This is the pretty-formatted version for general release.
 
 Still need to:
 - improve confliction-resolution, error-checking, etc
 - have better output reporting and more report modes (console-only, and HTML output)
 - need to deal with space in file paths ??? (not sure if this is resolved now)
-- add batch mode-friendly stuff, e.g. simpler TSV output, cached genotype data 
+- add batch mode-friendly stuff, e.g. simpler TSV output, cached genotype data
 
 '''
 from argparse import ArgumentParser
@@ -38,96 +38,96 @@ def handle_args():
 
     # these are always required
     parser_grp1 = parser.add_argument_group("REQUIRED")
-    parser_grp1.add_argument("--bam1",           "-B1", required=True,  
+    parser_grp1.add_argument("--bam1",           "-B1", required=True,
                              help="First BAM file")
-    parser_grp1.add_argument("--bam2",           "-B2", required=True,  
+    parser_grp1.add_argument("--bam2",           "-B2", required=True,
                              help="Second BAM file")
 
     # if not specified, will always look into the same location
     parser_grp2 = parser.add_argument_group("CONFIGURATION")
-    parser_grp2.add_argument("--config",          "-c",  required=False, 
+    parser_grp2.add_argument("--config",          "-c",  required=False,
                              help="Specify configuration file (default = \
-                             /dir/where/script/is/located/compare_bam.conf)")
-    parser_grp2.add_argument("--generate-config", "-G",  required=False, 
+                             /dir/where/script/is/located/bam-matcher.conf)")
+    parser_grp2.add_argument("--generate-config", "-G",  required=False,
                              help="Specify where to generate configuration \
                              file template")
 
     # Output needs to be specified at command line as it's usually per-run
     parser_grp3 = parser.add_argument_group("OUTPUT REPORT")
-    parser_grp3.add_argument("--output",         "-o",  required=False, 
+    parser_grp3.add_argument("--output",         "-o",  required=False,
                              help="Specify output report path (default = \
-                             /current/dir/compare_bam_report.SUBFIX)")
+                             /current/dir/bam_matcher.SUBFIX)")
     parser_grp3.add_argument("--short-output",   "-so",  required=False,
                              default = False, action="store_true",
                              help="Short output mode (tab-separated).")
-    parser_grp3.add_argument("--html",           "-H",  required=False, 
+    parser_grp3.add_argument("--html",           "-H",  required=False,
                              action="store_true", help="Enable HTML output. HTML file name = report + '.html'")
-    parser_grp3.add_argument("--no-report",      "-n",  required=False, 
+    parser_grp3.add_argument("--no-report",      "-n",  required=False,
                              action="store_true", help="Don't write output to file. Results output to command line only.")
-    parser_grp3.add_argument("--scratch-dir",    "-s",  required=False, 
+    parser_grp3.add_argument("--scratch-dir",    "-s",  required=False,
                              help="Scratch directory for temporary files. If not specified, the report output directory will be used (default = /tmp/[random_string])")
-    
-    # Usually defined in 
+
+    # Usually defined in
     parser_grp4 = parser.add_argument_group("VARIANTS")
-    parser_grp4.add_argument("--vcf",            "-V",  required=False, 
+    parser_grp4.add_argument("--vcf",            "-V",  required=False,
                              help="VCF file containing SNPs to check (default can be specified in config file instead)")
-    parser_grp4.add_argument("--filter-vcf",      "-FT", required=False, 
+    parser_grp4.add_argument("--filter-vcf",      "-FT", required=False,
                              action="store_true", help="Enable filtering of the input VCF file")
 
     # Specifying these values here will override config values
     parser_grp5 = parser.add_argument_group("CALLERS AND SETTINGS (will override config values)")
-    parser_grp5.add_argument("--caller",         "-CL", required=False, 
-                             default="gatk", 
-                             choices=('gatk', 'freebayes', 'varscan'), 
+    parser_grp5.add_argument("--caller",         "-CL", required=False,
+                             default="gatk",
+                             choices=('gatk', 'freebayes', 'varscan'),
                              help="Specify which caller to use (default = 'gatk')")
-    parser_grp5.add_argument("--dp-threshold",   "-DP", required=False, 
+    parser_grp5.add_argument("--dp-threshold",   "-DP", required=False,
                              type=int, help="Minimum required depth for comparing variants")
-    parser_grp5.add_argument("--number_of_snps", "-N", required=False, 
+    parser_grp5.add_argument("--number_of_snps", "-N", required=False,
                              type=int, help="Number of SNPs to compare.")
-    parser_grp5.add_argument("--fastfreebayes",  "-FF", required=False, 
+    parser_grp5.add_argument("--fastfreebayes",  "-FF", required=False,
                              action="store_true", help="Use --targets option for Freebayes.")
-    parser_grp5.add_argument("--gatk-mem-gb" ,   "-GM", required=False, 
+    parser_grp5.add_argument("--gatk-mem-gb" ,   "-GM", required=False,
                              type=int, help="Specify Java heap size for GATK (GB, int)")
-    parser_grp5.add_argument("--gatk-nt" ,       "-GT", required=False, 
+    parser_grp5.add_argument("--gatk-nt" ,       "-GT", required=False,
                              type=int, help="Specify number of threads for GATK UnifiedGenotyper (-nt option)")
-    parser_grp5.add_argument("--varscan-mem-gb", "-VM", required=False, 
+    parser_grp5.add_argument("--varscan-mem-gb", "-VM", required=False,
                              type=int, help="Specify Java heap size for VarScan2 (GB, int)")
 
 
     # overriding reference matching
     parser_grp6 = parser.add_argument_group("REFERENCES")
-    parser_grp6.add_argument("--reference",      "-R",  required=False, 
+    parser_grp6.add_argument("--reference",      "-R",  required=False,
                              help="Default reference fasta file. Needs to be indexed with samtools faidx")
-    parser_grp6.add_argument("--ref_noChr",      "-Rn", required=False, 
+    parser_grp6.add_argument("--ref_noChr",      "-Rn", required=False,
                              help="Reference fasta file, no 'chr' in chromosome names. Needs to be indexed with samtools faidx")
-    parser_grp6.add_argument("--ref_wChr",       "-Rw",  required=False, 
+    parser_grp6.add_argument("--ref_wChr",       "-Rw",  required=False,
                              help="Reference fasta file, has 'chr' in chromosome names. Needs to be indexed with samtools faidx")
-    parser_grp6.add_argument("--bam1-reference", "-B1R", required=False, 
+    parser_grp6.add_argument("--bam1-reference", "-B1R", required=False,
                              help="Reference fasta file for BAM1. Requires --bam2-reference/-B2R, overrides other settings")
-    parser_grp6.add_argument("--bam2-reference", "-B2R", required=False, 
+    parser_grp6.add_argument("--bam2-reference", "-B2R", required=False,
                              help="Reference fasta file for BAM2. Requires --bam1-reference/-B1R, overrides other settings")
 
     # for batch operations
     parser_grp7 = parser.add_argument_group("BATCH OPERATIONS")
-    parser_grp7.add_argument("--do-not-cache",    "-NC", required=False, 
+    parser_grp7.add_argument("--do-not-cache",    "-NC", required=False,
                              default=False, action="store_true",
                              help="Do not keep variant-calling output for future comparison. By default (False) data is written to /bam/filepath/without/dotbam.GT_compare_data")
-    parser_grp7.add_argument("--recalculate",    "-RC", required=False, 
-                             default=False, action="store_true", 
+    parser_grp7.add_argument("--recalculate",    "-RC", required=False,
+                             default=False, action="store_true",
                              help="Don't use cached variant calling data, redo variant-calling. Will overwrite cached data unless told not to")
     parser_grp7.add_argument("--cache-dir",      "-CD", required=False,
                              help="Specify directory for cached data. Overrides configuration")
 
     # optional, not in config
-    parser.add_argument("--debug", "-d", required=False, action="store_true", 
+    parser.add_argument("--debug", "-d", required=False, action="store_true",
                         help="Debug mode. Temporary files are not removed")
-    parser.add_argument("--verbose", "-v", required=False, action="store_true", 
+    parser.add_argument("--verbose", "-v", required=False, action="store_true",
                         help="Verbose reporting. Default = False")
     return parser.parse_args()
 
 #-------------------------------------------------------------------------------
 # Convert variants VCF file to intervals for variant callers
-def convert_vcf_to_intervals(invcf, output, window, ntries, format="gatk", 
+def convert_vcf_to_intervals(invcf, output, window, ntries, format="gatk",
                              filtering=True):
     vcf_read = vcf.Reader(open(invcf, "r"))
     fout = open(output, "w")
@@ -138,9 +138,9 @@ def convert_vcf_to_intervals(invcf, output, window, ntries, format="gatk",
         # 1) 1KG_AF between 0.45 - 0.55
         # 2) SNPs only, no indels
         if filtering:
-            if "1KG_AF" in var.INFO and (var.INFO["1KG_AF"] < 0.45 or 
+            if "1KG_AF" in var.INFO and (var.INFO["1KG_AF"] < 0.45 or
                                          var.INFO["1KG_AF"] > 0.55):
-                continue 
+                continue
             if var.var_type != "snp":
                 continue
         # intervals format
@@ -180,7 +180,7 @@ def sort_vcf_by_chrom_order(invcf, outvcf, ref_index):
     for chrom in chrom_order:
         grep_str = "grep -v ^# '%s' | egrep ^%s[[:space:]] | sort -k2n" % \
                     (invcf, chrom)
-        grep_cmd = subprocess.Popen([grep_str], stdout=subprocess.PIPE, 
+        grep_cmd = subprocess.Popen([grep_str], stdout=subprocess.PIPE,
                                     shell=True)
         for line in grep_cmd.stdout:
             fout.write(line)
@@ -271,7 +271,7 @@ def is_subset(hom_gt, het_gt):
 
 
 #===============================================================================
-# Parsing configuration file and command line options 
+# Parsing configuration file and command line options
 #===============================================================================
 
 
@@ -284,13 +284,13 @@ for idx, arg in enumerate(sys.argv):
         try:
             config_template_output = os.path.abspath(sys.argv[idx+1])
         except:
-            config_template_output = os.path.abspath("compare_bam.conf.template")
+            config_template_output = os.path.abspath("bam-matcher.conf.template")
         print """
 ====================================
 Generating configuration file template
 ====================================
 
-Config template will be written to %s 
+Config template will be written to %s
 
 """ % config_template_output
 
@@ -315,7 +315,7 @@ filter_VCF:      False
 number_of_SNPs: 1500
 # enable --targets option for Freebayes, faster but more prone to Freebayes errors
 # set to False will use --region, each variant is called separately
-fast_freebayes: True  
+fast_freebayes: True
 VCF_file: variants_noX.vcf
 
 [VariantCallerParameters]
@@ -329,7 +329,7 @@ VARSCAN_MEM: 4
 [GenomeReference]
 # default reference fasta file
 REFERENCE: hg19.fasta
-                        
+
 # Reference fasta file, with no chr in chromosome name (e.g. Broad19.fasta)
 REF_noChr: Broad19.fasta
 
@@ -357,7 +357,7 @@ HTML output is not implemented yet.
 """
 
 
-# okay now to parse the arguments         
+# okay now to parse the arguments
 args = handle_args()
 
 #-------------------------------------------------------------------------------
@@ -395,7 +395,7 @@ else:
 # Test if the config file exists
 if os.access(config_file, os.R_OK) == False:
     print """%s
-The config file '%s' either does not exist or is not readable 
+The config file '%s' either does not exist or is not readable
 """% (CONFIG_ERROR, os.path.abspath(config_file))
     sys.exit(1)
 
@@ -405,8 +405,8 @@ config.read(config_file)
 
 # are all the sections there?
 config_sections = config.sections()
-REQUIRED_CONFIG_SECTIONS = ["GenomeReference", "VariantCallerParameters", 
-                            "ScriptOptions", "VariantCallers", "Miscellaneous", 
+REQUIRED_CONFIG_SECTIONS = ["GenomeReference", "VariantCallerParameters",
+                            "ScriptOptions", "VariantCallers", "Miscellaneous",
                             "BatchOperations"]
 for sect in REQUIRED_CONFIG_SECTIONS:
     if sect not in config_sections:
@@ -426,7 +426,7 @@ JAVA      = config.get("VariantCallers", "java")
 DP_THRESH      = config.get("ScriptOptions", "DP_threshold")
 FILTER_VCF     = config.get("ScriptOptions", "filter_VCF")
 NUMBER_OF_SNPS = config.get("ScriptOptions", "number_of_SNPs")
-FAST_FREEBAYES = config.get("ScriptOptions", "fast_freebayes") 
+FAST_FREEBAYES = config.get("ScriptOptions", "fast_freebayes")
 VCF_FILE       = config.get("ScriptOptions", "VCF_file")
 
 REFERENCE = config.get("GenomeReference", "REFERENCE")
@@ -467,14 +467,14 @@ readable." % bam_file
     # check bam files are index:
     bam_index1 = bam_file.rstrip(".bam") + ".bai"
     bam_index2 = bam_file + ".bai"
-    if (os.access(bam_index1, os.R_OK) == False and 
+    if (os.access(bam_index1, os.R_OK) == False and
         os.access(bam_index2, os.R_OK) == False):
         print "The input bam files need to be indexed."
         sys.exit(1)
 
 # resolving output report path
 REPORT_PATH = ""
-current_dir = os.path.abspath("./") 
+current_dir = os.path.abspath("./")
 if args.output == None:
     REPORT_PATH = os.path.join(current_dir, "compare_bam_report")
     bam1_name = os.path.basename(args.bam1).rstrip(".bam").replace(".", "_")
@@ -494,7 +494,7 @@ Specified output directory is not writable: %s
 """ % (FILE_ERROR, REPORT_DIR)
     sys.exit(1)
 
-# HTML path 
+# HTML path
 html_path = ""
 if args.html:
     html_path = REPORT_PATH + ".html"
@@ -523,7 +523,7 @@ Specified scratchd directory is not writable: %s
             print """%s
 Unable to create specified scratch directory: %s
 Python error: %s
-""" % (FILE_ERROR, SCRATCH_DIR, e) 
+""" % (FILE_ERROR, SCRATCH_DIR, e)
 
 if args.verbose:
     print """
@@ -541,8 +541,8 @@ Checking caller
 
 Caller to use: %s
 ---------------------------------------------
-This is not really catching errors correctly. 
-Needs to catch errors and exit if fails 
+This is not really catching errors correctly.
+Needs to catch errors and exit if fails
 ---------------------------------------------
 """ % args.caller
 
@@ -559,13 +559,13 @@ if args.caller == "gatk":
         print "GATK path was not specified. \
     Do this in the configuration file"
         sys.exit(1)
-    
+
     if os.access(GATK, os.R_OK) == False:
         print "Cannot access GATK jar file (%s)" % GATK
         sys.exit(1)
     gatk_cmd = [JAVA, "-jar", GATK, "-version"]
     try:
-        gatk_proc = subprocess.Popen(gatk_cmd, stdout=subprocess.PIPE, 
+        gatk_proc = subprocess.Popen(gatk_cmd, stdout=subprocess.PIPE,
                                      stderr=STDERR_)
         if args.verbose:
             print "Testing GATK, running:\n   '%s'" % " ".join(gatk_cmd)
@@ -598,7 +598,7 @@ Do this in the configuration file"
     # free_cmd = "%s --version" % FREEBAYES
     free_cmd = [FREEBAYES, "--version"]
     try:
-        free_proc = subprocess.Popen(free_cmd, stdout=subprocess.PIPE, 
+        free_proc = subprocess.Popen(free_cmd, stdout=subprocess.PIPE,
                                      stderr=STDERR_)
         if args.verbose:
             print "Testing Freebayes, running:\n   '%s'" % " ".join(free_cmd)
@@ -609,7 +609,7 @@ Do this in the configuration file"
             free_proc.communicate()
     except subprocess.CalledProcessError, e:
         print "%s\nSomething wrong with Freebayes" % CONFIG_ERROR
-        print "Python error msg: ", e 
+        print "Python error msg: ", e
         sys.exit(1)
 
 #-------------------------------------------
@@ -622,11 +622,11 @@ Do this in the configuration file."
 
     if os.access(VARSCAN, os.R_OK) == False:
         print "Cannot access VarScan2 jar file (%s)" % VARSCAN
-        sys.exit(1) 
+        sys.exit(1)
 
     varscan_cmd = [JAVA, "-jar", VARSCAN]
     try:
-        varscan_proc = subprocess.Popen(varscan_cmd, stdout=subprocess.PIPE, 
+        varscan_proc = subprocess.Popen(varscan_cmd, stdout=subprocess.PIPE,
                                         stderr=STDERR_)
         if args.verbose:
             print "Testing Varscan, running:\n   '%s'" % " ".join(varscan_cmd)
@@ -666,7 +666,7 @@ if args.vcf != None:
 # is it specified?
 if VCF_FILE == "":
     print """%s
-No variants file (VCF) has been specified. 
+No variants file (VCF) has been specified.
 Use --vcf/-V at command line or VCF_FILE in the configuration file.
 """ % CONFIG_ERROR
     sys.exit(1)
@@ -715,14 +715,14 @@ if args.verbose:
 # only override if the flag is enabled at commandline
 if args.filter_vcf:
     FILTER_VCF = args.filter_vcf
-# if not specified at commandline, use config values 
+# if not specified at commandline, use config values
 else:
     if FILTER_VCF == "":
         print """
 +---------+
 | WARNING |
-+---------+  
-filter_VCF value was not set in the configuration file. 
++---------+
+filter_VCF value was not set in the configuration file.
 Default value (False) will be used instead.
 Setting filter_VCF = False
 """
@@ -752,7 +752,7 @@ else:
         print """
 +---------+
 | WARNING |
-+---------+  
++---------+
 number_of_SNPs was not specified in the configuration file.
 Default value (1500) will be used instead.
 Setting number_of_SNPs = 1500
@@ -771,8 +771,8 @@ if NUMBER_OF_SNPS <= 200:
     print """
 +---------+
 | WARNING |
-+---------+  
-Using fewer than 200 SNPs is not recommended, may not be sufficient to 
++---------+
+Using fewer than 200 SNPs is not recommended, may not be sufficient to
 correctly discriminate between samples.
 """
 
@@ -797,7 +797,7 @@ if args.caller == "freebayes":
 +---------+
 fast_freebayes was not set in the configuration file.
 Default value (False) will be used instead.
-    
+
 Setting fast_freebayes = False
 """
             FAST_FREEBAYES = False
@@ -818,7 +818,7 @@ Use 'False' or 'True'""" % (CONFIG_ERROR, FAST_FREEBAYES)
 #-------------------------------------------
 # GATK parameters
 if args.caller == "gatk":
-    
+
     # GATK_MEM
     # get from command line?
     # get from config file
@@ -862,7 +862,7 @@ Setting GATK_nt = 1
 GATK_nt value ('%s') in the config file is not a valid integer.
 """ % (CONFIG_ERROR, GATK_NT)
             sys.exit(1)
-        
+
 #-------------------------------------------
 # VarScan parameters
 if args.caller == "varscan":
@@ -900,7 +900,7 @@ AVAILABLE_REFERENCES = []
 
 # if any of the reference options are used, disable all config REFERENCE settings
 if args.reference != None or args.ref_noChr != None or args.ref_wChr != None or args.bam1_reference != None or args.bam2_reference != None:
-    
+
     REFERENCE = ""
     REF_noChr = ""
     REF_wChr  = ""
@@ -923,7 +923,7 @@ if args.bam1_reference == None and args.bam2_reference == None:
             if os.access(ref, os.R_OK) == False:
                 print "Specified reference fasta file ('%s') is either not present or readable" % ref
                 sys.exit(1)
-        # check that the references are indexed 
+        # check that the references are indexed
         ref_idx = ref + ".fai"
         if os.access(ref_idx, os.R_OK) == False:
             print "Make sure that the reference file ('%s') has been indexed by samtools." % ref
@@ -937,7 +937,7 @@ if args.bam1_reference == None and args.bam2_reference == None:
     # compare chromosomes between reference and bam files
     bam1_chrlist = []
     bam2_chrlist = []
-    
+
     # get bam1 chromosomes
     bam_in = HTSeq.BAM_Reader(args.bam1)
     bam_header = bam_in.get_header_dict()["SQ"]
@@ -967,12 +967,12 @@ if args.bam1_reference == None and args.bam2_reference == None:
         ref_idx = ref + ".fai"
         for line in open(ref_idx, "r"):
             ref_chrlist[ref].append(line.strip("\n").split("\t")[0])
-    
+
         bam1_ref_chr_ct = len(set(bam1_chrlist).intersection(set(ref_chrlist[ref])))
         if bam1_ref_chr_ct > bam1_ref_chr_ct_max:
             bam1_ref = ref
             bam1_ref_chr_ct_max = bam1_ref_chr_ct
-    
+
         bam2_ref_chr_ct = len(set(bam2_chrlist).intersection(set(ref_chrlist[ref])))
         if bam2_ref_chr_ct > bam2_ref_chr_ct_max:
             bam2_ref = ref
@@ -1012,7 +1012,7 @@ else:
 
 
 
-    # check reference file and index    
+    # check reference file and index
     for ref in [bam1_ref, bam2_ref]:
         if os.access(ref, os.R_OK) == False:
             print "Specified reference file ('%s') is either not present or \
@@ -1026,7 +1026,7 @@ samtools" % ref
 
 
     # need to know whether these references have chr or not
-    
+
 
 
 
@@ -1076,7 +1076,7 @@ if BATCH_WRITE_CACHE or BATCH_USE_CACHED:
         print """%s
 No CACHE_DIR specified in configuration or at command line.
 Cached operations requires this to work.
-""" % CONFIG_ERROR     
+""" % CONFIG_ERROR
         sys.exit(1)
 
     # test if CACHE_DIR is writable
@@ -1090,7 +1090,7 @@ Cached operations requires this to work.
         print """%s
 Unable to write to specified cache directory ('%s')
 Python error msg: %s
-""" % (CONFIG_ERROR, CACHE_DIR, e) 
+""" % (CONFIG_ERROR, CACHE_DIR, e)
         sys.exit(1)
 CACHE_DIR = os.path.abspath(CACHE_DIR)
 
@@ -1110,7 +1110,7 @@ if args.verbose:
 #-------------------------------------------------------------------------------
 # first look for cached data if using BATCH_USE_CACHED is True
 # cached file is named as the md5sum of:
-# - the BAM path 
+# - the BAM path
 # - number of variants compared
 # - depth
 # - bam file timestamp
@@ -1150,7 +1150,7 @@ if BATCH_USE_CACHED == False:
 
 #-------------------------------------------
 # SNPs file
-# VCF_FILE, FILTER_VCF, NUMBER_OF_SNPS 
+# VCF_FILE, FILTER_VCF, NUMBER_OF_SNPS
 
 # default 1KG VCF file doesn't use chr
 # create intervals file
@@ -1161,7 +1161,7 @@ if args.verbose:
 f_itv = os.path.join(SCRATCH_DIR, "target.intervals")
 temp_files.append(f_itv)
 # convert variant VCF file to GATK intervals
-convert_vcf_to_intervals(VCF_FILE, f_itv, 0, NUMBER_OF_SNPS, args.caller, 
+convert_vcf_to_intervals(VCF_FILE, f_itv, 0, NUMBER_OF_SNPS, args.caller,
                          FILTER_VCF)
 
 # Creating a version with 'chr'
@@ -1208,7 +1208,7 @@ temp_files.append(vcf1+".idx")
 temp_files.append(vcf2+".idx")
 temp_files += pup_list
 
-# Variant calling is not done in a single step, 
+# Variant calling is not done in a single step,
 # even though this is possible for some callers, because:
 # 1. If the sample names are the same, this causes problems for GATK
 # 2. They may have been mapped to different reference files
@@ -1220,39 +1220,39 @@ for i in [0,1]:
     out_vcf = vcf_list[i]
     ref = ref_list[i]
     has_chr = haschr_list[i]
-    interval_file = interval_files_list[i] 
+    interval_file = interval_files_list[i]
 
     if args.verbose:
         print "input bam: \t%s" % in_bam
         print "output vcf:\t%s" % out_vcf
 
     if args.caller == "gatk":        # GATK calling
-        varcall_cmd = [JAVA, "-jar", "-Xmx%dg" % GATK_MEM, 
-                       "-XX:ParallelGCThreads=1", GATK, "-T", 
-                       "UnifiedGenotyper", "-R", ref, "-I", in_bam, 
+        varcall_cmd = [JAVA, "-jar", "-Xmx%dg" % GATK_MEM,
+                       "-XX:ParallelGCThreads=1", GATK, "-T",
+                       "UnifiedGenotyper", "-R", ref, "-I", in_bam,
                        "-o", out_vcf]
-        varcall_cmd += ["--output_mode", "EMIT_ALL_SITES", "-nt", str(GATK_NT), 
+        varcall_cmd += ["--output_mode", "EMIT_ALL_SITES", "-nt", str(GATK_NT),
                         "-L", interval_file]
         if args.verbose:
             print "GATK variant-calling command:\n(space in path not escaped \
 here, but should be fine in actual call command)"
             print " ".join(varcall_cmd)
-        varcall_proc = subprocess.Popen(varcall_cmd, stdout=subprocess.PIPE, 
+        varcall_proc = subprocess.Popen(varcall_cmd, stdout=subprocess.PIPE,
                                         stderr=STDERR_)
 
         varcall_proc.communicate()
     elif args.caller == "freebayes":    # Freebayes calling
         fout = open(out_vcf, "w")
         if FAST_FREEBAYES:
-            varcall_cmd = [FREEBAYES, "--fasta-reference", ref, "--targets", 
-                           interval_file, "--no-indels", "--min-coverage", 
+            varcall_cmd = [FREEBAYES, "--fasta-reference", ref, "--targets",
+                           interval_file, "--no-indels", "--min-coverage",
                            str(DP_THRESH)]
-            varcall_cmd += ["--report-all-haplotype-alleles", 
+            varcall_cmd += ["--report-all-haplotype-alleles",
                             "--report-monomorphic", in_bam]
             if args.verbose:
                 print "Freebayes variant-calling command:"
                 print " ".join(varcall_cmd)
-            varcall_proc = subprocess.Popen(varcall_cmd, stdout=subprocess.PIPE, 
+            varcall_proc = subprocess.Popen(varcall_cmd, stdout=subprocess.PIPE,
                                             stderr=STDERR_)
             for line in varcall_proc.stdout:
                 fout.write(line)
@@ -1268,15 +1268,15 @@ here, but should be fine in actual call command)"
                 region_str = "%s:%d-%d" % (bits[0], bits[1], bits[2])
 
                 varcall_cmd = [FREEBAYES, "--fasta-reference", ref, "--region",
-                               region_str, "--no-indels", "--min-coverage", 
+                               region_str, "--no-indels", "--min-coverage",
                                str(DP_THRESH)]
-                varcall_cmd += ["--report-all-haplotype-alleles", 
+                varcall_cmd += ["--report-all-haplotype-alleles",
                                 "--report-monomorphic", in_bam]
                 if args.verbose:
                     print "Freebayes variant-calling command:"
                     print " ".join(varcall_cmd)
-                varcall_proc = subprocess.Popen(varcall_cmd, 
-                                                stdout=subprocess.PIPE, 
+                varcall_proc = subprocess.Popen(varcall_cmd,
+                                                stdout=subprocess.PIPE,
                                                 stderr=STDERR_)
                 for line in varcall_proc.stdout:
                     if line.startswith("#"):
@@ -1292,17 +1292,17 @@ here, but should be fine in actual call command)"
         pup_file = pup_list[i]
         fout = open(pup_file, "w")
         # First need to do a pileup
-        # not using the -l option in samtools mpileup because it doesn't seem to 
+        # not using the -l option in samtools mpileup because it doesn't seem to
         #   use indexed random BAM access, so ends up being much slower
         itv_list = []
         fin = open(interval_file, "r")
         for line in fin:
             region_str = line.strip("\n")
-            sam_cmd = [SAMTOOLS, "mpileup", "-r", region_str, "-B", "-f", 
+            sam_cmd = [SAMTOOLS, "mpileup", "-r", region_str, "-B", "-f",
                        ref, in_bam]
             if args.verbose:
                 print "pileup command:\n%s" % " ".join(sam_cmd)
-            sam_proc = subprocess.Popen(sam_cmd, stdout=subprocess.PIPE, 
+            sam_proc = subprocess.Popen(sam_cmd, stdout=subprocess.PIPE,
                                         stderr=STDERR_)
             for line in sam_proc.stdout:
                 bits = line.strip("\n").split("\t")
@@ -1311,14 +1311,14 @@ here, but should be fine in actual call command)"
                 fout.write(line)
 
         # calling with varscan
-        varscan_cmd = [JAVA, "-XX:ParallelGCThreads=1", 
-                       "-Xmx%dg" % VARSCAN_MEM, "-jar", VARSCAN, 
-                       "mpileup2snp", pup_file, 
+        varscan_cmd = [JAVA, "-XX:ParallelGCThreads=1",
+                       "-Xmx%dg" % VARSCAN_MEM, "-jar", VARSCAN,
+                       "mpileup2snp", pup_file,
                        "--output-vcf", "--min-coverage", str(DP_THRESH) ]
         if args.verbose:
             print "Varscan command:\n%s" % " ".join(varscan_cmd)
         fout = open(out_vcf, "w")
-        varscan_proc = subprocess.Popen(varscan_cmd, stdout=subprocess.PIPE, 
+        varscan_proc = subprocess.Popen(varscan_cmd, stdout=subprocess.PIPE,
                                         stderr=STDERR_)
         for line in varscan_proc.stdout:
             fout.write(line)
@@ -1394,20 +1394,20 @@ reference:  %s
 
 # Using GATK to convert VCF to TSV
 #     if args.caller == "gatk" or args.caller == "varscan":
-#         gatk_cmd = [JAVA, "-jar", "-Xmx2g", "-XX:ParallelGCThreads=1", 
-#                     GATK, "-T", "VariantsToTable", "-R", ref, "-V", in_vcf, 
+#         gatk_cmd = [JAVA, "-jar", "-Xmx2g", "-XX:ParallelGCThreads=1",
+#                     GATK, "-T", "VariantsToTable", "-R", ref, "-V", in_vcf,
 #                     "-F", "CHROM", "-F", "POS"]
-#         gatk_cmd += ["-F", "REF", "-F", "ALT", "-F", "QUAL", "-GF", "DP", 
+#         gatk_cmd += ["-F", "REF", "-F", "ALT", "-F", "QUAL", "-GF", "DP",
 #                      "-GF", "AD", "-GF", "GT", "-o", out_tsv]
 #     elif args.caller == "freebayes":
-#         gatk_cmd = [JAVA, "-jar", "-Xmx2g", "-XX:ParallelGCThreads=1", 
-#                     GATK, "-T", "VariantsToTable", "-R", ref, "-V", in_vcf, 
+#         gatk_cmd = [JAVA, "-jar", "-Xmx2g", "-XX:ParallelGCThreads=1",
+#                     GATK, "-T", "VariantsToTable", "-R", ref, "-V", in_vcf,
 #                     "-F", "CHROM", "-F", "POS"]
-#         gatk_cmd += ["-F", "REF", "-F", "ALT", "-F", "QUAL", "-GF", "DP", 
+#         gatk_cmd += ["-F", "REF", "-F", "ALT", "-F", "QUAL", "-GF", "DP",
 #                      "-GF", "AO", "-GF", "GT", "-o", out_tsv]
 #     if args.verbose:
 #         print "GATK VariantsToTable command:\n%s" % " ".join(gatk_cmd)
-#     gatk_proc = subprocess.Popen(gatk_cmd, stdout=subprocess.PIPE, 
+#     gatk_proc = subprocess.Popen(gatk_cmd, stdout=subprocess.PIPE,
 #                                  stderr=STDERR_)
 #     gatk_proc.communicate()
 
@@ -1485,7 +1485,7 @@ for line in fin:
     if line.startswith("CHROM\t"):
         continue
     bits = line.strip("\n").split("\t")
-    
+
     var_ = "\t".join(bits[:4])
     if var_ in var_list:
         var_list[var_] = 2
@@ -1498,7 +1498,7 @@ for line in fin:
     if line.startswith("CHROM"):
         continue
     bits = line.strip("\n").split("\t")
-    out_line = "%s\t%s\t%s\t%s\t%s\n" % (bits[0], bits[1], bits[2], 
+    out_line = "%s\t%s\t%s\t%s\t%s\n" % (bits[0], bits[1], bits[2],
                                          bits[3], bits[7])
     var_ = "\t".join(bits[:4])
     if var_ in var_list:
@@ -1514,7 +1514,7 @@ for line in fin:
     if line.startswith("CHROM"):
         continue
     bits = line.strip("\n").split("\t")
-    out_line = "%s\t%s\t%s\t%s\t%s\n" % (bits[0], bits[1], bits[2], bits[3], 
+    out_line = "%s\t%s\t%s\t%s\t%s\n" % (bits[0], bits[1], bits[2], bits[3],
                                          bits[7])
     var_ = "\t".join(bits[:4])
     if var_ in var_list:
@@ -1524,15 +1524,15 @@ fout.close()
 
 #-------------------------------------------------------------------------------
 # However, bam1_var and bam2_var may still be sorted differently
-# so sort to the same way 
+# so sort to the same way
 for fvar in [bam1_var, bam2_var]:
-#    f_sorted = os.path.join(SCRATCH_DIR, 
+#    f_sorted = os.path.join(SCRATCH_DIR,
 #                            "%s.sorted_variants_file" % vcf_random_str)
     f_sorted = os.path.join(SCRATCH_DIR, "sorted_variants_file")
     sort_cmd = "sort -k1n -k2n '%s' > '%s' " % (fvar, f_sorted)
     if args.verbose:
         print sort_cmd
-    sort_proc = subprocess.Popen([sort_cmd], shell=True, stdout=subprocess.PIPE, 
+    sort_proc = subprocess.Popen([sort_cmd], shell=True, stdout=subprocess.PIPE,
                                  stderr=STDERR_)
     sort_proc.communicate()
     shutil.copy(f_sorted, fvar)
@@ -1647,7 +1647,7 @@ else:
 
 # STANDARD FORMAT
 
-# assume that the most space required is 4 digits, 
+# assume that the most space required is 4 digits,
 # so pad numeric string to 6 spaces
 diff_hom = ("%d" % diff_hom_ct).rjust(5)
 diff_het = ("%d" % diff_het_ct).rjust(5)
@@ -1664,7 +1664,7 @@ positions with diff genotype:     %d
 
                        BAM 1
 
-               | het  | hom  | subset 
+               | het  | hom  | subset
         -------+------+------+-------
          het   |%s |%s |%s |
         -------+------+------+-------
@@ -1675,23 +1675,23 @@ BAM 2    hom   |%s |%s |   -  |
 fraction of common: %f
 
 judgement: %s
-"""  % (bam1_path, bam2_path, DP_THRESH, ct_common, 
-        comm_hom_ct, comm_het_ct, ct_diff, diff_het, diff_hom_het, 
+"""  % (bam1_path, bam2_path, DP_THRESH, ct_common,
+        comm_hom_ct, comm_het_ct, ct_diff, diff_het, diff_hom_het,
         diff_1sub2, diff_het_hom, diff_hom, diff_2sub1, frac_common, judgement)
 
 # SHORT FORMAT
 short_report_str = """# BAM1\t BAM2\t DP_thresh\t FracCommon\t Same\t Same_hom\t Same_het\t Different\t 1het-1het\t 1het-2hom\t 1het-2sub\t 1hom-2het\t 1hom-1hom\t 1sub-2het\t Judgement
-%s\t%s\t%d\t%f\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s""" % (bam1_path, 
+%s\t%s\t%d\t%f\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s""" % (bam1_path,
        bam2_path, DP_THRESH, frac_common, ct_common, comm_hom_ct, comm_het_ct,
-       ct_diff, diff_het_ct, diff_het_hom_ct, diff_2sub1_ct, diff_hom_het_ct, 
+       ct_diff, diff_het_ct, diff_het_hom_ct, diff_2sub1_ct, diff_hom_het_ct,
        diff_hom_ct, diff_1sub2_ct, short_judgement)
 
 # HTML FORMAT
 if args.html:
-    html_bam1_cached = "recalculated" 
+    html_bam1_cached = "recalculated"
     if BATCH_USE_CACHED and bam1_is_cached:
         html_bam1_cached = "cached"
-    html_bam2_cached = "recalculated" 
+    html_bam2_cached = "recalculated"
     if BATCH_USE_CACHED and bam2_is_cached:
         html_bam2_cached = "cached"
     html_namespace = {"BAM1"        : bam1_path,
@@ -1701,7 +1701,7 @@ if args.html:
                       "variants"    : VCF_FILE,
                       "bam1_cached" : html_bam1_cached,
                       "bam2_cached" : html_bam2_cached,
-                      
+
                       "total"          : total_compared,
                       "frac_common"    : frac_common*100,   # report % here
                       "ct_common"      : ct_common,
@@ -1747,11 +1747,3 @@ Temporary files were written to: %s
 """ % SCRATCH_DIR
 
 #===============================================================================
-
-
-
-
-
-
-
-
