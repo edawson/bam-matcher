@@ -86,6 +86,46 @@ CACHE_DIR:  cache_dir
 [Miscellaneous]
 ```
 
+Most configuration settings can also be overridden at run time.
+
+**[VariantCallers]**
+Paths to variant callers and their required components (Java, Samtools)
+
+**[ScriptOptions]**
+Settings for BAM-matcher comparison.
+
+* **DP_threshold**: the minimum read depth required for both BAM files to make a genotype comparison at any given site. (Recommended: 15 for WES-WES comaprison).
+
+* **filter_VCF**: When set to True, will filter out variants which are not SNPs and have 1KG_AF values outside of 0.45-0.55. (Recommended: False. Generally, easier to just pre-select the variants positions to be compared, and not use this option).
+
+* **number_of_SNPs**: The maximum number of variant sites to compare, even if the the input VCF file contains more variants. 
+
+* **fast_freebayes**: When using Freebayes for genotype calling, by default, each position is called separately (with --region). This is less efficient, but as Freebayes' --targets sometimes fails in our testing, this is a safer option. Set this option to "True" will enable using "--targets" during when running Freebayes. (Recommended: False. Slower but safer).
+
+* **VCF_file**: If you are using the same VCF file most of the time, then just set this option here, then you won't need to specify the VCF path every time you run BAM-matcher.
+
+
+
+**[VariantCallerParameters]**
+Set memory (Java VM) requirements and number of processing threads (GATK only).
+
+**[GenomeReference]**
+
+* **REFERENCE**
+* **REF_noChr**
+* **REF_wChr**
+
+
+
+**[BatchOperations]**
+
+
+
+## Running BAM-matcher ##
+
+
+
+
 
 
 
