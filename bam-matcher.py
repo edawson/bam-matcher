@@ -114,7 +114,7 @@ def handle_args():
                              help="Do not keep variant-calling output for future comparison. By default (False) data is written to /bam/filepath/without/dotbam.GT_compare_data")
     parser_grp7.add_argument("--recalculate",    "-RC", required=False,
                              default=False, action="store_true",
-                             help="Don't use cached variant calling data, redo variant-calling. Will overwrite cached data unless told not to")
+                             help="Don't use cached variant calling data, redo variant-calling. Will overwrite cached data unless told not to (-NC)")
     parser_grp7.add_argument("--cache-dir",      "-CD", required=False,
                              help="Specify directory for cached data. Overrides configuration")
 
@@ -388,7 +388,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 config_file = ""
 if args.config == None:
-    config_file = os.path.join(SCRIPT_DIR, "compare_bam.conf")
+    config_file = os.path.join(SCRIPT_DIR, "bam-matcher.conf")
 else:
     config_file = args.config
 
@@ -476,7 +476,7 @@ readable." % bam_file
 REPORT_PATH = ""
 current_dir = os.path.abspath("./")
 if args.output == None:
-    REPORT_PATH = os.path.join(current_dir, "compare_bam_report")
+    REPORT_PATH = os.path.join(current_dir, "bam_matcher_report")
     bam1_name = os.path.basename(args.bam1).rstrip(".bam").replace(".", "_")
     bam2_name = os.path.basename(args.bam2).rstrip(".bam").replace(".", "_")
     REPORT_PATH = REPORT_PATH + ".%s_%s_%s" % (bam1_name, bam2_name, random_str)
@@ -1717,7 +1717,7 @@ if args.html:
                       "diff_1sub2_ct"  : diff_1sub2_ct,
                       "judgement"      : judgement
                      }
-    template_file = os.path.join(SCRIPT_DIR, "compare_bam_html_template")
+    template_file = os.path.join(SCRIPT_DIR, "bam_matcher_html_template")
     template = Template(file=template_file, searchList=html_namespace)
     fout = open(html_path, "w")
     fout.write(str(template))
