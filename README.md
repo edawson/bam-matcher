@@ -114,10 +114,7 @@ Set memory requirements (Java VM) and number of processing threads (GATK only).
 
 **[GenomeReference]**
 
-* **REFERENCE**
-* **REF_noChr**
-* **REF_wChr**
-
+Set path(s) to the genome reference file. **REFERENCE** should always be set. **REF_noChr** and **REF_wChr** is to deal with the GRCh37 situation where two compatible assemblies are available, but one uses 'Chr' in chromosome names and the other does not. By setting these paths, BAM-matcher can compare BAM files that were mapped to different references.
 
 
 **[BatchOperations]**
