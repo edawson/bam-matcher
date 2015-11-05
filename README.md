@@ -124,6 +124,99 @@ BAM-matcher caches the genotype data of BAM files that it has processed previous
 
 ## Running BAM-matcher ##
 
+If the configuration file is set up with paths to REFERENCE and VCF file, then you can run a comparison by:
+
+```
+bam-matcher.py -B1 BAM_FILE_1 -B2 BAM_FILE_2 
+```
+
+This assumes that the configuration is in the same directory as bam-matcher.py and is called bam-matcher.conf.
+
+Run ```bam-matcher.py -h```  to see the full help message.
+
+
+```
+REQUIRED:
+  --bam1 BAM1, -B1 BAM1
+                        First BAM file
+  --bam2 BAM2, -B2 BAM2
+                        Second BAM file
+
+CONFIGURATION:
+  --config CONFIG, -c CONFIG
+                        Specify configuration file (default =
+                        /dir/where/script/is/located/bam-matcher.conf)
+  --generate-config GENERATE_CONFIG, -G GENERATE_CONFIG
+                        Specify where to generate configuration file template
+
+OUTPUT REPORT:
+  --output OUTPUT, -o OUTPUT
+                        Specify output report path (default =
+                        /current/dir/bam_matcher.SUBFIX)
+  --short-output, -so   Short output mode (tab-separated).
+  --html, -H            Enable HTML output. HTML file name = report + '.html'
+  --no-report, -n       Don't write output to file. Results output to command
+                        line only.
+  --scratch-dir SCRATCH_DIR, -s SCRATCH_DIR
+                        Scratch directory for temporary files. If not
+                        specified, the report output directory will be used
+                        (default = /tmp/[random_string])
+
+VARIANTS:
+  --vcf VCF, -V VCF     VCF file containing SNPs to check (default can be
+                        specified in config file instead)
+  --filter-vcf, -FT     Enable filtering of the input VCF file
+
+CALLERS AND SETTINGS (will override config values):
+  --caller {gatk,freebayes,varscan}, -CL {gatk,freebayes,varscan}
+                        Specify which caller to use (default = 'gatk')
+  --dp-threshold DP_THRESHOLD, -DP DP_THRESHOLD
+                        Minimum required depth for comparing variants
+  --number_of_snps NUMBER_OF_SNPS, -N NUMBER_OF_SNPS
+                        Number of SNPs to compare.
+  --fastfreebayes, -FF  Use --targets option for Freebayes.
+  --gatk-mem-gb GATK_MEM_GB, -GM GATK_MEM_GB
+                        Specify Java heap size for GATK (GB, int)
+  --gatk-nt GATK_NT, -GT GATK_NT
+                        Specify number of threads for GATK UnifiedGenotyper
+                        (-nt option)
+  --varscan-mem-gb VARSCAN_MEM_GB, -VM VARSCAN_MEM_GB
+                        Specify Java heap size for VarScan2 (GB, int)
+
+REFERENCES:
+  --reference REFERENCE, -R REFERENCE
+                        Default reference fasta file. Needs to be indexed with
+                        samtools faidx
+  --ref_noChr REF_NOCHR, -Rn REF_NOCHR
+                        Reference fasta file, no 'chr' in chromosome names.
+                        Needs to be indexed with samtools faidx
+  --ref_wChr REF_WCHR, -Rw REF_WCHR
+                        Reference fasta file, has 'chr' in chromosome names.
+                        Needs to be indexed with samtools faidx
+  --bam1-reference BAM1_REFERENCE, -B1R BAM1_REFERENCE
+                        Reference fasta file for BAM1. Requires
+                        --bam2-reference/-B2R, overrides other settings
+  --bam2-reference BAM2_REFERENCE, -B2R BAM2_REFERENCE
+                        Reference fasta file for BAM2. Requires
+                        --bam1-reference/-B1R, overrides other settings
+
+BATCH OPERATIONS:
+  --do-not-cache, -NC   Do not keep variant-calling output for future
+                        comparison. By default (False) data is written to
+                        /bam/filepath/without/dotbam.GT_compare_data
+  --recalculate, -RC    Don't use cached variant calling data, redo variant-
+                        calling. Will overwrite cached data unless told not to
+  --cache-dir CACHE_DIR, -CD CACHE_DIR
+                        Specify directory for cached data. Overrides
+                        configuration
+
+```
+
+
+
+
+
+
 
 
 
