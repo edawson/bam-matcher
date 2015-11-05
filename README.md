@@ -89,9 +89,11 @@ CACHE_DIR:  cache_dir
 Most configuration settings can also be overridden at run time.
 
 **[VariantCallers]**
+
 Paths to variant callers and their required components (Java, Samtools)
 
 **[ScriptOptions]**
+
 Settings for BAM-matcher comparison.
 
 * **DP_threshold**: the minimum read depth required for both BAM files to make a genotype comparison at any given site. (Recommended: 15 for WES-WES comaprison).
@@ -107,6 +109,7 @@ Settings for BAM-matcher comparison.
 
 
 **[VariantCallerParameters]**
+
 Set memory (Java VM) requirements and number of processing threads (GATK only).
 
 **[GenomeReference]**
