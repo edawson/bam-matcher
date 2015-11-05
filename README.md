@@ -174,8 +174,9 @@ OUTPUT REPORT:
                         (default = /tmp/[random_string])
 ```
 
+If no output settings are specified, BAM-matcher will print out results to standard output and write results to bam_matcher.SUBFIX in the current working directory, where SUBFIX includes the BAM file names and a random string.
 
-
+The scratch directory is usually deleted at the end of a successful run, unless --debug option is set, then the temporary files will be kept. If you are using the --scratch-dir option, the specified path must not exist already (although its parent directory should exist).
 
 
 
@@ -184,7 +185,14 @@ VARIANTS:
   --vcf VCF, -V VCF     VCF file containing SNPs to check (default can be
                         specified in config file instead)
   --filter-vcf, -FT     Enable filtering of the input VCF file
+```
 
+Use --vcf to specify the variants to compare. This will override the setting in the config file.
+
+--filter-vcf is the same as filter_VCF setting in config file.
+
+
+```
 CALLERS AND SETTINGS (will override config values):
   --caller {gatk,freebayes,varscan}, -CL {gatk,freebayes,varscan}
                         Specify which caller to use (default = 'gatk')
@@ -200,7 +208,13 @@ CALLERS AND SETTINGS (will override config values):
                         (-nt option)
   --varscan-mem-gb VARSCAN_MEM_GB, -VM VARSCAN_MEM_GB
                         Specify Java heap size for VarScan2 (GB, int)
+```
 
+These are all the same as the settings in config file. Specifying values here will override config settings.
+
+
+
+```
 REFERENCES:
   --reference REFERENCE, -R REFERENCE
                         Default reference fasta file. Needs to be indexed with
@@ -217,7 +231,12 @@ REFERENCES:
   --bam2-reference BAM2_REFERENCE, -B2R BAM2_REFERENCE
                         Reference fasta file for BAM2. Requires
                         --bam1-reference/-B1R, overrides other settings
+```
 
+These are all the same as the settings in config file. Specifying values here will override config settings.
+
+
+```
 BATCH OPERATIONS:
   --do-not-cache, -NC   Do not keep variant-calling output for future
                         comparison. By default (False) data is written to
@@ -227,8 +246,12 @@ BATCH OPERATIONS:
   --cache-dir CACHE_DIR, -CD CACHE_DIR
                         Specify directory for cached data. Overrides
                         configuration
-
 ```
+
+
+
+
+
 
 
 ```
