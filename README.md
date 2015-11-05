@@ -7,6 +7,7 @@ A tool for determining whether two BAM files were sequenced from the same sample
 ## Dependencies ##
 
 **Python** 
+
 version 2.7
 
 **Python libraries**
