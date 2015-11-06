@@ -299,13 +299,13 @@ optional arguments:
 
 
 
-### Licence ###
+# LICENCE #
 
 The code is released under the Creative Commons by Attribution licence (http://creativecommons.org/licenses/by/4.0/). You are free to use and modify it for any purpose (including commercial), so long as you cite/link ....
 
 
 
 
-### Who do I talk to? ###
+# Who do I talk to? #
 
 Paul (paul.wang @ sa.gov.au)
