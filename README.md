@@ -301,7 +301,7 @@ optional arguments:
 
 ### Licence ###
 
-The code is released under the Creative Commons by Attribution licence. You are free to use and modify it for any purpose (including commercial), so long as you cite/link ....
+The code is released under the Creative Commons by Attribution licence (https://creativecommons.org/licenses/by/3.0/au/legalcode). You are free to use and modify it for any purpose (including commercial), so long as you cite/link ....
 
 
 
