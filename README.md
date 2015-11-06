@@ -1,6 +1,6 @@
 # BAM-matcher #
 
-A simple tool for determining whether two BAM files were sequenced from the same sample or patient. 
+A simple tool for determining whether two BAM files were sequenced from the same sample or patient, by counting genotype matches at common SNPs.
 
 Once configuration file is setup, to compare two bam files (sample1.bam and sample2.bam) just run:
 ```
@@ -299,7 +299,9 @@ optional arguments:
 
 
 
+### Licence ###
 
+The code is released under the Creative Commons by Attribution licence. You are free to use and modify it for any purpose (including commercial), so long as you cite/link ....
 
 
 
