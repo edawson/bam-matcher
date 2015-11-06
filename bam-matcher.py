@@ -2,7 +2,7 @@
 '''
 Created on 09/12/2014
 
-@author: paul
+@author: Paul Wang (ppswang@gmail.com)
 
 This is the pretty-formatted version for general release.
 
