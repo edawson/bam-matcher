@@ -55,7 +55,7 @@ The repository also includes a VCF file ```(1KG_1500_exon_variants_noX.vcf)``` w
 **Python libraries**
 
 * PyVCF
-* HTSeq
+* HTSeq (req. NumPy, matplotlib)
 * ConfigParser
 * Cheetah
 
