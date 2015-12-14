@@ -1680,7 +1680,7 @@ judgement: %s
         diff_1sub2, diff_het_hom, diff_hom, diff_2sub1, frac_common, judgement)
 
 # SHORT FORMAT
-short_report_str = """# BAM1\t BAM2\t DP_thresh\t FracCommon\t Same\t Same_hom\t Same_het\t Different\t 1het-1het\t 1het-2hom\t 1het-2sub\t 1hom-2het\t 1hom-1hom\t 1sub-2het\t Judgement
+short_report_str = """# BAM1\t BAM2\t DP_thresh\t FracCommon\t Same\t Same_hom\t Same_het\t Different\t 1het-2het\t 1het-2hom\t 1het-2sub\t 1hom-2het\t 1hom-2hom\t 1sub-2het\t Judgement
 %s\t%s\t%d\t%f\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s""" % (bam1_path,
        bam2_path, DP_THRESH, frac_common, ct_common, comm_hom_ct, comm_het_ct,
        ct_diff, diff_het_ct, diff_het_hom_ct, diff_2sub1_ct, diff_hom_het_ct,
