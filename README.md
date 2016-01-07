@@ -1,6 +1,6 @@
 # BAM-matcher #
 
-A simple tool for determining whether two BAM files were sequenced from the same sample or patient, by counting genotype matches at common SNPs.
+A simple tool for determining whether two BAM files contain reads sequenced from the same sample or patient by counting genotype matches at common SNPs.
 
 Once configuration file is setup, to compare two bam files (sample1.bam and sample2.bam) just run:
 ```
@@ -9,26 +9,33 @@ bam-matcher.py -B1 sample1.bam -B2 sample2.bam
 
 which will give an output like:
 ```
-bam1:	sample1.bam
-bam2:	sample2.bam
-DP threshold: 15
------------------
-positions with same genotype:     234    (hom: 50, het: 184)
-positions with diff genotype:     176
 
-                       BAM 1
+BAM1:	tumour1.bam 
+BAM2:	tumour2.bam 
+depth threshold: 15 
+____________________________________
 
-               | het  | hom  | subset
-        -------+------+------+-------
-         het   |    0 |    0 |   79 |
-        -------+------+------+-------
-BAM 2    hom   |    0 |    0 |   -  |
-        -------+------+------+-------
-         subset|   97 |   -  |   -  |
+Positions with same genotype:   243  
+     breakdown:    hom: 51
+                   het: 192
+____________________________________
 
-fraction of common: 0.570732
+Positions with diff genotype:   158 
+     breakdown:
+                       BAM 1 
+               | het  | hom  | subset 
+        -------+------+------+------- 
+         het   |    0 |    0 |   76  
+        -------+------+------+------- 
+BAM 2    hom   |    0 |    0 |   -   
+        -------+------+------+------- 
+         subset|   82 |   -  |   -   
+____________________________________
 
-judgement: Different
+Total sites compared: 401
+Fraction of common: 0.605985 (243/401)
+CONCLUSION: DIFFERENT SOURCES
+
 ```
 
 
