@@ -10,8 +10,8 @@ bam-matcher.py -B1 sample1.bam -B2 sample2.bam
 which will give an output like:
 ```
 
-BAM1:	tumour1.bam 
-BAM2:	tumour2.bam 
+BAM1:	sample1.bam 
+BAM2:	sample2.bam 
 depth threshold: 15 
 ____________________________________
 
