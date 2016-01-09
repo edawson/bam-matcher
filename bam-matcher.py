@@ -1624,11 +1624,28 @@ if args.verbose:
 total_compared = ct_common + ct_diff
 frac_common = float(ct_common)/total_compared
 
+
+
+
+
+# SAME PATIENT
+# JUDGE_THRESHOLD = 0.95
+# frac_common >= threshold & total_compared >= 50
+
+# POSSIBLE RNA?
+# check ratio of 1het-2sub and 1sub-2het
+
+# frac_common <= 0.70 & total_compared >= 50
+
+
+
+
+
 # determine whether they are from the same patient
-judgement = "Different"
+judgement = "DIFFERENT SOURCES"
 short_judgement = "Diff"
 if frac_common >= JUDGE_THRESHOLD:
-    judgement = "Same sample"
+    judgement = "SAME SOURCE"
     short_judgement = "Same"
 
 # but RNA-seq data...
@@ -1645,6 +1662,11 @@ else:
         short_judgement = "Same (BAM2=RNA)"
 
 
+
+
+
+
+
 # STANDARD FORMAT
 
 # assume that the most space required is 4 digits,
@@ -1658,12 +1680,16 @@ diff_2sub1 = ("%d" % diff_2sub1_ct).rjust(5)
 std_report_str = """bam1:\t%s
 bam2:\t%s
 DP threshold: %d
------------------
-positions with same genotype:     %d    (hom: %d, het: %d)
-positions with diff genotype:     %d
+________________________________________
 
+Positions with same genotype:     %d
+     breakdown:    hom: %d
+                   het: %d
+________________________________________
+
+Positions with diff genotype:     %d
+     breakdown:
                        BAM 1
-
                | het  | hom  | subset
         -------+------+------+-------
          het   |%s |%s |%s |
@@ -1671,16 +1697,18 @@ positions with diff genotype:     %d
 BAM 2    hom   |%s |%s |   -  |
         -------+------+------+-------
          subset|%s |   -  |   -  |
+________________________________________
 
-fraction of common: %f
-
-judgement: %s
-"""  % (bam1_path, bam2_path, DP_THRESH, ct_common,
-        comm_hom_ct, comm_het_ct, ct_diff, diff_het, diff_hom_het,
-        diff_1sub2, diff_het_hom, diff_hom, diff_2sub1, frac_common, judgement)
+Total sites compared: %d
+Fraction of common: %f (%d/%d)
+CONCLUSION: %s
+"""  % (bam1_path, bam2_path, DP_THRESH,
+        ct_common, comm_hom_ct, comm_het_ct,
+        ct_diff, diff_het, diff_hom_het, diff_1sub2, diff_het_hom, diff_hom, diff_2sub1,
+        total_compared, frac_common, ct_common, total_compared, judgement)
 
 # SHORT FORMAT
-short_report_str = """# BAM1\t BAM2\t DP_thresh\t FracCommon\t Same\t Same_hom\t Same_het\t Different\t 1het-2het\t 1het-2hom\t 1het-2sub\t 1hom-2het\t 1hom-2hom\t 1sub-2het\t Judgement
+short_report_str = """# BAM1\t BAM2\t DP_thresh\t FracCommon\t Same\t Same_hom\t Same_het\t Different\t 1het-2het\t 1het-2hom\t 1het-2sub\t 1hom-2het\t 1hom-2hom\t 1sub-2het\t Conclusion
 %s\t%s\t%d\t%f\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s""" % (bam1_path,
        bam2_path, DP_THRESH, frac_common, ct_common, comm_hom_ct, comm_het_ct,
        ct_diff, diff_het_ct, diff_het_hom_ct, diff_2sub1_ct, diff_hom_het_ct,
