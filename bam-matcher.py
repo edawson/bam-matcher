@@ -1417,10 +1417,9 @@ reference:  %s
 if args.verbose:
     print "removing chr from tsv files"
 
-for tsv in tsv_list:
-    if BATCH_USE_CACHED:
-        if cached_list[i]:
-            continue
+for i, tsv in enumerate(tsv_list):
+    if BATCH_USE_CACHED and cached_list[i]:
+        continue
     f_temp = os.path.join(SCRATCH_DIR, "temp_file")
     fin = open(tsv, "r")
     fout = open(f_temp, "w")
@@ -1679,15 +1678,15 @@ diff_1sub2 = ("%d" % diff_1sub2_ct).rjust(5)
 diff_2sub1 = ("%d" % diff_2sub1_ct).rjust(5)
 std_report_str = """bam1:\t%s
 bam2:\t%s
-DP threshold: %d
+depth threshold: %d
 ________________________________________
 
-Positions with same genotype:     %d
+Positions with same genotype:   %d
      breakdown:    hom: %d
                    het: %d
 ________________________________________
 
-Positions with diff genotype:     %d
+Positions with diff genotype:   %d
      breakdown:
                        BAM 1
                | het  | hom  | subset
