@@ -24,7 +24,7 @@ import random
 import string
 import ConfigParser
 import shutil
-from Cheetah import Template
+from Cheetah.Template import Template
 from hashlib import md5
 # from fisher import pvalue
 
