@@ -1459,19 +1459,12 @@ reference:  %s
 if args.verbose:
     print "removing chr from tsv files"
 
-<<<<<<< HEAD
-
 for i, tsv in enumerate(tsv_list):
     if BATCH_USE_CACHED:
         if cached_list[i]:
             if args.verbose:
                 print "BAM %d has cached genotype data" % (i+1)
             continue
-=======
-for i, tsv in enumerate(tsv_list):
-    if BATCH_USE_CACHED and cached_list[i]:
-        continue
->>>>>>> b01d8a83e7a57da029c60ac5c5253dbac6ae4afc
     f_temp = os.path.join(SCRATCH_DIR, "temp_file")
     fin = open(tsv, "r")
     fout = open(f_temp, "w")
