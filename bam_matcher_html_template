@@ -19,18 +19,18 @@
        border-style:solid;
        border-color:black;
        }
-  
+
   #c  {text-align:center;
        color:blue}
 
   #d  {text-align:center}
-  
+
 </style>
 </head>
 
 <body>
   <h1>Compare BAM files using common SNPs</h1>
- 
+
   <h2>Input files and parameters</h2>
   <table>
   	<tr><th>BAM1:</th><td>${BAM1}&nbsp&nbsp&nbsp</td><td>(${bam1_cached})</td></tr>
@@ -41,7 +41,7 @@
   </table>
 
   <hr width="80%" align="center">
-  
+
   <h2>Results</h2>
   <table>
     <tr><th>Total number of positions compared:&nbsp&nbsp&nbsp&nbsp</th><td>${total}</td></tr>
@@ -79,7 +79,7 @@
 
   <hr width="80%" align="center">
 
-  <h2>Judgement</h2>
+  <h2>Conclusion</h2>
   <p>${judgement}
 
 

@@ -335,16 +335,20 @@ java:      java
 DP_threshold:   15
 filter_VCF:      False
 number_of_SNPs: 1500
-# enable --targets option for Freebayes, faster but more prone to Freebayes errors
+
+# fast_freebayes enables --targets option for Freebayes, faster but more prone to Freebayes errors
 # set to False will use --region, each variant is called separately
 fast_freebayes: True
-VCF_file: variants_noX.vcf
+
+VCF_file: variants.vcf
 
 [VariantCallerParameters]
 # GATK memory usage in GB
 GATK_MEM: 4
+
 # GATK threads (-nt)
 GATK_nt:  1
+
 # VarScan memory usage in GB
 VARSCAN_MEM: 4
 
@@ -1455,6 +1459,7 @@ reference:  %s
 if args.verbose:
     print "removing chr from tsv files"
 
+<<<<<<< HEAD
 
 for i, tsv in enumerate(tsv_list):
     if BATCH_USE_CACHED:
@@ -1462,6 +1467,11 @@ for i, tsv in enumerate(tsv_list):
             if args.verbose:
                 print "BAM %d has cached genotype data" % (i+1)
             continue
+=======
+for i, tsv in enumerate(tsv_list):
+    if BATCH_USE_CACHED and cached_list[i]:
+        continue
+>>>>>>> b01d8a83e7a57da029c60ac5c5253dbac6ae4afc
     f_temp = os.path.join(SCRATCH_DIR, "temp_file")
     fin = open(tsv, "r")
     fout = open(f_temp, "w")
@@ -1665,11 +1675,28 @@ if args.verbose:
 total_compared = ct_common + ct_diff
 frac_common = float(ct_common)/total_compared
 
+
+
+
+
+# SAME PATIENT
+# JUDGE_THRESHOLD = 0.95
+# frac_common >= threshold & total_compared >= 50
+
+# POSSIBLE RNA?
+# check ratio of 1het-2sub and 1sub-2het
+
+# frac_common <= 0.70 & total_compared >= 50
+
+
+
+
+
 # determine whether they are from the same patient
-judgement = "Different"
+judgement = "DIFFERENT SOURCES"
 short_judgement = "Diff"
 if frac_common >= JUDGE_THRESHOLD:
-    judgement = "Same sample"
+    judgement = "SAME SOURCE"
     short_judgement = "Same"
 
 # but RNA-seq data...
@@ -1686,6 +1713,11 @@ else:
         short_judgement = "Same (BAM2=RNA)"
 
 
+
+
+
+
+
 # STANDARD FORMAT
 
 # assume that the most space required is 4 digits,
@@ -1698,13 +1730,17 @@ diff_1sub2 = ("%d" % diff_1sub2_ct).rjust(5)
 diff_2sub1 = ("%d" % diff_2sub1_ct).rjust(5)
 std_report_str = """bam1:\t%s
 bam2:\t%s
-DP threshold: %d
------------------
-positions with same genotype:     %d    (hom: %d, het: %d)
-positions with diff genotype:     %d
+depth threshold: %d
+________________________________________
 
+Positions with same genotype:   %d
+     breakdown:    hom: %d
+                   het: %d
+________________________________________
+
+Positions with diff genotype:   %d
+     breakdown:
                        BAM 1
-
                | het  | hom  | subset
         -------+------+------+-------
          het   |%s |%s |%s |
@@ -1712,16 +1748,18 @@ positions with diff genotype:     %d
 BAM 2    hom   |%s |%s |   -  |
         -------+------+------+-------
          subset|%s |   -  |   -  |
+________________________________________
 
-fraction of common: %f
-
-judgement: %s
-"""  % (bam1_path, bam2_path, DP_THRESH, ct_common,
-        comm_hom_ct, comm_het_ct, ct_diff, diff_het, diff_hom_het,
-        diff_1sub2, diff_het_hom, diff_hom, diff_2sub1, frac_common, judgement)
+Total sites compared: %d
+Fraction of common: %f (%d/%d)
+CONCLUSION: %s
+"""  % (bam1_path, bam2_path, DP_THRESH,
+        ct_common, comm_hom_ct, comm_het_ct,
+        ct_diff, diff_het, diff_hom_het, diff_1sub2, diff_het_hom, diff_hom, diff_2sub1,
+        total_compared, frac_common, ct_common, total_compared, judgement)
 
 # SHORT FORMAT
-short_report_str = """# BAM1\t BAM2\t DP_thresh\t FracCommon\t Same\t Same_hom\t Same_het\t Different\t 1het-2het\t 1het-2hom\t 1het-2sub\t 1hom-2het\t 1hom-2hom\t 1sub-2het\t Judgement
+short_report_str = """# BAM1\t BAM2\t DP_thresh\t FracCommon\t Same\t Same_hom\t Same_het\t Different\t 1het-2het\t 1het-2hom\t 1het-2sub\t 1hom-2het\t 1hom-2hom\t 1sub-2het\t Conclusion
 %s\t%s\t%d\t%f\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s""" % (bam1_path,
        bam2_path, DP_THRESH, frac_common, ct_common, comm_hom_ct, comm_het_ct,
        ct_diff, diff_het_ct, diff_het_hom_ct, diff_2sub1_ct, diff_hom_het_ct,
