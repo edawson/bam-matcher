@@ -41,22 +41,12 @@ def sort_vcf_by_chrom_order(invcf, outvcf, ref_index):
 
 
 # Convert variants VCF file to intervals for variant callers
-def convert_vcf_to_intervals(invcf, output, window, ntries, format="gatk",
-                             filtering=True):
+def convert_vcf_to_intervals(invcf, output, window, ntries, format="gatk"):
     vcf_read = vcf.Reader(open(invcf, "r"))
     fout = open(output, "w")
     n_written = 0
 
     for var in vcf_read:
-        # Filtering variants
-        # 1) 1KG_AF between 0.45 - 0.55
-        # 2) SNPs only, no indels
-        if filtering:
-            if "1KG_AF" in var.INFO and (var.INFO["1KG_AF"] < 0.45 or
-                                         var.INFO["1KG_AF"] > 0.55):
-                continue
-            if var.var_type != "snp":
-                continue
         # intervals format
         if format == "gatk" or format == "varscan":
             start_pos = var.POS - window

@@ -8,7 +8,6 @@ java:      java
 
 [ScriptOptions]
 DP_threshold:   15
-filter_VCF:      False
 number_of_SNPs: 1500
 # enable --targets option for Freebayes, faster but more prone to Freebayes errors
 # set to False will use --region, each variant is called separately

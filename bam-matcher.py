@@ -69,8 +69,8 @@ def handle_args():
     parser_grp4 = parser.add_argument_group("VARIANTS")
     parser_grp4.add_argument("--vcf",            "-V",  required=False,
                              help="VCF file containing SNPs to check (default can be specified in config file instead)")
-    parser_grp4.add_argument("--filter-vcf",      "-FT", required=False,
-                             action="store_true", help="Enable filtering of the input VCF file")
+#    parser_grp4.add_argument("--filter-vcf",      "-FT", required=False,
+#                             action="store_true", help="Enable filtering of the input VCF file")
 
     # Specifying these values here will override config values
     parser_grp5 = parser.add_argument_group("CALLERS AND SETTINGS (will override config values)")
@@ -176,7 +176,6 @@ java:      java
 
 [ScriptOptions]
 DP_threshold:   15
-filter_VCF:      False
 number_of_SNPs: 1500
 
 # fast_freebayes enables --targets option for Freebayes, faster but more prone to Freebayes errors
@@ -288,7 +287,7 @@ VARSCAN   = config.get("VariantCallers", "varscan")
 JAVA      = config.get("VariantCallers", "java")
 
 DP_THRESH      = config.get("ScriptOptions", "DP_threshold")
-FILTER_VCF     = config.get("ScriptOptions", "filter_VCF")
+# FILTER_VCF     = config.get("ScriptOptions", "filter_VCF")
 NUMBER_OF_SNPS = config.get("ScriptOptions", "number_of_SNPs")
 FAST_FREEBAYES = config.get("ScriptOptions", "fast_freebayes")
 VCF_FILE       = config.get("ScriptOptions", "VCF_file")
@@ -576,37 +575,6 @@ DP_threshold value ('%s') in config file is not a valid integer.
 
 if args.verbose:
     print "DP_threshold:  ", DP_THRESH
-
-#-------------------------------------------
-# filter_VCF
-# only override if the flag is enabled at commandline
-if args.filter_vcf:
-    FILTER_VCF = args.filter_vcf
-# if not specified at commandline, use config values
-else:
-    if FILTER_VCF == "":
-        print """
-+---------+
-| WARNING |
-+---------+
-filter_VCF value was not set in the configuration file.
-Default value (False) will be used instead.
-Setting filter_VCF = False
-"""
-        FILTER_VCF = False
-    else:
-        if FILTER_VCF in ["False", "false", "F", "FALSE"]:
-            FILTER_VCF = False
-        elif FILTER_VCF in ["True", "true", "T", "TRUE"]:
-            FILTER_VCF = True
-        else:
-            print """%s
-Invalid value ('%s') was specified for filter_VCF in the configuration file.
-Use 'False' or 'True'""" % (CONFIG_ERROR, FILTER_VCF)
-            sys.exit(1)
-
-if args.verbose:
-    print "filter_VCF:    ", FILTER_VCF
 
 #-------------------------------------------
 # Number of SNPs
@@ -1020,8 +988,7 @@ if args.verbose:
 f_itv = os.path.join(SCRATCH_DIR, "target.intervals")
 temp_files.append(f_itv)
 # convert variant VCF file to GATK intervals
-convert_vcf_to_intervals(VCF_FILE, f_itv, 0, NUMBER_OF_SNPS, args.caller,
-                         FILTER_VCF)
+convert_vcf_to_intervals(VCF_FILE, f_itv, 0, NUMBER_OF_SNPS, args.caller)
 
 # Creating a version with 'chr'
 f_itv_chr = f_itv + "_chr"
