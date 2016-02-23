@@ -19,11 +19,12 @@ import os
 import subprocess
 import sys
 import vcf
-import HTSeq
+# import HTSeq
 import random
 import string
 import ConfigParser
 import shutil
+import gzip
 from Cheetah.Template import Template
 from hashlib import md5
 # from fisher import pvalue
@@ -255,6 +256,27 @@ def is_subset(hom_gt, het_gt):
         return True
     else:
         return False
+
+# ----------------------------------------------------------------------------
+# Get list of chromosome names from the BAM file
+
+def get_chrom_names(bam_file):
+    chrom_list = []
+    inbam = gzip.open(bam_file, "r")
+    for line in inbam:
+        if line.startswith("@") == False and line.startswith("BAM") == False:
+            break
+        elif line.startswith("@SQ"):
+            bits = line.strip().split("\t")
+            for chunk_ in bits:
+                if chunk_.startswith("SN:"):
+                    chrom_list.append(chunk_[3:])
+    return chrom_list
+
+
+
+
+
 
 #===============================================================================
 # End of methods
@@ -900,7 +922,6 @@ AVAILABLE_REFERENCES = []
 
 # if any of the reference options are used, disable all config REFERENCE settings
 if args.reference != None or args.ref_noChr != None or args.ref_wChr != None or args.bam1_reference != None or args.bam2_reference != None:
-
     REFERENCE = ""
     REF_noChr = ""
     REF_wChr  = ""
@@ -910,7 +931,6 @@ if args.reference != None or args.ref_noChr != None or args.ref_wChr != None or 
         REF_noChr = args.ref_noChr
     if args.ref_wChr != None:
         REF_wChr = args.ref_wChr
-
 
 if args.bam1_reference == None and args.bam2_reference == None:
     if REFERENCE == "" and REF_noChr == "" and REF_wChr == "": # and bam1_ref == "" and bam2_ref == "":
@@ -935,26 +955,36 @@ if args.bam1_reference == None and args.bam2_reference == None:
 
     # ----------
     # compare chromosomes between reference and bam files
-    bam1_chrlist = []
-    bam2_chrlist = []
+    bam1_chrlist = get_chrom_names(args.bam1)
+    bam2_chrlist = get_chrom_names(args.bam2)
 
-    # get bam1 chromosomes
-    bam_in = HTSeq.BAM_Reader(args.bam1)
-    bam_header = bam_in.get_header_dict()["SQ"]
-    for headline in bam_header:
-        chr_name = headline["SN"]
-        bam1_chrlist.append(chr_name)
-        if "chr" in chr_name:
+    bam1_haschr = False
+    for chr_ in bam1_chrlist:
+        if chr_.startswith("chr"):
             bam1_haschr = True
 
-    # get bam2 chromosomes
-    bam_in = HTSeq.BAM_Reader(args.bam2)
-    bam_header = bam_in.get_header_dict()["SQ"]
-    for headline in bam_header:
-        chr_name = headline["SN"]
-        bam2_chrlist.append(headline["SN"])
-        if "chr" in chr_name:
+    bam2_haschr = False
+    for chr_ in bam2_chrlist:
+        if chr_.startswith("chr"):
             bam2_haschr = True
+
+    # # get bam1 chromosomes
+    # bam_in = HTSeq.BAM_Reader(args.bam1)
+    # bam_header = bam_in.get_header_dict()["SQ"]
+    # for headline in bam_header:
+    #     chr_name = headline["SN"]
+    #     bam1_chrlist.append(chr_name)
+    #     if "chr" in chr_name:
+    #         bam1_haschr = True
+    #
+    # # get bam2 chromosomes
+    # bam_in = HTSeq.BAM_Reader(args.bam2)
+    # bam_header = bam_in.get_header_dict()["SQ"]
+    # for headline in bam_header:
+    #     chr_name = headline["SN"]
+    #     bam2_chrlist.append(headline["SN"])
+    #     if "chr" in chr_name:
+    #         bam2_haschr = True
 
     # ---------
     # generate chr list for references
@@ -1033,23 +1063,24 @@ samtools" % ref
     # ----------
     # compare chromosomes between reference and bam files
 
-    bam1_haschr = False
-    # get bam1 chromosomes
-    bam_in = HTSeq.BAM_Reader(args.bam1)
-    bam_header = bam_in.get_header_dict()["SQ"]
-    for headline in bam_header:
-        chr_name = headline["SN"]
-        if "chr" in chr_name:
-            bam1_haschr = True
-
-    bam2_haschr = False
-    # get bam2 chromosomes
-    bam_in = HTSeq.BAM_Reader(args.bam2)
-    bam_header = bam_in.get_header_dict()["SQ"]
-    for headline in bam_header:
-        chr_name = headline["SN"]
-        if "chr" in chr_name:
-            bam2_haschr = True
+    # EDIT: These two block don't seem to do anything...
+    # bam1_haschr = False
+    # # get bam1 chromosomes
+    # bam_in = HTSeq.BAM_Reader(args.bam1)
+    # bam_header = bam_in.get_header_dict()["SQ"]
+    # for headline in bam_header:
+    #     chr_name = headline["SN"]
+    #     if "chr" in chr_name:
+    #         bam1_haschr = True
+    #
+    # bam2_haschr = False
+    # # get bam2 chromosomes
+    # bam_in = HTSeq.BAM_Reader(args.bam2)
+    # bam_header = bam_in.get_header_dict()["SQ"]
+    # for headline in bam_header:
+    #     chr_name = headline["SN"]
+    #     if "chr" in chr_name:
+    #         bam2_haschr = True
 
 
 #-------------------------------------------
@@ -1213,8 +1244,13 @@ temp_files += pup_list
 # 1. If the sample names are the same, this causes problems for GATK
 # 2. They may have been mapped to different reference files
 for i in [0,1]:
+    if args.verbose:
+        print "\n----------------------\nGenotype calling for BAM %d" % (i+1)
+
     if BATCH_USE_CACHED:
         if cached_list[i]:
+            if args.verbose:
+                print "BAM %d has cached genotype data" % (i+1)
             continue
     in_bam = bam_list[i]
     out_vcf = vcf_list[i]
@@ -1379,6 +1415,8 @@ if args.verbose:
 for i in [0,1]:
     if BATCH_USE_CACHED:
         if cached_list[i]:
+            if args.verbose:
+                print "BAM %d has cached genotype data" % (i+1)
             continue
     in_vcf  = vcf_list[i]
     out_tsv = tsv_list[i]
@@ -1417,9 +1455,12 @@ reference:  %s
 if args.verbose:
     print "removing chr from tsv files"
 
-for tsv in tsv_list:
+
+for i, tsv in enumerate(tsv_list):
     if BATCH_USE_CACHED:
         if cached_list[i]:
+            if args.verbose:
+                print "BAM %d has cached genotype data" % (i+1)
             continue
     f_temp = os.path.join(SCRATCH_DIR, "temp_file")
     fin = open(tsv, "r")
