@@ -40,7 +40,7 @@
   	<tr><th>Variants compared</th><td>${variants}</td></tr>
   </table>
 
-  <hr width="80%" align="center">
+  <hr width="50%" align="left">
 
   <h2>Results</h2>
   <table>
@@ -50,14 +50,17 @@
 
 </br>
 
+<hr width="50%" align="left">
+
   <table>
-    <tr><th width="250px">Positions with different genotype:</th><td>${ct_diff}</td></tr>
+    <tr><th width="250px">Positions with same genotype:</th><td>${ct_common}</td></tr>
     <tr><th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Break-down:</th></tr>
     <tr><th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Homozygous sites</th><td>${comm_hom_ct}</td></tr>
     <tr><th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Heterozygous sites</th><td>${comm_het_ct}</td></tr>
   </table>
 
 </br>
+<hr width="50%" align="left">
 
   <table>
   <tr><th width="250px">Positions with different genotype:</th><td>${ct_diff}</td></tr>
@@ -89,7 +92,7 @@
         </tr>
   </table>
 
-  <hr width="80%" align="center">
+  <hr width="50%" align="left">
 
   <h2>Conclusion</h2>
   <p>${judgement}

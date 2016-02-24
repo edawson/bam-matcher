@@ -10,6 +10,9 @@ Moved methods from main script to here
 
 import gzip
 import vcf
+import os
+import ConfigParser
+import subprocess
 
 # Sort VCF entries by chromosome order ordered by the reference index
 # This is somewhat fugly... requires some unix commands
@@ -149,12 +152,140 @@ def get_chrom_names(bam_file):
 
 
 
+def fetch_config_value(config_obj, config_section, config_keyword):
+    try:
+        value_ = config_obj.get(config_section, config_keyword)
+    except ConfigParser.NoOptionError as e:
+        print """%s
+
+Missing keyword '%s' in configuration file.
+Do not remove or comment out keywords in the config file.
+Just leave blank value if not using the parameter.
+
+Python error message:
+%s
+""" % (CONFIG_ERROR, config_keyword, e)
+        exit(1)
+    except Exception as e:
+        print """%s
+
+Unknown config error.
+
+Python error message:
+%s
+""" (CONFIG_ERROR, e)
+        exit(1)
+
+    # if all good, return value_
+    return value_
+
+
+
+
+
+def check_caller(caller, caller_binary, JAVA="java", verbose=False):
+    # ------------------------------------------
+    # checking GATK
+    if caller == "gatk":
+        if caller_binary == "":
+            print """%s
+GATK path was not specified.
+Do this in the configuration file""" % CONFIG_ERROR
+            exit(1)
+
+        if os.access(caller_binary, os.R_OK) == False:
+            print """%s
+Cannot access GATK jar file (%s).
+It is either missing or not readable.""" % (CONFIG_ERROR, caller_binary)
+            exit(1)
+
+        gatk_cmd = [JAVA, "-jar", caller_binary, "-version"]
+        try:
+            gatk_proc = subprocess.check_output(gatk_cmd, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            print "%s\nSomething wrong with GATK settings" % CONFIG_ERROR
+            print "\nPython error msg:\n", e
+            print "\nJAVA/GATK error msg:"
+            gatk_proc = subprocess.Popen(gatk_cmd, stdout=subprocess.PIPE)
+            for line in gatk_proc.stdout:
+                print line
+            exit(1)
+
+    # -------------------------------------------
+    # Checking Freebayes
+    elif caller == "freebayes":
+        if caller_binary == "":
+            print """%s
+Freebayes path was not specified.
+Do this in the configuration file""" % CONFIG_ERROR
+            exit(1)
+
+        if os.access(caller_binary, os.R_OK) == False:
+            print """%s
+Cannot access Freebayes binary (%s).
+It is either missing or not readable. Try specifying full path.
+""" % (CONFIG_ERROR, caller_binary)
+            exit(1)
+
+    # free_cmd = "%s --version" % FREEBAYES
+    free_cmd = [caller_binary, "--version"]
+    try:
+        free_proc = subprocess.Popen(free_cmd, stdout=subprocess.PIPE)
+    except subprocess.CalledProcessError as e:
+        print "%s\nSomething wrong with Freebayes" % CONFIG_ERROR
+        print "\nPython error msg:\n", e
+        sys.exit(1)
+    except Exception as e:
+        print "%s\nSomething wrong with Freebayes" % CONFIG_ERROR
+        print "\nPython error msg:\n", e
+        sys.exit(1)
+    if verbose:
+        for line in free_proc.stdout:
+            print "Freebayes", line
+
+    # ------------------------------------------
+    # checking VARSCAN
+    if caller == "varscan":
+        if caller_binary == "":
+            print """%s
+VarScan2 path was not specified.
+Do this in the configuration file""" % CONFIG_ERROR
+            exit(1)
+
+        if os.access(caller_binary, os.R_OK) == False:
+            print """%s
+Cannot access VarScan2 jar file (%s).
+It is either missing or not readable.""" % (CONFIG_ERROR, caller_binary)
+            exit(1)
+
+        gatk_cmd = [JAVA, "-jar", caller_binary]
+        try:
+            gatk_proc = subprocess.check_output(gatk_cmd, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            print "%s\nSomething wrong with VarScan2 settings" % CONFIG_ERROR
+            print "\nPython error msg:\n", e
+            print "\nJAVA/VarScan2 error msg:"
+            gatk_proc = subprocess.Popen(gatk_cmd, stdout=subprocess.PIPE)
+            for line in gatk_proc.stdout:
+                print line
+            exit(1)
 
 
 
 
 
 
+def get_bam_header(bam_file):
+    header_lines = []
+    fin = gzip.open(bam_file, "r")
+    firstline = fin.readline().strip()
+    header_lines.append("@HD"+firstline.split("@HD")[1])
+    for line in fin:
+        if line.startswith("@") == False:
+            break
+        else:
+            header_lines.append(line.strip())
+    return header_lines
 
 
 
@@ -169,8 +300,14 @@ def get_chrom_names(bam_file):
 
 
 def get_config_template_str():
-    return """[VariantCallers]
+    return """
+# If not setting a specific parameter, just leave it blank, rather than deleting or commenting out the line
+# Missing parameter keywords will generate errors
+
+[VariantCallers]
 # file paths to variant callers and other binaries
+# sometime you may need to specify full path to the binary (for freebayes, samtools and java)
+# full paths is always required for *.jar files (GATK and VarScan2)
 GATK:      GenomeAnalysisTK.jar
 freebayes: freebayes
 samtools:  samtools

@@ -153,7 +153,6 @@ Config template will be written to %s
 
 # okay to parse the arguments now
 args = handle_args()
-
 #-------------------------------------------------------------------------------
 # Some random-related stuff, this is for temp files
 random.seed()
@@ -173,7 +172,7 @@ else:
 
 # Test if the config file exists
 if os.access(config_file, os.R_OK) == False:
-    print """%s
+    print """%s\n
 The config file '%s' either does not exist or is not readable
 """% (CONFIG_ERROR, os.path.abspath(config_file))
     sys.exit(1)
@@ -193,64 +192,62 @@ for sect in REQUIRED_CONFIG_SECTIONS:
 Missing required section in config file: %s
 """ % (CONFIG_ERROR, sect)
         sys.exit(1)
-
 #-------------------------------------------------------------------------------
 # setting variables using the config file
-GATK      = config.get("VariantCallers", "GATK")
-FREEBAYES = config.get("VariantCallers", "freebayes")
-SAMTOOLS  = config.get("VariantCallers", "samtools")
-VARSCAN   = config.get("VariantCallers", "varscan")
-JAVA      = config.get("VariantCallers", "java")
-
-DP_THRESH      = config.get("ScriptOptions", "DP_threshold")
-# FILTER_VCF     = config.get("ScriptOptions", "filter_VCF")
-NUMBER_OF_SNPS = config.get("ScriptOptions", "number_of_SNPs")
-FAST_FREEBAYES = config.get("ScriptOptions", "fast_freebayes")
-VCF_FILE       = config.get("ScriptOptions", "VCF_file")
-
-REFERENCE = config.get("GenomeReference", "REFERENCE")
-REF_noChr = config.get("GenomeReference", "REF_noCHR")
-REF_wChr  = config.get("GenomeReference", "REF_wCHR")
-
-GATK_MEM    = config.get("VariantCallerParameters", "GATK_MEM")
-GATK_NT     = config.get("VariantCallerParameters", "GATK_nt")
-VARSCAN_MEM = config.get("VariantCallerParameters", "VARSCAN_MEM")
-CACHE_DIR   = config.get("BatchOperations", "CACHE_DIR")
+GATK           = fetch_config_value(config, "VariantCallers", "GATK")
+FREEBAYES      = fetch_config_value(config, "VariantCallers", "freebayes")
+SAMTOOLS       = fetch_config_value(config, "VariantCallers", "samtools")
+VARSCAN        = fetch_config_value(config, "VariantCallers", "varscan")
+JAVA           = fetch_config_value(config, "VariantCallers", "java")
+DP_THRESH      = fetch_config_value(config, "ScriptOptions", "DP_threshold")
+NUMBER_OF_SNPS = fetch_config_value(config, "ScriptOptions", "number_of_SNPs")
+FAST_FREEBAYES = fetch_config_value(config, "ScriptOptions", "fast_freebayes")
+VCF_FILE       = fetch_config_value(config, "ScriptOptions", "VCF_file")
+REFERENCE      = fetch_config_value(config, "GenomeReference", "REFERENCE")
+REF_noChr      = fetch_config_value(config, "GenomeReference", "REF_noCHR")
+REF_wChr       = fetch_config_value(config, "GenomeReference", "REF_wCHR")
+GATK_MEM       = fetch_config_value(config, "VariantCallerParameters", "GATK_MEM")
+GATK_NT        = fetch_config_value(config, "VariantCallerParameters", "GATK_nt")
+VARSCAN_MEM    = fetch_config_value(config, "VariantCallerParameters", "VARSCAN_MEM")
+CACHE_DIR      = fetch_config_value(config, "BatchOperations", "CACHE_DIR")
 
 BATCH_RECALCULATE = False
 BATCH_USE_CACHED  = True
 BATCH_WRITE_CACHE = True
+JUDGE_THRESHOLD   = 0.95
+RNA_THRESHOLD     = 0.9
 
-JUDGE_THRESHOLD = 0.95
-RNA_THRESHOLD = 0.9
-
+# Fail silently if not verbose
 STDERR_ = open("/dev/null", "w")
 if args.verbose:
     STDERR_ = None
 
 #-------------------------------------------------------------------------------
 # Input and output files
-
 if args.verbose:
     print """
 =========================
 Checking input and output
+=========================
 """
 
-# check input bams
+# check input bams are readable and indexed
 for bam_file in [args.bam1, args.bam2]:
     if os.access(bam_file, os.R_OK) == False:
-        print "Cannot access bam file '%s'. Either it doesn't exist or it's not \
-readable." % bam_file
+        print "%s\nCannot access BAM file '%s'.\nEither it doesn't exist or \
+it's not readable." % (FILE_ERROR, bam_file)
         sys.exit(1)
-    # check bam files are index:
+
+    # check bam files are indexed:
     bam_index1 = bam_file.rstrip(".bam") + ".bai"
     bam_index2 = bam_file + ".bai"
     if (os.access(bam_index1, os.R_OK) == False and
         os.access(bam_index2, os.R_OK) == False):
-        print "The input bam files need to be indexed."
+        print "%s\nInput BAM file (%s) is either missing index or the index \
+file is not readable." % (FILE_ERROR, bam_file)
         sys.exit(1)
 
+# ----------------------------
 # resolving output report path
 REPORT_PATH = ""
 current_dir = os.path.abspath("./")
@@ -265,19 +262,22 @@ if args.no_report:
     REPORT_PATH = "/dev/null"
     args.html = False
 
+# ----------------------------
 # check output directory is writable
 REPORT_DIR = os.path.dirname(REPORT_PATH)
 if REPORT_PATH != "/dev/null" and os.access(  REPORT_DIR, os.W_OK   ) == False:
     print """%s
-Specified output directory is not writable: %s
+Specified output directory (%s) is not writable.
 """ % (FILE_ERROR, REPORT_DIR)
     sys.exit(1)
 
+# ----------------------------
 # HTML path
 html_path = ""
 if args.html:
     html_path = REPORT_PATH + ".html"
 
+# ----------------------------
 # scratch dir
 SCRATCH_DIR = "/tmp/%s" % random_str
 if args.scratch_dir == None:
@@ -298,136 +298,23 @@ Specified scratchd directory is not writable: %s
             print "Creating scratch directory: %s" % SCRATCH_DIR
         try:
             os.mkdir(SCRATCH_DIR)
-        except OSError, e:
+        except OSError as e:
             print """%s
 Unable to create specified scratch directory: %s
 Python error: %s
+""" % (FILE_ERROR, SCRATCH_DIR, e)
+        except Exception as e:
+            print """%s
+Unknown error while trying to create scratch directory (%s)
+Python error message: %s
 """ % (FILE_ERROR, SCRATCH_DIR, e)
 
 if args.verbose:
     print """
 Input and output seem okay
 --------------------------
+
 """
-
-
-
-
-#===============================================================================
-# Test caller binaries
-
-if args.verbose:
-    print """
-=========================
-Checking caller
-
-Caller to use: %s
----------------------------------------------
-This is not really catching errors correctly.
-Needs to catch errors and exit if fails
----------------------------------------------
-""" % args.caller
-
-
-if JAVA == "":
-    print "Java command was not specified. \
-Do this in the configuration file"
-    sys.exit(1)
-
-#-------------------------------------------
-# Testing GATK
-if args.caller == "gatk":
-    if GATK == "":
-        print "GATK path was not specified. \
-    Do this in the configuration file"
-        sys.exit(1)
-
-    if os.access(GATK, os.R_OK) == False:
-        print "Cannot access GATK jar file (%s)" % GATK
-        sys.exit(1)
-    gatk_cmd = [JAVA, "-jar", GATK, "-version"]
-    try:
-        gatk_proc = subprocess.Popen(gatk_cmd, stdout=subprocess.PIPE,
-                                     stderr=STDERR_)
-        if args.verbose:
-            print "Testing GATK, running:\n   '%s'" % " ".join(gatk_cmd)
-            print "This should get the GATK version number:"
-            for line in gatk_proc.stdout:
-                print line
-        else:
-            gatk_proc.communicate()
-    except subprocess.CalledProcessError, e:
-        print "%s\nSomething wrong with GATK settings" % CONFIG_ERROR
-        print "Python error msg: ", e
-        sys.exit(1)
-
-#-------------------------------------------
-# Testing Freebayes
-elif args.caller == "freebayes":
-    if FREEBAYES == "":
-        print "Path to Freebayes binary was not specified. \
-Do this in the configuration file"
-        sys.exit(1)
-
-    # test freebayes
-    if os.path.isfile(FREEBAYES) == False:
-        print "Cannot find Freebayes (%s)" % FREEBAYES
-        sys.exit(1)
-    if os.access(FREEBAYES, os.R_OK) == False:
-        print "Freebayes binary file (%s) is not readable" % FREEBAYES
-        sys.exit(1)
-
-    # free_cmd = "%s --version" % FREEBAYES
-    free_cmd = [FREEBAYES, "--version"]
-    try:
-        free_proc = subprocess.Popen(free_cmd, stdout=subprocess.PIPE,
-                                     stderr=STDERR_)
-        if args.verbose:
-            print "Testing Freebayes, running:\n   '%s'" % " ".join(free_cmd)
-            print "This should get the Freebayes version number:"
-            for line in free_proc.stdout:
-                print line
-        else:
-            free_proc.communicate()
-    except subprocess.CalledProcessError, e:
-        print "%s\nSomething wrong with Freebayes" % CONFIG_ERROR
-        print "Python error msg: ", e
-        sys.exit(1)
-
-#-------------------------------------------
-# Testing Varscan
-elif args.caller == "varscan":
-    if VARSCAN == "":
-        print "Path to VarScan2 jar file was not specified. \
-Do this in the configuration file."
-        sys.exit(1)
-
-    if os.access(VARSCAN, os.R_OK) == False:
-        print "Cannot access VarScan2 jar file (%s)" % VARSCAN
-        sys.exit(1)
-
-    varscan_cmd = [JAVA, "-jar", VARSCAN]
-    try:
-        varscan_proc = subprocess.Popen(varscan_cmd, stdout=subprocess.PIPE,
-                                        stderr=STDERR_)
-        if args.verbose:
-            print "Testing Varscan, running:\n   '%s'" % " ".join(varscan_cmd)
-            print "This should generate the version number and command menu:\n"
-            for line in varscan_proc.stdout:
-                print line
-        else:
-            varscan_proc.communicate()
-    except subprocess.CalledProcessError, e:
-        print "%s\nSomething went wrong with Varscan\n%s" % (CONFIG_ERROR, e)
-        sys.exit(1)
-
-if args.verbose:
-    print """
-Caller settings seem okay
---------------------------
-"""
-#-------------------------------------------------------------------------------
-
 
 
 
@@ -648,7 +535,6 @@ bam1_haschr = False
 bam2_haschr = False
 AVAILABLE_REFERENCES = []
 
-
 # if any of the reference options are used, disable all config REFERENCE settings
 if args.reference != None or args.ref_noChr != None or args.ref_wChr != None or args.bam1_reference != None or args.bam2_reference != None:
     REFERENCE = ""
@@ -687,15 +573,13 @@ if args.bam1_reference == None and args.bam2_reference == None:
     bam1_chrlist = get_chrom_names(args.bam1)
     bam2_chrlist = get_chrom_names(args.bam2)
 
-    bam1_haschr = False
     for chr_ in bam1_chrlist:
         if chr_.startswith("chr"):
             bam1_haschr = True
-
-    bam2_haschr = False
     for chr_ in bam2_chrlist:
         if chr_.startswith("chr"):
             bam2_haschr = True
+
     # ---------
     # generate chr list for references
     ref_chrlist = {}
@@ -749,9 +633,6 @@ else:
     bam1_ref = args.bam1_reference
     bam2_ref = args.bam2_reference
 
-
-
-
     # check reference file and index
     for ref in [bam1_ref, bam2_ref]:
         if os.access(ref, os.R_OK) == False:
@@ -763,34 +644,6 @@ readable" % ref
             print "Reference fasta file ('%s') needs to be indexed by \
 samtools" % ref
             sys.exit(1)
-
-
-    # need to know whether these references have chr or not
-
-
-
-
-    # ----------
-    # compare chromosomes between reference and bam files
-
-    # EDIT: These two block don't seem to do anything...
-    # bam1_haschr = False
-    # # get bam1 chromosomes
-    # bam_in = HTSeq.BAM_Reader(args.bam1)
-    # bam_header = bam_in.get_header_dict()["SQ"]
-    # for headline in bam_header:
-    #     chr_name = headline["SN"]
-    #     if "chr" in chr_name:
-    #         bam1_haschr = True
-    #
-    # bam2_haschr = False
-    # # get bam2 chromosomes
-    # bam_in = HTSeq.BAM_Reader(args.bam2)
-    # bam_header = bam_in.get_header_dict()["SQ"]
-    # for headline in bam_header:
-    #     chr_name = headline["SN"]
-    #     if "chr" in chr_name:
-    #         bam2_haschr = True
 
 
 #===============================================================================
@@ -845,6 +698,7 @@ CACHE_DIR = os.path.abspath(CACHE_DIR)
 
 
 
+
 #===============================================================================
 # Variant calling
 #===============================================================================
@@ -868,10 +722,8 @@ m1.update(str(NUMBER_OF_SNPS))
 m1.update(str(DP_THRESH))
 m1.update(bam1_mtime)
 m1.update(VCF_FILE)
-sam_cmd = [SAMTOOLS, "view", "-H", bam1_path]
-sam_proc = subprocess.Popen(sam_cmd, stdout=subprocess.PIPE)
-for line in sam_proc.stdout:
-    m1.update(line.strip("\n"))
+for line in get_bam_header(bam1_path):
+    m1.update(line)
 
 m2 = md5()
 bam2_path = os.path.abspath(args.bam2)
@@ -881,10 +733,8 @@ m2.update(str(NUMBER_OF_SNPS))
 m2.update(str(DP_THRESH))
 m2.update(bam2_mtime)
 m2.update(VCF_FILE)
-sam_cmd = [SAMTOOLS, "view", "-H", bam2_path]
-sam_proc = subprocess.Popen(sam_cmd, stdout=subprocess.PIPE)
-for line in sam_proc.stdout:
-    m2.update(line.strip("\n"))
+for line in get_bam_header(bam2_path):
+    m2.update(line)
 
 bam1_cache_path = os.path.join(CACHE_DIR, m1.hexdigest())
 bam2_cache_path = os.path.join(CACHE_DIR, m2.hexdigest())
@@ -893,6 +743,72 @@ bam2_is_cached = os.access(bam2_cache_path, os.R_OK)
 if BATCH_USE_CACHED == False:
     bam1_is_cached = False
     bam2_is_cached = False
+
+
+
+# Only check callers if not using cached data
+# Test caller binaries
+
+if args.verbose:
+    print """
+============================
+Checking caller and samtools
+============================
+
+Caller to use: %s
+""" % args.caller
+
+
+if JAVA == "":
+    print """%s
+Java command was not specified. \
+Do this in the configuration file""" % CONFIG_ERROR
+    sys.exit(1)
+
+if args.caller == "gatk":
+    check_caller(args.caller, GATK, JAVA, args.verbose)
+elif args.caller == "freebayes":
+    check_caller(args.caller, FREEBAYES, JAVA, args.verbose)
+elif args.caller == "varscan":
+    check_caller(args.caller, VARSCAN, JAVA, args.verbose)
+
+    if VARSCAN == "":
+        print "Path to VarScan2 jar file was not specified. \
+Do this in the configuration file."
+        sys.exit(1)
+
+    if os.access(VARSCAN, os.R_OK) == False:
+        print "Cannot access VarScan2 jar file (%s)" % VARSCAN
+        sys.exit(1)
+
+    varscan_cmd = [JAVA, "-jar", VARSCAN]
+    try:
+        varscan_proc = subprocess.Popen(varscan_cmd, stdout=subprocess.PIPE,
+                                        stderr=STDERR_)
+        if args.verbose:
+            print "Testing Varscan, running:\n   '%s'" % " ".join(varscan_cmd)
+            print "This should generate the version number and command menu:\n"
+            for line in varscan_proc.stdout:
+                print line
+        else:
+            varscan_proc.communicate()
+    except subprocess.CalledProcessError, e:
+        print "%s\nSomething went wrong with Varscan\n%s" % (CONFIG_ERROR, e)
+        sys.exit(1)
+
+if args.verbose:
+    print """Caller settings seem okay.
+--------------------------
+"""
+#-------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
 
 #-------------------------------------------
 # SNPs file
@@ -976,7 +892,9 @@ for i in [0,1]:
         print "input bam: \t%s" % in_bam
         print "output vcf:\t%s" % out_vcf
 
-    if args.caller == "gatk":        # GATK calling
+    # ----------------------------------------------------------
+    # Genotype calling with GATK
+    if args.caller == "gatk":
         varcall_cmd = [JAVA, "-jar", "-Xmx%dg" % GATK_MEM,
                        "-XX:ParallelGCThreads=1", GATK, "-T",
                        "UnifiedGenotyper", "-R", ref, "-I", in_bam,
@@ -989,10 +907,14 @@ here, but should be fine in actual call command)"
             print " ".join(varcall_cmd)
         varcall_proc = subprocess.Popen(varcall_cmd, stdout=subprocess.PIPE,
                                         stderr=STDERR_)
-
         varcall_proc.communicate()
-    elif args.caller == "freebayes":    # Freebayes calling
+
+    # ----------------------------------------------------------
+    # Genotype calling with Freebayes
+    elif args.caller == "freebayes":
         fout = open(out_vcf, "w")
+        # -----------------------
+        # fast-Freebayes, single intervals file
         if FAST_FREEBAYES:
             varcall_cmd = [FREEBAYES, "--fasta-reference", ref, "--targets",
                            interval_file, "--no-indels", "--min-coverage",
@@ -1008,6 +930,8 @@ here, but should be fine in actual call command)"
                 fout.write(line)
             fout.close()
         else:
+        # -----------------------
+        # slow Freebayes,calling each site separately
             write_header = True
             itv_list = []
             fin = open(interval_file, "r")
@@ -1016,7 +940,6 @@ here, but should be fine in actual call command)"
                 bits[1] = int(bits[1])
                 bits[2] = int(bits[2]) + 1
                 region_str = "%s:%d-%d" % (bits[0], bits[1], bits[2])
-
                 varcall_cmd = [FREEBAYES, "--fasta-reference", ref, "--region",
                                region_str, "--no-indels", "--min-coverage",
                                str(DP_THRESH)]
@@ -1038,7 +961,10 @@ here, but should be fine in actual call command)"
                         fout.write(line)
                 write_header = False
             fout.close()
-    elif args.caller == "varscan":   # Varscan
+
+    # ----------------------------------------------------------
+    # Genotype calling with VarScan2
+    elif args.caller == "varscan":
         pup_file = pup_list[i]
         fout = open(pup_file, "w")
         # First need to do a pileup
@@ -1074,6 +1000,7 @@ here, but should be fine in actual call command)"
             fout.write(line)
         fout.close()
 
+    # ----------------------------------------------------------
     # need to re-sort VCF file if genome has 'chr'
     # as the bam file chr order is not the same as the reference
     if has_chr:
