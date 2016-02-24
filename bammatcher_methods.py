@@ -60,9 +60,11 @@ def convert_vcf_to_intervals(invcf, output, window, ntries, format="gatk"):
             end_pos   = start_pos + window + 1
             fout.write("%s\t%d\t%d\n" % (var.CHROM, start_pos, end_pos))
         n_written += 1
-        if ntries != None:
+
+        if ntries >0:
             if n_written >= ntries:
                 break
+
     fout.close()
     return
 
@@ -202,6 +204,7 @@ It is either missing or not readable.""" % (CONFIG_ERROR, caller_binary)
         gatk_cmd = [JAVA, "-jar", caller_binary, "-version"]
         try:
             gatk_proc = subprocess.check_output(gatk_cmd, stderr=subprocess.STDOUT)
+            print "GATK version: ", gatk_proc
         except subprocess.CalledProcessError as e:
             print "%s\nSomething wrong with GATK settings" % CONFIG_ERROR
             print "\nPython error msg:\n", e
@@ -227,21 +230,21 @@ It is either missing or not readable. Try specifying full path.
 """ % (CONFIG_ERROR, caller_binary)
             exit(1)
 
-    # free_cmd = "%s --version" % FREEBAYES
-    free_cmd = [caller_binary, "--version"]
-    try:
-        free_proc = subprocess.Popen(free_cmd, stdout=subprocess.PIPE)
-    except subprocess.CalledProcessError as e:
-        print "%s\nSomething wrong with Freebayes" % CONFIG_ERROR
-        print "\nPython error msg:\n", e
-        sys.exit(1)
-    except Exception as e:
-        print "%s\nSomething wrong with Freebayes" % CONFIG_ERROR
-        print "\nPython error msg:\n", e
-        sys.exit(1)
-    if verbose:
-        for line in free_proc.stdout:
-            print "Freebayes", line
+        # free_cmd = "%s --version" % FREEBAYES
+        free_cmd = [caller_binary, "--version"]
+        try:
+            free_proc = subprocess.Popen(free_cmd, stdout=subprocess.PIPE)
+        except subprocess.CalledProcessError as e:
+            print "%s\nSomething wrong with Freebayes" % CONFIG_ERROR
+            print "\nPython error msg:\n", e
+            exit(1)
+        except Exception as e:
+            print "%s\nSomething wrong with Freebayes" % CONFIG_ERROR
+            print "\nPython error msg:\n", e
+            exit(1)
+        if verbose:
+            for line in free_proc.stdout:
+                print "Freebayes", line
 
     # ------------------------------------------
     # checking VARSCAN
@@ -316,7 +319,7 @@ java:      java
 
 [ScriptOptions]
 DP_threshold:   15
-number_of_SNPs: 1500
+number_of_SNPs:
 
 # fast_freebayes enables --targets option for Freebayes, faster but more prone to Freebayes errors
 # set to False will use --region, each variant is called separately
@@ -369,3 +372,8 @@ CALLER_ERROR = """
 +--------------+
 | CALLER ERROR |
 +--------------+"""
+
+WARNING_MSG = """
++---------+
+| WARNING |
++---------+"""

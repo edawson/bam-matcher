@@ -322,8 +322,10 @@ Input and output seem okay
 # Checking and validating settings and parameters
 if args.verbose:
     print """
-=========================
-Checking settings and parameters"""
+================================
+Checking settings and parameters
+================================
+"""
 
 #-------------------------------------------
 # Variants file
@@ -359,14 +361,11 @@ if args.dp_threshold != None:
 # get from config file
 else:
     if DP_THRESH == "":
-        print """
-+---------+
-| WARNING |
-+---------+
+        print """ %s
 DP_threshold value was not specified in the config file or arguments.
 Default value (15) will be used instead.
 Setting DP_threshold = 15
-"""
+""" % WARNING_MSG
     else:
         try:
             DP_THRESH = int(DP_THRESH)
@@ -387,15 +386,7 @@ if args.number_of_snps != None:
 # get from config file
 else:
     if NUMBER_OF_SNPS == "":
-        print """
-+---------+
-| WARNING |
-+---------+
-number_of_SNPs was not specified in the configuration file.
-Default value (1500) will be used instead.
-Setting number_of_SNPs = 1500
-"""
-        NUMBER_OF_SNPS = 1500
+        NUMBER_OF_SNPS = 0
     else:
         try:
             NUMBER_OF_SNPS = int(NUMBER_OF_SNPS)
@@ -405,14 +396,11 @@ number_of_SNPs value ('%s') in config file is not a valid integer.
 """ % (CONFIG_ERROR, NUMBER_OF_SNPS)
             sys.exit(1)
 
-if NUMBER_OF_SNPS <= 200:
-    print """
-+---------+
-| WARNING |
-+---------+
+if NUMBER_OF_SNPS <= 200 and NUMBER_OF_SNPS > 0:
+    print """%s
 Using fewer than 200 SNPs is not recommended, may not be sufficient to
 correctly discriminate between samples.
-"""
+""" % WARNING_MSG
 
 if args.verbose:
     print "number_of_SNPs:", NUMBER_OF_SNPS
@@ -429,15 +417,12 @@ if args.caller == "freebayes":
     # get from config file
     else:
         if FAST_FREEBAYES == "":
-            print """
-+---------+
-| WARNING |
-+---------+
+            print """%s
 fast_freebayes was not set in the configuration file.
 Default value (False) will be used instead.
 
 Setting fast_freebayes = False
-"""
+""" % WARNING_MSG
             FAST_FREEBAYES = False
         else:
             if FAST_FREEBAYES in ["False", "false", "F", "FALSE"]:
@@ -461,15 +446,12 @@ if args.caller == "gatk":
     # get from command line?
     # get from config file
     if GATK_MEM == "":
-        print """
-+---------+
-| WARNING |
-+---------+
+        print """%s
 GATK_MEM was not specified in the configuration file.
 Default value (4) will be used instead.
 
 Setting GATK_MEM = 4
-"""
+""" % WARNING_MSG
         GATK_MEM = 4
     else:
         try:
@@ -482,15 +464,11 @@ GATK_MEM value ('%s') in the config file is not a valid integer.
 
     # GATK_nt
     if GATK_NT == "":
-        print """
-+---------+
-| WARNING |
-+---------+
-GATK_nt was not specified in the configuration file.
+        print """ %s GATK_nt was not specified in the configuration file.
 Default value (1) will be used instead.
 
 Setting GATK_nt = 1
-"""
+""" % WARNING_MSG
         GATK_NT = 1
     else:
         try:
@@ -509,14 +487,11 @@ if args.caller == "varscan":
     # get from config file
     if VARSCAN_MEM == "":
         print """
-+---------+
-| WARNING |
-+---------+
 VARSCAN_MEM was not specified in the configuration file.
 Default value (4) will be used instead.
 
 Setting VARSCAN_MEM = 4
-"""
+""" % WARNING_MSG
         VARSCAN_MEM = 4
     else:
         try:
@@ -525,7 +500,7 @@ Setting VARSCAN_MEM = 4
             print """%s
 VARSCAN_MEM value ('%s') in the config file is not a valid integer.
 """ % (CONFIG_ERROR, VARSCAN_MEM)
-            sys.exit(1)
+            exit(1)
 
 #===============================================================================
 # References
@@ -702,8 +677,6 @@ CACHE_DIR = os.path.abspath(CACHE_DIR)
 #===============================================================================
 # Variant calling
 #===============================================================================
-if args.verbose:
-    print "\n=======================================\nCalling variants"
 
 #-------------------------------------------------------------------------------
 # first look for cached data if using BATCH_USE_CACHED is True
@@ -713,6 +686,7 @@ if args.verbose:
 # - depth
 # - bam file timestamp
 # - bam header
+# - VCF file path (list of variants to check)
 
 m1 = md5()
 bam1_path = os.path.abspath(args.bam1)
@@ -744,62 +718,63 @@ if BATCH_USE_CACHED == False:
     bam1_is_cached = False
     bam2_is_cached = False
 
-
-
 # Only check callers if not using cached data
 # Test caller binaries
+if bam1_is_cached == False or bam2_is_cached==False:
+    if args.verbose:
+        print "===============\nChecking caller\n===============\nCaller to use: %s\n" % args.caller
 
-if args.verbose:
-    print """
-============================
-Checking caller and samtools
-============================
+#    if JAVA == "":
+    if not JAVA:
+        print "%s\nJava command was not specified.\nDo this in the configuration file" % CONFIG_ERROR
+        sys.exit(1)
 
-Caller to use: %s
-""" % args.caller
+    if args.caller == "gatk":
+        check_caller(args.caller, GATK, JAVA, args.verbose)
+    elif args.caller == "freebayes":
+        check_caller(args.caller, FREEBAYES, JAVA, args.verbose)
+    elif args.caller == "varscan":
+        check_caller(args.caller, VARSCAN, JAVA, args.verbose)
 
-
-if JAVA == "":
-    print """%s
-Java command was not specified. \
-Do this in the configuration file""" % CONFIG_ERROR
-    sys.exit(1)
-
-if args.caller == "gatk":
-    check_caller(args.caller, GATK, JAVA, args.verbose)
-elif args.caller == "freebayes":
-    check_caller(args.caller, FREEBAYES, JAVA, args.verbose)
-elif args.caller == "varscan":
-    check_caller(args.caller, VARSCAN, JAVA, args.verbose)
-
-    if VARSCAN == "":
-        print "Path to VarScan2 jar file was not specified. \
+        if VARSCAN == "":
+            print "Path to VarScan2 jar file was not specified. \
 Do this in the configuration file."
-        sys.exit(1)
+            sys.exit(1)
 
-    if os.access(VARSCAN, os.R_OK) == False:
-        print "Cannot access VarScan2 jar file (%s)" % VARSCAN
-        sys.exit(1)
+        if os.access(VARSCAN, os.R_OK) == False:
+            print "Cannot access VarScan2 jar file (%s)" % VARSCAN
+            sys.exit(1)
 
-    varscan_cmd = [JAVA, "-jar", VARSCAN]
-    try:
-        varscan_proc = subprocess.Popen(varscan_cmd, stdout=subprocess.PIPE,
-                                        stderr=STDERR_)
-        if args.verbose:
-            print "Testing Varscan, running:\n   '%s'" % " ".join(varscan_cmd)
-            print "This should generate the version number and command menu:\n"
-            for line in varscan_proc.stdout:
-                print line
-        else:
-            varscan_proc.communicate()
-    except subprocess.CalledProcessError, e:
-        print "%s\nSomething went wrong with Varscan\n%s" % (CONFIG_ERROR, e)
-        sys.exit(1)
+        varscan_cmd = [JAVA, "-jar", VARSCAN]
+        try:
+            varscan_proc = subprocess.Popen(varscan_cmd, stdout=subprocess.PIPE,
+                                            stderr=STDERR_)
+            if args.verbose:
+                print "Testing Varscan, running:\n   '%s'" % " ".join(varscan_cmd)
+                print "This should generate the version number and command menu:\n"
+                for line in varscan_proc.stdout:
+                    print line
+            else:
+                varscan_proc.communicate()
+        except subprocess.CalledProcessError, e:
+            print "%s\nSomething went wrong with Varscan\n%s" % (CONFIG_ERROR, e)
+            sys.exit(1)
 
-if args.verbose:
-    print """Caller settings seem okay.
+    if args.verbose:
+        print """Caller settings seem okay.
 --------------------------
 """
+else:
+    if args.verbose:
+        print """
+===============
+Checking caller
+===============
+Using cached data for both BAM files, so don't need to test caller.
+
+"""
+
+
 #-------------------------------------------------------------------------------
 
 
@@ -873,6 +848,10 @@ temp_files += pup_list
 # even though this is possible for some callers, because:
 # 1. If the sample names are the same, this causes problems for GATK
 # 2. They may have been mapped to different reference files
+
+if args.verbose:
+    print "\n================\nCalling variants\n================\n"
+
 for i in [0,1]:
     if args.verbose:
         print "\n----------------------\nGenotype calling for BAM %d" % (i+1)
