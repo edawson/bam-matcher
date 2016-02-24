@@ -720,18 +720,15 @@ if BATCH_USE_CACHED == False:
 if bam1_is_cached == False or bam2_is_cached==False:
     if args.verbose:
         print "===============\nChecking caller\n===============\nCaller to use: %s\n" % args.caller
-
-#    if JAVA == "":
     if not JAVA:
         print "%s\nJava command was not specified.\nDo this in the configuration file" % CONFIG_ERROR
         sys.exit(1)
-
     if args.caller == "gatk":
         check_caller(args.caller, GATK, JAVA, args.verbose)
     elif args.caller == "freebayes":
         check_caller(args.caller, FREEBAYES, JAVA, args.verbose)
     elif args.caller == "varscan":
-        check_caller(args.caller, VARSCAN, JAVA, args.verbose)
+        check_caller(args.caller, VARSCAN, JAVA, args.verbose, SAMTL=SAMTOOLS)
 
     if args.verbose:
         print """Caller settings seem okay.

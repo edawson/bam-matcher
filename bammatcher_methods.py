@@ -90,17 +90,24 @@ def VCFtoTSV(invcf, outtsv, caller):
         if alt_ != None:
             alt_str = alt_.sequence
         qual_ = str(var.QUAL)
-        dp_   = str(var.INFO["DP"])
+        if caller == "varscan":
+            qual_ = str(var.samples[0]["GQ"])
+        if caller == "freebayes" or caller == "gatk":
+            dp_ = str(var.INFO["DP"])
+        else:
+            dp_ = str(var.INFO["ADP"])
 
         ad_or_ao = "NA"
         ad_str = "NA"
         gt_ = "NA"
         if var.samples[0].called:
-            if caller == "gatk" or caller == "varscan":
+            if caller == "gatk":
                 ad_ = var.samples[0]["AD"]
                 for a_ in ad_:
                     ad_str += ",%d" % a_
                 ad_str = ad_str[1:]
+            elif caller == "varscan":
+                ad_str = str(var.samples[0]["AD"])
             else:
                 ad_str = str(var.samples[0]["AO"])
             gt_ = var.samples[0].gt_bases
@@ -185,7 +192,7 @@ Python error message:
 
 
 
-def check_caller(caller, caller_binary, JAVA="java", verbose=False):
+def check_caller(caller, caller_binary, JAVA="java", verbose=False, SAMTL="samtools"):
     # ------------------------------------------
     # checking GATK
     if caller == "gatk":
@@ -204,7 +211,6 @@ It is either missing or not readable.""" % (CONFIG_ERROR, caller_binary)
         gatk_cmd = [JAVA, "-jar", caller_binary, "-version"]
         try:
             gatk_proc = subprocess.check_output(gatk_cmd, stderr=subprocess.STDOUT)
-            print "GATK version: ", gatk_proc
         except subprocess.CalledProcessError as e:
             print "%s\nSomething wrong with GATK settings" % CONFIG_ERROR
             print "\nPython error msg:\n", e
@@ -213,7 +219,8 @@ It is either missing or not readable.""" % (CONFIG_ERROR, caller_binary)
             for line in gatk_proc.stdout:
                 print line
             exit(1)
-
+        if verbose:
+            print "GATK version: ", gatk_proc
     # -------------------------------------------
     # Checking Freebayes
     elif caller == "freebayes":
@@ -223,17 +230,17 @@ Freebayes path was not specified.
 Do this in the configuration file""" % CONFIG_ERROR
             exit(1)
 
-        if os.access(caller_binary, os.R_OK) == False:
-            print """%s
-Cannot access Freebayes binary (%s).
-It is either missing or not readable. Try specifying full path.
-""" % (CONFIG_ERROR, caller_binary)
-            exit(1)
+#         if os.access(caller_binary, os.R_OK) == False:
+#             print """%s
+# Cannot access Freebayes binary (%s).
+# It is either missing or not readable. Try specifying full path.
+# """ % (CONFIG_ERROR, caller_binary)
+#             exit(1)
 
         # free_cmd = "%s --version" % FREEBAYES
         free_cmd = [caller_binary, "--version"]
         try:
-            free_proc = subprocess.Popen(free_cmd, stdout=subprocess.PIPE)
+            free_proc = subprocess.check_output(free_cmd, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             print "%s\nSomething wrong with Freebayes" % CONFIG_ERROR
             print "\nPython error msg:\n", e
@@ -243,12 +250,41 @@ It is either missing or not readable. Try specifying full path.
             print "\nPython error msg:\n", e
             exit(1)
         if verbose:
-            for line in free_proc.stdout:
-                print "Freebayes", line
+            print "Freebayes", free_proc
 
     # ------------------------------------------
     # checking VARSCAN
     if caller == "varscan":
+        # ===================================
+        # Testing samtools
+        if SAMTL == "":
+            print """%s
+SAMtools path was not specified.
+Do this in the configuration file""" % CONFIG_ERROR
+            exit(1)
+
+#         if os.access(SAMTL, os.R_OK) == False:
+#             print """%s
+# Cannot access SAMtools binary (%s).
+# It is either missing or not readable.""" % (CONFIG_ERROR, SAMTL)
+#             exit(1)
+
+        sam_cmd = [SAMTL, "--version"]
+        try:
+            sam_proc = subprocess.check_output(sam_cmd, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            print "%s\nSomething wrong with SAMtools settings" % CONFIG_ERROR
+            print "\nPython error msg:\n", e
+            print "\nSAMtools error msg:"
+            sam_proc = subprocess.Popen(sam_cmd, stdout=subprocess.PIPE)
+            for line in sam_proc.stdout:
+                print line
+            exit(1)
+        if verbose:
+            print "\n".join(sam_proc.split("\n")[:2])
+
+        # ===================================
+        # Testing VarScan itself
         if caller_binary == "":
             print """%s
 VarScan2 path was not specified.
@@ -261,18 +297,19 @@ Cannot access VarScan2 jar file (%s).
 It is either missing or not readable.""" % (CONFIG_ERROR, caller_binary)
             exit(1)
 
-        gatk_cmd = [JAVA, "-jar", caller_binary]
+        var_cmd = [JAVA, "-jar", caller_binary]
         try:
-            gatk_proc = subprocess.check_output(gatk_cmd, stderr=subprocess.STDOUT)
+            var_proc = subprocess.check_output(var_cmd, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             print "%s\nSomething wrong with VarScan2 settings" % CONFIG_ERROR
             print "\nPython error msg:\n", e
             print "\nJAVA/VarScan2 error msg:"
-            gatk_proc = subprocess.Popen(gatk_cmd, stdout=subprocess.PIPE)
-            for line in gatk_proc.stdout:
+            var_proc = subprocess.Popen(var_cmd, stdout=subprocess.PIPE)
+            for line in var_proc.stdout:
                 print line
             exit(1)
-
+        if verbose:
+            print "\n" + var_proc.split("\n")[0] + "\n"
 
 
 
