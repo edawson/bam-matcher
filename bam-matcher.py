@@ -441,16 +441,13 @@ Use 'False' or 'True'""" % (CONFIG_ERROR, FAST_FREEBAYES)
 #-------------------------------------------
 # GATK parameters
 if args.caller == "gatk":
-
     # GATK_MEM
-    # get from command line?
-    # get from config file
     if GATK_MEM == "":
         print """%s
 GATK_MEM was not specified in the configuration file.
-Default value (4) will be used instead.
+Default value (4G) will be used instead.
 
-Setting GATK_MEM = 4
+Setting GATK_MEM = 4G
 """ % WARNING_MSG
         GATK_MEM = 4
     else:
@@ -488,9 +485,9 @@ if args.caller == "varscan":
     if VARSCAN_MEM == "":
         print """
 VARSCAN_MEM was not specified in the configuration file.
-Default value (4) will be used instead.
+Default value (4GB) will be used instead.
 
-Setting VARSCAN_MEM = 4
+Setting VARSCAN_MEM = 4GB
 """ % WARNING_MSG
         VARSCAN_MEM = 4
     else:
@@ -541,7 +538,7 @@ if args.bam1_reference == None and args.bam2_reference == None:
         # if all checks pass, add to list
         AVAILABLE_REFERENCES.append(ref)
     if args.verbose:
-        print "Available references:\n%s" % "\n  ".join(AVAILABLE_REFERENCES)
+        print "Available references:\n  %s" % "\n  ".join(AVAILABLE_REFERENCES)
 
     # ----------
     # compare chromosomes between reference and bam files
@@ -735,30 +732,6 @@ if bam1_is_cached == False or bam2_is_cached==False:
         check_caller(args.caller, FREEBAYES, JAVA, args.verbose)
     elif args.caller == "varscan":
         check_caller(args.caller, VARSCAN, JAVA, args.verbose)
-
-        if VARSCAN == "":
-            print "Path to VarScan2 jar file was not specified. \
-Do this in the configuration file."
-            sys.exit(1)
-
-        if os.access(VARSCAN, os.R_OK) == False:
-            print "Cannot access VarScan2 jar file (%s)" % VARSCAN
-            sys.exit(1)
-
-        varscan_cmd = [JAVA, "-jar", VARSCAN]
-        try:
-            varscan_proc = subprocess.Popen(varscan_cmd, stdout=subprocess.PIPE,
-                                            stderr=STDERR_)
-            if args.verbose:
-                print "Testing Varscan, running:\n   '%s'" % " ".join(varscan_cmd)
-                print "This should generate the version number and command menu:\n"
-                for line in varscan_proc.stdout:
-                    print line
-            else:
-                varscan_proc.communicate()
-        except subprocess.CalledProcessError, e:
-            print "%s\nSomething went wrong with Varscan\n%s" % (CONFIG_ERROR, e)
-            sys.exit(1)
 
     if args.verbose:
         print """Caller settings seem okay.
