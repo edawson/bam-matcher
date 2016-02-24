@@ -39,7 +39,6 @@ def sort_vcf_by_chrom_order(invcf, outvcf, ref_index):
     fout.close()
     return
 
-
 # Convert variants VCF file to intervals for variant callers
 def convert_vcf_to_intervals(invcf, output, window, ntries, format="gatk"):
     vcf_read = vcf.Reader(open(invcf, "r"))
@@ -146,3 +145,90 @@ def get_chrom_names(bam_file):
                 if chunk_.startswith("SN:"):
                     chrom_list.append(chunk_[3:])
     return chrom_list
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def get_config_template_str():
+    return """[VariantCallers]
+# file paths to variant callers and other binaries
+GATK:      GenomeAnalysisTK.jar
+freebayes: freebayes
+samtools:  samtools
+varscan:   VarScan.jar
+java:      java
+
+[ScriptOptions]
+DP_threshold:   15
+number_of_SNPs: 1500
+
+# fast_freebayes enables --targets option for Freebayes, faster but more prone to Freebayes errors
+# set to False will use --region, each variant is called separately
+fast_freebayes: True
+
+VCF_file: variants.vcf
+
+[VariantCallerParameters]
+# GATK memory usage in GB
+GATK_MEM: 4
+
+# GATK threads (-nt)
+GATK_nt:  1
+
+# VarScan memory usage in GB
+VARSCAN_MEM: 4
+
+[GenomeReference]
+# default reference fasta file
+REFERENCE: hg19.fasta
+
+# Reference fasta file, with no chr in chromosome name (e.g. Broad19.fasta)
+REF_noChr: Broad19.fasta
+
+# Reference fasta file with 'chr' in chromosome names
+REF_wChr:  genome.fa
+
+[BatchOperations]
+CACHE_DIR:  cache_dir
+
+[Miscellaneous]
+"""
+
+
+
+
+#-------------------------------------------------------------------------------
+# Error messages
+CONFIG_ERROR = """
++--------------+
+| CONFIG ERROR |
++--------------+"""
+
+FILE_ERROR = """
++------------+
+| FILE ERROR |
++------------+"""
+
+CALLER_ERROR = """
++--------------+
+| CALLER ERROR |
++--------------+"""

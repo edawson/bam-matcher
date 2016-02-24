@@ -26,8 +26,6 @@ from Cheetah.Template import Template
 from hashlib import md5
 from bammatcher_methods import *
 
-
-
 #============================================================================
 def handle_args():
     parser = ArgumentParser(description="Compare two BAM files to see if \
@@ -124,23 +122,7 @@ def handle_args():
     return parser.parse_args()
 
 #===============================================================================
-
-
-
-
-
-
-
-
-
-
-
-#===============================================================================
 # Parsing configuration file and command line options
-#===============================================================================
-
-
-
 #-------------------------------------------------------------------------------
 # Before calling handle_args(), need to check if --generate-config was called
 GENERATE_CONFIG_SYMS = ["--generate-config", "--generate_config", "-G"]
@@ -164,91 +146,25 @@ Config template will be written to %s
             print "The specified path ('%s') for config template exists already." % config_template_output
             print "Write to another file."
             sys.exit(1)
-
         fout = open(config_template_output, "w")
-        fout.write("""[VariantCallers]
-# file paths to variant callers and other binaries
-GATK:      GenomeAnalysisTK.jar
-freebayes: freebayes
-samtools:  samtools
-varscan:   VarScan.jar
-java:      java
-
-[ScriptOptions]
-DP_threshold:   15
-number_of_SNPs: 1500
-
-# fast_freebayes enables --targets option for Freebayes, faster but more prone to Freebayes errors
-# set to False will use --region, each variant is called separately
-fast_freebayes: True
-
-VCF_file: variants.vcf
-
-[VariantCallerParameters]
-# GATK memory usage in GB
-GATK_MEM: 4
-
-# GATK threads (-nt)
-GATK_nt:  1
-
-# VarScan memory usage in GB
-VARSCAN_MEM: 4
-
-[GenomeReference]
-# default reference fasta file
-REFERENCE: hg19.fasta
-
-# Reference fasta file, with no chr in chromosome name (e.g. Broad19.fasta)
-REF_noChr: Broad19.fasta
-
-# Reference fasta file with 'chr' in chromosome names
-REF_wChr:  genome.fa
-
-[BatchOperations]
-CACHE_DIR:  cache_dir
-
-[Miscellaneous]
-""")
+        fout.write(get_config_template_str())
         fout.close()
         exit()
 
 # okay to parse the arguments now
-
 args = handle_args()
 
-
-
-
 #-------------------------------------------------------------------------------
-# some random-related stuff, this is for temp files
+# Some random-related stuff, this is for temp files
 random.seed()
 random_str = ""
 for _ in range(12):
     random_str += random.choice(string.ascii_uppercase + string.digits)
 temp_files = []
-
-#-------------------------------------------------------------------------------
-# Error messages
-CONFIG_ERROR = """
-+--------------+
-| CONFIG ERROR |
-+--------------+"""
-
-FILE_ERROR = """
-+------------+
-| FILE ERROR |
-+------------+"""
-
-CALLER_ERROR = """
-+--------------+
-| CALLER ERROR |
-+--------------+"""
-
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 #-------------------------------------------------------------------------------
 # Read in configuration file
-
 config_file = ""
 if args.config == None:
     config_file = os.path.join(SCRIPT_DIR, "bam-matcher.conf")
@@ -397,7 +313,7 @@ Input and output seem okay
 
 
 
-#-------------------------------------------------------------------------------
+#===============================================================================
 # Test caller binaries
 
 if args.verbose:
@@ -515,7 +431,7 @@ Caller settings seem okay
 
 
 
-#-------------------------------------------------------------------------------
+#===============================================================================
 # Checking and validating settings and parameters
 if args.verbose:
     print """
@@ -724,7 +640,7 @@ VARSCAN_MEM value ('%s') in the config file is not a valid integer.
 """ % (CONFIG_ERROR, VARSCAN_MEM)
             sys.exit(1)
 
-#-------------------------------------------
+#===============================================================================
 # References
 bam1_ref = ""
 bam2_ref = ""
@@ -877,7 +793,7 @@ samtools" % ref
     #         bam2_haschr = True
 
 
-#-------------------------------------------
+#===============================================================================
 # Batch operations
 # args.do_not_cache, args.recalculate
 
@@ -923,6 +839,9 @@ CACHE_DIR = os.path.abspath(CACHE_DIR)
 #===============================================================================
 # Finished configuration and arguments checking and loading
 #===============================================================================
+
+
+
 
 
 

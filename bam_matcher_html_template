@@ -44,13 +44,25 @@
 
   <h2>Results</h2>
   <table>
-    <tr><th>Total number of positions compared:&nbsp&nbsp&nbsp&nbsp</th><td>${total}</td></tr>
+    <tr><th width="250px">Total number of positions compared:&nbsp&nbsp&nbsp&nbsp</th><td>${total}</td></tr>
     <tr><th>Percentage of common genotypes:</th><td>${frac_common}</td></tr>
-    <tr><th># positions with same genotype:</th><td>${ct_common} (hom: ${comm_hom_ct}, het: ${comm_het_ct})</td></tr>
-    <tr><th># positions with different genotype:</th><td>${ct_diff}</td></tr>
   </table>
 
-  <h3>Break-down of different genotypes</h3>
+</br>
+
+  <table>
+    <tr><th width="250px">Positions with different genotype:</th><td>${ct_diff}</td></tr>
+    <tr><th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Break-down:</th></tr>
+    <tr><th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Homozygous sites</th><td>${comm_hom_ct}</td></tr>
+    <tr><th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Heterozygous sites</th><td>${comm_het_ct}</td></tr>
+  </table>
+
+</br>
+
+  <table>
+  <tr><th width="250px">Positions with different genotype:</th><td>${ct_diff}</td></tr>
+  <tr><th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Break-down:</th></tr>
+</table>
   <table id="b">
     <tr><td colspan="2" rowspan="2" bgcolor="grey"></td>
         <th id="c" colspan="3" style="height:30px" bgcolor="lightgrey">BAM 1</th>
