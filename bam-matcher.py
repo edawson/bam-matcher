@@ -685,6 +685,7 @@ Cached operations requires this to work.
 """ % CONFIG_ERROR
         sys.exit(1)
 
+
     # test if CACHE_DIR is writable
     try:
         test_cache_file = os.path.join(CACHE_DIR, "cache_test")
@@ -735,9 +736,9 @@ write cache data for new samples: %r
 exit()
 
 
-STILL NOT WORKING,
+# STILL NOT WORKING,
 
-NEED TO CHANGE ALL RELEVANT SECTION TO DEFAULT vs ALTERNATE REFs
+# NEED TO CHANGE ALL RELEVANT SECTION TO DEFAULT vs ALTERNATE REFs
 
 
 
