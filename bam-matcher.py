@@ -67,8 +67,6 @@ def handle_args():
     parser_grp4 = parser.add_argument_group("VARIANTS")
     parser_grp4.add_argument("--vcf",            "-V",  required=False,
                              help="VCF file containing SNPs to check (default can be specified in config file instead)")
-#    parser_grp4.add_argument("--filter-vcf",      "-FT", required=False,
-#                             action="store_true", help="Enable filtering of the input VCF file")
 
     # Specifying these values here will override config values
     parser_grp5 = parser.add_argument_group("CALLERS AND SETTINGS (will override config values)")
@@ -89,25 +87,33 @@ def handle_args():
     parser_grp5.add_argument("--varscan-mem-gb", "-VM", required=False,
                              type=int, help="Specify Java heap size for VarScan2 (GB, int)")
 
-
     # overriding reference matching
     parser_grp6 = parser.add_argument_group("REFERENCES")
     parser_grp6.add_argument("--reference",      "-R",  required=False,
-                             help="Default reference fasta file. Needs to be indexed with samtools faidx")
-    parser_grp6.add_argument("--alternate_ref", "-R2",  required=False,
-                             help="Alternate reference fasta file. Needs to be indexed with samtools faidx")
+                             help="Default reference fasta file. Needs to be \
+                             indexed with samtools faidx. Overrides config settings.")
+    parser_grp6.add_argument("--ref-alternate", "-R2",  required=False,
+                             help="Alternate reference fasta file. Needs to be \
+                             indexed with samtools faidx. Overrides config settings.")
+    parser_grp6.add_argument("--bam1-reference", "-B1R", required=False,
+                             help="Reference fasta file for BAM1. Requires \
+                             --bam2-reference/-B2R, overrides all other settings \
+                             (i.e. will ignore default or alternate reference if specified).")
+    parser_grp6.add_argument("--bam2-reference", "-B2R", required=False,
+                             help="Reference fasta file for BAM2. Requires \
+                             --bam1-reference/-B1R, overrides other settings \
+                             (i.e. will ignore default or alternate reference if specified).")
+    parser_grp6.add_argument("--chromosome-map", "-M", required=False,
+                             help="Required when using alternate reference. \
+                             Run BAM-matcher with --about-alternate-ref for more details.")
+    parser_grp6.add_argument("--about-alternate-ref", "-A", required=False,
+                             help="Print information about using --alternate-ref and --chromosome-map")
+
+    # THESE WILL BE DEPRECATED
     parser_grp6.add_argument("--ref_noChr",      "-Rn", required=False,
                              help="Reference fasta file, no 'chr' in chromosome names. Needs to be indexed with samtools faidx")
     parser_grp6.add_argument("--ref_wChr",       "-Rw",  required=False,
                              help="Reference fasta file, has 'chr' in chromosome names. Needs to be indexed with samtools faidx")
-    parser_grp6.add_argument("--bam1-reference", "-B1R", required=False,
-                             help="Reference fasta file for BAM1. Requires --bam2-reference/-B2R, overrides other settings")
-    parser_grp6.add_argument("--bam2-reference", "-B2R", required=False,
-                             help="Reference fasta file for BAM2. Requires --bam1-reference/-B1R, overrides other settings")
-    parser_grp6.add_argument("--chromosome-map", "-M", required=False,
-                             help="Required when using alternate reference. Run BAM-matcher with --about-alternate-ref for more details.")
-    parser_grp6.add_argument("--about-alternate-ref", "-A", required=False,
-                             help="Print information about using --alternate-ref and --chromosome-map")
 
     # for batch operations
     parser_grp7 = parser.add_argument_group("BATCH OPERATIONS")
@@ -152,7 +158,7 @@ Config template will be written to %s
 
         # make sure that it doesn't overwrite anything!
         if os.path.isfile(config_template_output):
-            print "The specified path ('%s') for config template exists already." % config_template_output
+            print "%s\nThe specified path ('%s') for config template exists already." % (FILE_ERROR, config_template_output)
             print "Write to another file."
             sys.exit(1)
         fout = open(config_template_output, "w")
@@ -185,15 +191,15 @@ else:
     config_file = args.config
 
 # Test if the config file exists
-if os.access(config_file, os.R_OK) == False:
-    print """%s\n
-The config file '%s' either does not exist or is not readable
-"""% (CONFIG_ERROR, os.path.abspath(config_file))
-    sys.exit(1)
+if check_file_read(config_file, "config", CONFIG_ERROR) == False: exit(1)
 
 # Load config and check if all necessary bits are available
 config = ConfigParser.ConfigParser()
-config.read(config_file)
+try:
+    config.read(config_file)
+except ConfigParser.Error as e:
+    print "%s\nUnspecified configuration file error. Please check configuration file.\n\nPython error msg:\n%s" % (CONFIG_ERROR, e)
+    exit(1)
 
 # are all the sections there?
 config_sections = config.sections()
@@ -205,7 +211,7 @@ for sect in REQUIRED_CONFIG_SECTIONS:
         print """%s
 Missing required section in config file: %s
 """ % (CONFIG_ERROR, sect)
-        sys.exit(1)
+        exit(1)
 #-------------------------------------------------------------------------------
 # setting variables using the config file
 GATK           = fetch_config_value(config, "VariantCallers", "GATK")
@@ -218,14 +224,16 @@ NUMBER_OF_SNPS = fetch_config_value(config, "ScriptOptions", "number_of_SNPs")
 FAST_FREEBAYES = fetch_config_value(config, "ScriptOptions", "fast_freebayes")
 VCF_FILE       = fetch_config_value(config, "ScriptOptions", "VCF_file")
 REFERENCE      = fetch_config_value(config, "GenomeReference", "REFERENCE")
-REF_ALT        = fetch_config_value(config, "GenomeReference", "REF_ALTERNATE")
+REF_ALTERNATE  = fetch_config_value(config, "GenomeReference", "REF_ALTERNATE")
 CHROM_MAP      = fetch_config_value(config, "GenomeReference", "CHROM_MAP")
-REF_noChr      = fetch_config_value(config, "GenomeReference", "REF_noCHR")
-REF_wChr       = fetch_config_value(config, "GenomeReference", "REF_wCHR")
 GATK_MEM       = fetch_config_value(config, "VariantCallerParameters", "GATK_MEM")
 GATK_NT        = fetch_config_value(config, "VariantCallerParameters", "GATK_nt")
 VARSCAN_MEM    = fetch_config_value(config, "VariantCallerParameters", "VARSCAN_MEM")
 CACHE_DIR      = fetch_config_value(config, "BatchOperations", "CACHE_DIR")
+
+# THESE WILL BE DEPRECATED
+REF_noChr      = fetch_config_value(config, "GenomeReference", "REF_noCHR")
+REF_wChr       = fetch_config_value(config, "GenomeReference", "REF_wCHR")
 
 BATCH_RECALCULATE = False
 BATCH_USE_CACHED  = True
@@ -233,7 +241,7 @@ BATCH_WRITE_CACHE = True
 JUDGE_THRESHOLD   = 0.95
 RNA_THRESHOLD     = 0.9
 
-# Fail silently if not verbose
+# don't write anything to standard output if not verbose
 STDERR_ = open("/dev/null", "w")
 if args.verbose:
     STDERR_ = None
@@ -249,19 +257,16 @@ CHECKING INPUT AND OUTPUT
 
 # check input bams are readable and indexed
 for bam_file in [args.bam1, args.bam2]:
-    if os.access(bam_file, os.R_OK) == False:
-        print "%s\nCannot access BAM file '%s'.\nEither it doesn't exist or \
-it's not readable." % (FILE_ERROR, bam_file)
-        sys.exit(1)
+    if check_file_read(bam_file, "BAM", FILE_ERROR) == False: exit(1)
 
     # check bam files are indexed:
-    bam_index1 = bam_file.rstrip(".bam") + ".bai"
-    bam_index2 = bam_file + ".bai"
+    bam_index2 = bam_file.rstrip(".bam") + ".bai"
+    bam_index1 = bam_file + ".bai"
     if (os.access(bam_index1, os.R_OK) == False and
         os.access(bam_index2, os.R_OK) == False):
         print "%s\nInput BAM file (%s) is either missing index or the index \
 file is not readable." % (FILE_ERROR, bam_file)
-        sys.exit(1)
+        exit(1)
 
 # ----------------------------
 # resolving output report path
@@ -281,11 +286,8 @@ if args.no_report:
 # ----------------------------
 # check output directory is writable
 REPORT_DIR = os.path.dirname(REPORT_PATH)
-if REPORT_PATH != "/dev/null" and os.access(  REPORT_DIR, os.W_OK   ) == False:
-    print """%s
-Specified output directory (%s) is not writable.
-""" % (FILE_ERROR, REPORT_DIR)
-    sys.exit(1)
+if REPORT_PATH != "/dev/null":
+    if not check_file_write(REPORT_DIR, "output report directory", FILE_ERROR): exit(1)
 
 # ----------------------------
 # HTML path
@@ -298,16 +300,14 @@ if args.html:
 SCRATCH_DIR = "/tmp/%s" % random_str
 if args.scratch_dir == None:
     if args.verbose:
-        print "Scratch directory: %s" % SCRATCH_DIR
+        print "Making scratch directory: %s" % SCRATCH_DIR
     os.mkdir(SCRATCH_DIR)
 else:
     SCRATCH_DIR = args.scratch_dir
-    # if specified scratch exists
-    if os.path.isdir(SCRATCH_DIR) and os.access(SCRATCH_DIR, os.W_OK) == False:
-        print """%s
-Specified scratchd directory is not writable: %s
-""" % (FILE_ERROR, SCRATCH_DIR)
-        sys.exit(1)
+    # if specified scratch exists, check it's writeable
+    if os.path.isdir(SCRATCH_DIR):
+        if check_file_write(SCRATCH_DIR, "scratch directory", FILE_ERROR) == False:
+            exit(1)
     # if not, make it
     else:
         if args.verbose:
@@ -342,6 +342,7 @@ Input and output seem okay
 
 
 
+
 #===============================================================================
 # Checking and validating settings and parameters
 if args.verbose:
@@ -355,8 +356,7 @@ CHECKING SETTINGS AND PARAMETERS
 # Variants file
 
 # is it overridden by args?
-if args.vcf != None:
-    VCF_FILE = args.vcf
+if args.vcf: VCF_FILE = args.vcf
 
 # is it specified?
 if VCF_FILE == "":
@@ -368,11 +368,7 @@ Use --vcf/-V at command line or VCF_FILE in the configuration file.
 
 # is it readable?
 VCF_FILE = os.path.abspath(VCF_FILE)
-if os.access(VCF_FILE, os.R_OK) == False:
-    print """%s
-Cannot find or read the variants VCF file: %s
-""" % (CONFIG_ERROR, VCF_FILE)
-    exit(1)
+if check_file_read(VCF_FILE, "variants VCF", CONFIG_ERROR) == False: exit(1)
 
 #-------------------------------------------
 # DP threshold
@@ -424,7 +420,6 @@ correctly discriminate between samples.
 
 #-------------------------------------------
 # Fast Freebayes
-
 # only check if actually using Freebayes for variant calling
 if args.caller == "freebayes":
     # get from command line
@@ -451,7 +446,6 @@ Setting fast_freebayes = False
 Invalid value ('%s') was specified for fast_freebayes in the configuration file.
 Use 'False' or 'True'""" % (CONFIG_ERROR, FAST_FREEBAYES)
                 sys.exit(1)
-
 
 #-------------------------------------------
 # GATK parameters
@@ -494,8 +488,6 @@ GATK_nt value ('%s') in the config file is not a valid integer.
 #-------------------------------------------
 # VarScan parameters
 if args.caller == "varscan":
-    # get from command line?
-
     # get from config file
     if VARSCAN_MEM == "":
         print """
@@ -516,6 +508,98 @@ VARSCAN_MEM value ('%s') in the config file is not a valid integer.
 
 
 #===============================================================================
+# New reference matching
+
+bam1_ref = ""
+bam2_ref = ""
+
+# No references are specified anywhere
+if REFERENCE == "" and args.reference == None and args.bam1_reference == None and args.bam2_reference == None:
+    print """%s
+No genome reference has been specified anywhere.
+Need to do this in either the configuration file or at run time (--reference/-R).
+
+ALTERNATE_REF (in config) or --alternate_ref/-A should only be used if there is
+already a default genome reference speficied.
+""" % CONFIG_ERROR
+    exit(1)
+
+# overriding config REFERENCE
+if args.reference != None:
+    REFERENCE = args.reference
+    print """%s
+--reference/-R argument overrides config setting (REFERENCE).
+Default reference = %s
+""" % (WARNING_MSG, REFERENCE)
+
+# overriding config REF_ALTERNATE
+if args.ref_alternate != None:
+    REF_ALTERNATE = args.ref_alternate
+    print """%s
+--ref-alternate/-R2 argument overrides config setting (REF_ALTERNATE).
+Alternate reference = %s
+""" % (WARNING_MSG, REF_ALTERNATE)
+
+# overriding config CHROM_MAP
+if args.chromosome_map != None:
+    CHROM_MAP = args.chromosome_map
+    print """%s
+--chromosome-map/-M argument overrides config setting (CHROM_MAP).
+Chromosome map = %s
+""" % (WARNING_MSG, CHROM_MAP)
+
+# check that if bam1_reference or bam2_reference are both supplied
+if (args.bam1_reference == None and args.bam2_reference != None) or (args.bam1_reference != None and args.bam2_reference == None):
+    print """%s
+When using --bam1_reference(-B1R) and --bam2_reference(-B2R), both need to be specified.
+""" % (ARGUMENT_ERROR)
+    exit(1)
+
+# check that if ref_alternate is used, then chromosome_map is also supplied
+if REF_ALTERNATE:
+    if not CHROM_MAP:
+        print """%s
+When using an alternate genome reference (--ref-alternate), chromosome map
+(--chromosome-map/-M or CHROM_MAP in config) must also be supplied.
+For more details, run BAM-matcher with --about-alternate-ref/-A.
+""" % (CONFIG_ERROR)
+        exit(1)
+
+# ---------------------------------------------------------
+
+# When only 1 reference is available
+if args.bam1_reference == None and args.bam2_reference == None and REF_ALTERNATE == "":
+    # just use REFERENCE
+    bam1_ref = REFERENCE
+    bam2_ref = REFERENCE
+
+    # check REFERENCE
+    if check_file_read(REFERENCE, "default reference", FILE_ERROR) == False: exit(1)
+
+# When using bam1_reference and bam2_reference
+elif args.bam1_reference != None and args.bam2_reference != None:
+    bam1_ref = args.bam1_reference
+    bam2_ref = args.bam2_reference
+
+    # check the reference files
+    if not check_file_read(bam1_ref, "BAM1 reference", FILE_ERROR): exit(1)
+    if not check_file_read(bam2_ref, "BAM2 reference", FILE_ERROR): exit(1)
+
+# When need to match BAM to correct reference file
+
+
+
+exit()
+
+
+# ---------------------------------------------------------
+# Matching the correct genome reference to use
+
+
+
+
+
+
 # References
 bam1_ref = ""
 bam2_ref = ""
@@ -628,7 +712,6 @@ samtools" % (CONFIG_ERROR, ref)
 
 
 
-
 #===============================================================================
 # Batch operations
 # args.do_not_cache, args.recalculate
@@ -686,6 +769,18 @@ Caller:            %s""" % (VCF_FILE, DP_THRESH, NUMBER_OF_SNPS, args.caller)
     print "BAM2 ('%s') is matched to reference ('%s')" % (args.bam2, bam2_ref)
     print "\nUse cached wherever possible:    ", BATCH_USE_CACHED
     print "Write cache data for new samples:", BATCH_WRITE_CACHE
+
+
+
+
+
+exit()
+
+
+
+
+
+
 
 
 
@@ -764,7 +859,6 @@ if bam1_is_cached == False or bam2_is_cached==False:
         check_caller(args.caller, FREEBAYES, JAVA, args.verbose)
     elif args.caller == "varscan":
         check_caller(args.caller, VARSCAN, JAVA, args.verbose, SAMTL=SAMTOOLS)
-
     if args.verbose:
         print "Caller settings seem okay.\n"
 else:
@@ -775,7 +869,6 @@ Checking caller
 ---------------
 Using cached data for both BAM files, so don't need to test caller.
 """
-
 
 #-------------------------------------------------------------------------------
 # generating intervals file for variant calling - only required if not using cached data
@@ -987,13 +1080,9 @@ if args.verbose:
 Variant-calling finished
 """
 
-
 #===============================================================================
 # Finished variant calling
 #===============================================================================
-
-#-------------------------------------------------------------------------------
-
 
 
 

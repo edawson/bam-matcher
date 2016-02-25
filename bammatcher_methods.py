@@ -116,7 +116,6 @@ def VCFtoTSV(invcf, outtsv, caller):
         fout.write("%s\n" % "\t".join(data_bits))
     fout.close()
 
-
 # GENOTYPE COMPARISON FUNCTIONS
 def is_hom(gt):
     gt_ = gt.split("/")
@@ -144,7 +143,6 @@ def is_subset(hom_gt, het_gt):
         return False
 
 # Get list of chromosome names from the BAM file
-
 def get_chrom_names(bam_file):
     chrom_list = []
     inbam = gzip.open(bam_file, "r")
@@ -157,9 +155,6 @@ def get_chrom_names(bam_file):
                 if chunk_.startswith("SN:"):
                     chrom_list.append(chunk_[3:])
     return chrom_list
-
-
-
 
 def fetch_config_value(config_obj, config_section, config_keyword):
     try:
@@ -184,12 +179,8 @@ Python error message:
 %s
 """ (CONFIG_ERROR, e)
         exit(1)
-
     # if all good, return value_
     return value_
-
-
-
 
 
 def check_caller(caller, caller_binary, JAVA="java", verbose=False, SAMTL="samtools"):
@@ -315,6 +306,13 @@ It is either missing or not readable.""" % (CONFIG_ERROR, caller_binary)
 
 
 
+
+
+
+
+
+
+
 def get_bam_header(bam_file):
     header_lines = []
     fin = gzip.open(bam_file, "r")
@@ -326,6 +324,31 @@ def get_bam_header(bam_file):
         else:
             header_lines.append(line.strip())
     return header_lines
+
+
+
+
+
+def check_file_read(file_path, file_object_name, error_type):
+    if os.access(file_path, os.R_OK) == False:
+        print """%s
+Cannot access %s file (%s).
+It either does not exist or is not readable.
+""" % (error_type, file_object_name, file_path)
+        return False
+    else:
+        return True
+
+
+def check_file_write(file_path, file_object_name, error_type):
+    if os.access(file_path, os.W_OK) == False:
+        print """%s
+Specified path for %s (%s) is not writable.
+""" % (error_type, file_object_name, file_path)
+        return False
+    else:
+        return True
+
 
 
 
@@ -396,6 +419,20 @@ CACHE_DIR:  cache_dir
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #-------------------------------------------------------------------------------
 # Error messages
 CONFIG_ERROR = """+--------------+
@@ -413,6 +450,10 @@ CALLER_ERROR = """+--------------+
 WARNING_MSG = """+---------+
 | WARNING |
 +---------+"""
+
+ARGUMENT_ERROR = """+----------------+
+| ARGUMENT ERROR |
++----------------+"""
 
 # --about-alternate-ref message
 
