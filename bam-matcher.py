@@ -586,127 +586,200 @@ elif args.bam1_reference != None and args.bam2_reference != None:
     if not check_file_read(bam2_ref, "BAM2 reference", FILE_ERROR): exit(1)
 
 # When need to match BAM to correct reference file
-
-DOES NOT WORK AT THE MOMENT
-
-
-exit()
-
-
-# ---------------------------------------------------------
-# Matching the correct genome reference to use
-
-
-
-
-
-# References
-bam1_ref = ""
-bam2_ref = ""
-bam1_haschr = False
-bam2_haschr = False
-AVAILABLE_REFERENCES = []
-
-# if any of the reference options are used, disable all config REFERENCE settings
-if args.reference != None or args.ref_noChr != None or args.ref_wChr != None or args.bam1_reference != None or args.bam2_reference != None:
-    REFERENCE = ""
-    REF_ALTERNATE = ""
-    REF_noChr = ""
-    REF_wChr  = ""
-    if args.reference != None:
-        REFERENCE = args.reference
-    if args.ref_noChr != None:
-        REF_noChr = args.ref_noChr
-    if args.ref_wChr != None:
-        REF_wChr = args.ref_wChr
-
-if args.bam1_reference == None and args.bam2_reference == None:
-    if REFERENCE == "" and REF_noChr == "" and REF_wChr == "": # and bam1_ref == "" and bam2_ref == "":
-        print "No genome reference files were specified!"
-        sys.exit(1)
-    for ref in [REFERENCE, REF_noChr, REF_wChr]:
-        if ref == "":
-            continue
-        else:
-            if os.access(ref, os.R_OK) == False:
-                print "Specified reference fasta file ('%s') is either not present or readable" % ref
-                sys.exit(1)
-        # check that the references are indexed
-        ref_idx = ref + ".fai"
-        if os.access(ref_idx, os.R_OK) == False:
-            print "Make sure that the reference file ('%s') has been indexed by samtools." % ref
-            sys.exit(1)
-        # if all checks pass, add to list
-        AVAILABLE_REFERENCES.append(ref)
-
-    # ----------
-    # compare chromosomes between reference and bam files
-    bam1_chrlist = get_chrom_names(args.bam1)
-    bam2_chrlist = get_chrom_names(args.bam2)
-
-    for chr_ in bam1_chrlist:
-        if chr_.startswith("chr"):
-            bam1_haschr = True
-    for chr_ in bam2_chrlist:
-        if chr_.startswith("chr"):
-            bam2_haschr = True
-
-    # ---------
-    # generate chr list for references
-    ref_chrlist = {}
-    bam1_ref_chr_ct_max = -1
-    bam2_ref_chr_ct_max = -1
-
-    for ref in AVAILABLE_REFERENCES:
-        ref_chrlist[ref] = []
-        ref_idx = ref + ".fai"
-        for line in open(ref_idx, "r"):
-            ref_chrlist[ref].append(line.strip("\n").split("\t")[0])
-
-        bam1_ref_chr_ct = len(set(bam1_chrlist).intersection(set(ref_chrlist[ref])))
-        if bam1_ref_chr_ct > bam1_ref_chr_ct_max:
-            bam1_ref = ref
-            bam1_ref_chr_ct_max = bam1_ref_chr_ct
-
-        bam2_ref_chr_ct = len(set(bam2_chrlist).intersection(set(ref_chrlist[ref])))
-        if bam2_ref_chr_ct > bam2_ref_chr_ct_max:
-            bam2_ref = ref
-            bam2_ref_chr_ct_max = bam2_ref_chr_ct
-
-    # ------------
-    # check whether the matching was appropriate
-    if bam1_ref_chr_ct_max < 5:
-        print "%s\nFewer than 5 chromosome names in BAM1 ('%s') are found in the \
-matched reference ('%s')" % (CONFIG_ERROR, args.bam1, bam1_ref)
-        print "Please check that correct reference files are supplied"
-        sys.exit(1)
-    if bam2_ref_chr_ct_max < 5:
-        print "%s\nFewer than 5 chromosome names in BAM2 ('%s') are found in the \
-matched reference ('%s')" % (CONFIG_ERROR, args.bam2, bam2_ref)
-        print "\nPlease check that correct reference files are supplied"
-        exit(1)
-elif args.bam1_reference == None or args.bam2_reference == None:
-    # if only one of these are supplied
-    print "%s\nWhen overriding REFERENCE settings using \
---bam1-reference(-B1R)/--bam2-reference(-B2R), BOTH need to be specified separately." % CONFIG_ERROR
-    exit(1)
-
 else:
-    # both have been supplied
-    bam1_ref = args.bam1_reference
-    bam2_ref = args.bam2_reference
+    # get BAM chroms
+    bam1_chroms = get_chrom_names_from_BAM(args.bam1)
+    bam2_chroms = get_chrom_names_from_BAM(args.bam2)
 
-    # check reference file and index
-    for ref in [bam1_ref, bam2_ref]:
-        if os.access(ref, os.R_OK) == False:
-            print "%s\nSpecified reference file ('%s') is either not present or \
-readable" % (CONFIG_ERROR, ref)
-            sys.exit(1)
-        ref_idx = ref + ".fai"
-        if os.access(ref_idx, os.R_OK) == False:
-            print "%s\nReference fasta file ('%s') needs to be indexed by \
-samtools" % (CONFIG_ERROR, ref)
-            sys.exit(1)
+    # expect to have REFERENCE and ALTERNATE_REF
+    # check ref files
+    if not check_file_read(REFERENCE, "default genome reference FASTA", FILE_ERROR): exit(1)
+    if not check_file_read(REF_ALTERNATE, "alternate genome reference FASTA", FILE_ERROR): exit(1)
+
+    # get ref chroms
+    REF_CHROMS = get_chrom_names_from_REF(REFERENCE)
+    ALT_CHROMS = get_chrom_names_from_REF(REF_ALTERNATE)
+
+    # check chromsome_map
+    if not check_file_read(CHROM_MAP, "chromosome map", FILE_ERROR): exit(1)
+
+    # compare chromosomes
+    MAP_REF_CHROMS, MAP_ALT_CHROMS, MAP_DEF2ALT, MAP_ALT2DEF = get_chrom_data_from_map(CHROM_MAP)
+    n_chroms_expected = len(MAP_REF_CHROMS)
+
+    # expect all REF_CHROMS to be in ref_chroms
+    ref_chroms_diff = set(MAP_REF_CHROMS).difference(set(REF_CHROMS))
+    alt_chroms_diff = set(MAP_ALT_CHROMS).difference(set(ALT_CHROMS))
+    chrom_diffs = [ref_chroms_diff, alt_chroms_diff]
+    for rid, reftype in enumerate(["default", "alternate"]):
+        chrdiff = chrom_diffs[rid]
+        if len(chrdiff) > 0: # - n_chroms_expected < 0:
+            print """%s
+Number of matching chromosomes in the %s reference genome (%d) is fewer than expected from the chromosome map (%d).\n
+Missing chromosome: %r\n
+Check that the correct genome reference files and chromosome map are used.
+""" % (CONFIG_ERROR, reftype, n_chroms_expected-len(chrdiff), n_chroms_expected, ", ".join(chrdiff))
+            exit(1)
+
+    if args.verbose:
+        print "Matching BAM files and genome references"
+
+    bam1_REF_diff = set(MAP_REF_CHROMS).difference(set(bam1_chroms))
+    bam2_REF_diff = set(MAP_REF_CHROMS).difference(set(bam2_chroms))
+    bam1_ALT_diff = set(MAP_ALT_CHROMS).difference(set(bam1_chroms))
+    bam2_ALT_diff = set(MAP_ALT_CHROMS).difference(set(bam2_chroms))
+
+    if len(bam1_REF_diff) == 0:
+        bam1_ref = REFERENCE
+        if args.verbose:
+            print "BAM1 (%s) is matched to default genome reference (%s)" % (args.bam1, REFERENCE)
+    elif len(bam1_ALT_diff) == 0:
+        bam1_ref = REF_ALTERNATE
+        if args.verbose:
+            print "BAM1 (%s) is matched to alternate genome reference (%s)" % (args.bam2, REF_ALTERNATE)
+    else:
+        print """%s
+Cannot match BAM1 to a genome reference
+BAM1 (%s) is missing:
+- %d chromosomes against default reference (%s). Missing:
+- %d chromosomes against alternate reference (%s). Missing:
+""" % (CONFIG_ERROR, args.bam1, len(bam1_REF_diff), REFERENCE, len(bam1_ALT_diff), REF_ALTERNATE)
+        exit(1)
+
+    if len(bam2_REF_diff) == 0:
+        bam2_ref = REFERENCE
+        if args.verbose:
+            print "BAM2 (%s) is matched to default genome reference (%s)" % (args.bam1, REFERENCE)
+    elif len(bam2_ALT_diff) == 0:
+        bam2_ref = REF_ALTERNATE
+        if args.verbose:
+            print "BAM2 (%s) is matched to alternate genome reference (%s)" % (args.bam2, REF_ALTERNATE)
+    else:
+        print """%s
+Cannot match BAM2 to a genome reference
+BAM2 (%s) is missing:
+- %d chromosomes against default reference (%s). Missing:
+- %d chromosomes against alternate reference (%s). Missing:
+""" % (CONFIG_ERROR, args.bam2, len(bam2_REF_diff), REFERENCE, len(bam2_ALT_diff), REF_ALTERNATE)
+        exit(1)
+
+
+
+#
+# # ---------------------------------------------------------
+# # Matching the correct genome reference to use
+#
+#
+#
+#
+#
+# # References
+# bam1_ref = ""
+# bam2_ref = ""
+# bam1_haschr = False
+# bam2_haschr = False
+# AVAILABLE_REFERENCES = []
+#
+# # if any of the reference options are used, disable all config REFERENCE settings
+# if args.reference != None or args.ref_noChr != None or args.ref_wChr != None or args.bam1_reference != None or args.bam2_reference != None:
+#     REFERENCE = ""
+#     REF_ALTERNATE = ""
+#     REF_noChr = ""
+#     REF_wChr  = ""
+#     if args.reference != None:
+#         REFERENCE = args.reference
+#     if args.ref_noChr != None:
+#         REF_noChr = args.ref_noChr
+#     if args.ref_wChr != None:
+#         REF_wChr = args.ref_wChr
+#
+# if args.bam1_reference == None and args.bam2_reference == None:
+#     if REFERENCE == "" and REF_noChr == "" and REF_wChr == "": # and bam1_ref == "" and bam2_ref == "":
+#         print "No genome reference files were specified!"
+#         sys.exit(1)
+#     for ref in [REFERENCE, REF_noChr, REF_wChr]:
+#         if ref == "":
+#             continue
+#         else:
+#             if os.access(ref, os.R_OK) == False:
+#                 print "Specified reference fasta file ('%s') is either not present or readable" % ref
+#                 sys.exit(1)
+#         # check that the references are indexed
+#         ref_idx = ref + ".fai"
+#         if os.access(ref_idx, os.R_OK) == False:
+#             print "Make sure that the reference file ('%s') has been indexed by samtools." % ref
+#             sys.exit(1)
+#         # if all checks pass, add to list
+#         AVAILABLE_REFERENCES.append(ref)
+#
+#     # ----------
+#     # compare chromosomes between reference and bam files
+#     bam1_chrlist = get_chrom_names_from_BAM(args.bam1)
+#     bam2_chrlist = get_chrom_names_from_BAM(args.bam2)
+#
+#     for chr_ in bam1_chrlist:
+#         if chr_.startswith("chr"):
+#             bam1_haschr = True
+#     for chr_ in bam2_chrlist:
+#         if chr_.startswith("chr"):
+#             bam2_haschr = True
+#
+#     # ---------
+#     # generate chr list for references
+#     ref_chrlist = {}
+#     bam1_ref_chr_ct_max = -1
+#     bam2_ref_chr_ct_max = -1
+#
+#     for ref in AVAILABLE_REFERENCES:
+#         ref_chrlist[ref] = []
+#         ref_idx = ref + ".fai"
+#         for line in open(ref_idx, "r"):
+#             ref_chrlist[ref].append(line.strip("\n").split("\t")[0])
+#
+#         bam1_ref_chr_ct = len(set(bam1_chrlist).intersection(set(ref_chrlist[ref])))
+#         if bam1_ref_chr_ct > bam1_ref_chr_ct_max:
+#             bam1_ref = ref
+#             bam1_ref_chr_ct_max = bam1_ref_chr_ct
+#
+#         bam2_ref_chr_ct = len(set(bam2_chrlist).intersection(set(ref_chrlist[ref])))
+#         if bam2_ref_chr_ct > bam2_ref_chr_ct_max:
+#             bam2_ref = ref
+#             bam2_ref_chr_ct_max = bam2_ref_chr_ct
+#
+#     # ------------
+#     # check whether the matching was appropriate
+#     if bam1_ref_chr_ct_max < 5:
+#         print "%s\nFewer than 5 chromosome names in BAM1 ('%s') are found in the \
+# matched reference ('%s')" % (CONFIG_ERROR, args.bam1, bam1_ref)
+#         print "Please check that correct reference files are supplied"
+#         sys.exit(1)
+#     if bam2_ref_chr_ct_max < 5:
+#         print "%s\nFewer than 5 chromosome names in BAM2 ('%s') are found in the \
+# matched reference ('%s')" % (CONFIG_ERROR, args.bam2, bam2_ref)
+#         print "\nPlease check that correct reference files are supplied"
+#         exit(1)
+# elif args.bam1_reference == None or args.bam2_reference == None:
+#     # if only one of these are supplied
+#     print "%s\nWhen overriding REFERENCE settings using \
+# --bam1-reference(-B1R)/--bam2-reference(-B2R), BOTH need to be specified separately." % CONFIG_ERROR
+#     exit(1)
+#
+# else:
+#     # both have been supplied
+#     bam1_ref = args.bam1_reference
+#     bam2_ref = args.bam2_reference
+#
+#     # check reference file and index
+#     for ref in [bam1_ref, bam2_ref]:
+#         if os.access(ref, os.R_OK) == False:
+#             print "%s\nSpecified reference file ('%s') is either not present or \
+# readable" % (CONFIG_ERROR, ref)
+#             sys.exit(1)
+#         ref_idx = ref + ".fai"
+#         if os.access(ref_idx, os.R_OK) == False:
+#             print "%s\nReference fasta file ('%s') needs to be indexed by \
+# samtools" % (CONFIG_ERROR, ref)
+#             sys.exit(1)
 
 
 
@@ -764,24 +837,15 @@ Caller:            %s""" % (VCF_FILE, DP_THRESH, NUMBER_OF_SNPS, args.caller)
     if args.caller == "freebayes":
         print "fast_freebayes:   ", FAST_FREEBAYES
 
-    print "\nAvailable references:\n  %s" % "\n  ".join(AVAILABLE_REFERENCES)
-    print "\nBAM1 ('%s') is matched to reference ('%s')" % (args.bam1, bam1_ref)
-    print "BAM2 ('%s') is matched to reference ('%s')" % (args.bam2, bam2_ref)
-    print "\nUse cached wherever possible:    ", BATCH_USE_CACHED
-    print "Write cache data for new samples:", BATCH_WRITE_CACHE
+    print """
+default genome reference:   %s
+alternate genome reference: %s
+BAM1 matched to:            %s
+BAM2 matched to:            %s
 
-
-
-
-
-exit()
-
-
-
-
-
-
-
+use cached wherever possible:     %r
+write cache data for new samples: %r
+""" % (REFERENCE, REF_ALTERNATE, bam1_ref, bam2_ref, BATCH_USE_CACHED, BATCH_WRITE_CACHE)
 
 
 #===============================================================================
@@ -789,6 +853,13 @@ exit()
 #===============================================================================
 
 
+
+exit()
+
+
+STILL NOT WORKING,
+
+NEED TO CHANGE ALL RELEVANT SECTION TO DEFAULT vs ALTERNATE REFs
 
 
 

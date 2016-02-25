@@ -143,18 +143,62 @@ def is_subset(hom_gt, het_gt):
         return False
 
 # Get list of chromosome names from the BAM file
-def get_chrom_names(bam_file):
+def get_chrom_names_from_BAM(bam_file):
     chrom_list = []
     inbam = gzip.open(bam_file, "r")
-    for line in inbam:
-        if line.startswith("@") == False and line.startswith("BAM") == False:
-            break
-        elif line.startswith("@SQ"):
+    for line in get_bam_header(bam_file):
+        if line.startswith("@SQ"):
             bits = line.strip().split("\t")
             for chunk_ in bits:
                 if chunk_.startswith("SN:"):
                     chrom_list.append(chunk_[3:])
     return chrom_list
+
+
+def get_chrom_names_from_REF(ref_fasta):
+    # first check that the FASTA file is indexed
+    ref_idx = ref_fasta + ".fai"
+    if not check_file_read(ref_idx, "", None, silent=True):
+        print """%s
+Specified reference FASTA file (%s) needs to be indexed by samtools:
+
+samtools faidx %s
+""" % (FILE_ERROR, ref_fasta, ref_fasta)
+        exit(1)
+
+    chrom_list = []
+    fin = open(ref_idx, "r")
+    for line in fin:
+        if line.strip() == "":
+            continue
+        chrom_list.append(line.strip().split()[0])
+    return chrom_list
+
+def get_chrom_data_from_map(chrom_map_file):
+    chrom_ct = 0
+    default_chroms = []
+    alternate_chroms = []
+    def_to_alt = {}
+    alt_to_def = {}
+    fin = open(chrom_map_file, 'r')
+    header = fin.readline()
+    for line in fin:
+        if line.strip() == "":
+            continue
+        chrom_ct += 1
+        bits = line.strip().split()
+        default_chroms.append(bits[0])
+        alternate_chroms.append(bits[1])
+        def_to_alt[bits[0]] = bits[1]
+        alt_to_def[bits[1]] = bits[0]
+    return default_chroms, alternate_chroms, def_to_alt, alt_to_def
+
+
+
+
+
+
+
 
 def fetch_config_value(config_obj, config_section, config_keyword):
     try:
@@ -221,14 +265,6 @@ Freebayes path was not specified.
 Do this in the configuration file""" % CONFIG_ERROR
             exit(1)
 
-#         if os.access(caller_binary, os.R_OK) == False:
-#             print """%s
-# Cannot access Freebayes binary (%s).
-# It is either missing or not readable. Try specifying full path.
-# """ % (CONFIG_ERROR, caller_binary)
-#             exit(1)
-
-        # free_cmd = "%s --version" % FREEBAYES
         free_cmd = [caller_binary, "--version"]
         try:
             free_proc = subprocess.check_output(free_cmd, stderr=subprocess.STDOUT)
@@ -329,9 +365,10 @@ def get_bam_header(bam_file):
 
 
 
-def check_file_read(file_path, file_object_name, error_type):
+def check_file_read(file_path, file_object_name, error_type, silent=False):
     if os.access(file_path, os.R_OK) == False:
-        print """%s
+        if not silent:
+            print """%s
 Cannot access %s file (%s).
 It either does not exist or is not readable.
 """ % (error_type, file_object_name, file_path)
@@ -340,9 +377,10 @@ It either does not exist or is not readable.
         return True
 
 
-def check_file_write(file_path, file_object_name, error_type):
+def check_file_write(file_path, file_object_name, error_type, silent=False):
     if os.access(file_path, os.W_OK) == False:
-        print """%s
+        if not silent:
+            print """%s
 Specified path for %s (%s) is not writable.
 """ % (error_type, file_object_name, file_path)
         return False
@@ -473,12 +511,17 @@ versions of hg19 being used, where one has "chr" and the other without.
 
 Format for chromosome map:
 
-chr1     1
-chr11   11
-chr12   12
+DEFAULT   ALTERNATE
+1           chr1
+11          chr11
+2           chr2
+3           chr3
 ...etc
 
-Fields can be separated by tab or spaces.
+- fields can be separated by tab or spaces.
+- header is necessary,
+- chromosome names in 'DEFAULT' column  must match the chromosome names in the
+  genome reference file, and 'ALTERNATE' match the alternate reference
 
 Notes:
 1. The input variants VCF file should be referencing the default genome reference
