@@ -339,8 +339,7 @@ def get_bam_header(bam_file):
 
 
 
-def get_config_template_str():
-    return """
+CONFIG_TEMPLATE_STR = """# BAM-matcher configuration file
 # If not setting a specific parameter, just leave it blank, rather than deleting or commenting out the line
 # Missing parameter keywords will generate errors
 
@@ -377,10 +376,14 @@ VARSCAN_MEM: 4
 [GenomeReference]
 # default reference fasta file
 REFERENCE: hg19.fasta
+REF_ALTERNATE:
+# CHROM_MAP is required if using two different genome references that have different (but compatible) chromosome names
+# this is mainly to deal with the hg19 "chr" issue
+CHROM_MAP:
 
+# These are deprecated.
 # Reference fasta file, with no chr in chromosome name (e.g. Broad19.fasta)
 REF_noChr: Broad19.fasta
-
 # Reference fasta file with 'chr' in chromosome names
 REF_wChr:  genome.fa
 
@@ -395,22 +398,60 @@ CACHE_DIR:  cache_dir
 
 #-------------------------------------------------------------------------------
 # Error messages
-CONFIG_ERROR = """
-+--------------+
+CONFIG_ERROR = """+--------------+
 | CONFIG ERROR |
 +--------------+"""
 
-FILE_ERROR = """
-+------------+
+FILE_ERROR = """+------------+
 | FILE ERROR |
 +------------+"""
 
-CALLER_ERROR = """
-+--------------+
+CALLER_ERROR = """+--------------+
 | CALLER ERROR |
 +--------------+"""
 
-WARNING_MSG = """
-+---------+
+WARNING_MSG = """+---------+
 | WARNING |
 +---------+"""
+
+# --about-alternate-ref message
+
+ABOUT_ALTERNATE_REF_MSG = """
+If input BAM files are mapped with different but compatible genome references
+(which may also have different chromosome names), user can also supply an
+alternate genome reference file (--alternate-ref/-A) either at run time or
+in the configuration file. However, a chromosome map file (--chromsome-map/-M)
+is also required when doing so. This file is required to tell BAM-matcher what
+are the matching chromosome names in the two different genome references.
+The format is two columns of chromosome names, one column for each genome
+reference, with each line representing an unique chromosome entry identifiable
+in each genome reference.
+
+This function is mainly provided to address the problem with the two major
+versions of hg19 being used, where one has "chr" and the other without.
+
+Format for chromosome map:
+
+chr1     1
+chr11   11
+chr12   12
+...etc
+
+Fields can be separated by tab or spaces.
+
+Notes:
+1. The input variants VCF file should be referencing the default genome reference
+(--reference/-R) if possible. Efforts have been made to resolve the hg19 "chr"
+issue, however, it is unclear whether it is sufficient for other types of
+compatible-but-not-quite-the-same genome references.
+
+2. When using alternate reference, only variants which are found in chromosomes
+listed in the chromosome map will be used for comparison. For example, when
+working with hg19, minor contigs and the mitochondrial chromosome (chrM/MT)
+should not be included in the chromosome map, as they are different between the
+two versions.
+
+3. Cached genotype data will store genomic positions using the format in the
+default reference genome (--reference/-R).
+
+"""

@@ -94,6 +94,8 @@ def handle_args():
     parser_grp6 = parser.add_argument_group("REFERENCES")
     parser_grp6.add_argument("--reference",      "-R",  required=False,
                              help="Default reference fasta file. Needs to be indexed with samtools faidx")
+    parser_grp6.add_argument("--alternate_ref", "-R2",  required=False,
+                             help="Alternate reference fasta file. Needs to be indexed with samtools faidx")
     parser_grp6.add_argument("--ref_noChr",      "-Rn", required=False,
                              help="Reference fasta file, no 'chr' in chromosome names. Needs to be indexed with samtools faidx")
     parser_grp6.add_argument("--ref_wChr",       "-Rw",  required=False,
@@ -102,6 +104,10 @@ def handle_args():
                              help="Reference fasta file for BAM1. Requires --bam2-reference/-B2R, overrides other settings")
     parser_grp6.add_argument("--bam2-reference", "-B2R", required=False,
                              help="Reference fasta file for BAM2. Requires --bam1-reference/-B1R, overrides other settings")
+    parser_grp6.add_argument("--chromosome-map", "-M", required=False,
+                             help="Required when using alternate reference. Run BAM-matcher with --about-alternate-ref for more details.")
+    parser_grp6.add_argument("--about-alternate-ref", "-A", required=False,
+                             help="Print information about using --alternate-ref and --chromosome-map")
 
     # for batch operations
     parser_grp7 = parser.add_argument_group("BATCH OPERATIONS")
@@ -126,7 +132,10 @@ def handle_args():
 #-------------------------------------------------------------------------------
 # Before calling handle_args(), need to check if --generate-config was called
 GENERATE_CONFIG_SYMS = ["--generate-config", "--generate_config", "-G"]
+ALTERNATE_REF_SYMS = ["--about-alternate-ref", "--about_alternate_ref", "-A"]
 for idx, arg in enumerate(sys.argv):
+
+    # generate config template
     if arg in GENERATE_CONFIG_SYMS:
         try:
             config_template_output = os.path.abspath(sys.argv[idx+1])
@@ -147,8 +156,13 @@ Config template will be written to %s
             print "Write to another file."
             sys.exit(1)
         fout = open(config_template_output, "w")
-        fout.write(get_config_template_str())
+        fout.write(CONFIG_TEMPLATE_STR)
         fout.close()
+        exit()
+
+    # about alternate genome reference
+    if arg in ALTERNATE_REF_SYMS:
+        print ABOUT_ALTERNATE_REF_MSG
         exit()
 
 # okay to parse the arguments now
@@ -204,6 +218,8 @@ NUMBER_OF_SNPS = fetch_config_value(config, "ScriptOptions", "number_of_SNPs")
 FAST_FREEBAYES = fetch_config_value(config, "ScriptOptions", "fast_freebayes")
 VCF_FILE       = fetch_config_value(config, "ScriptOptions", "VCF_file")
 REFERENCE      = fetch_config_value(config, "GenomeReference", "REFERENCE")
+REF_ALT        = fetch_config_value(config, "GenomeReference", "REF_ALTERNATE")
+CHROM_MAP      = fetch_config_value(config, "GenomeReference", "CHROM_MAP")
 REF_noChr      = fetch_config_value(config, "GenomeReference", "REF_noCHR")
 REF_wChr       = fetch_config_value(config, "GenomeReference", "REF_wCHR")
 GATK_MEM       = fetch_config_value(config, "VariantCallerParameters", "GATK_MEM")
@@ -226,9 +242,9 @@ if args.verbose:
 # Input and output files
 if args.verbose:
     print """
-=========================
-Checking input and output
-=========================
+================================================================================
+CHECKING INPUT AND OUTPUT
+================================================================================
 """
 
 # check input bams are readable and indexed
@@ -311,10 +327,18 @@ Python error message: %s
 
 if args.verbose:
     print """
-Input and output seem okay
---------------------------
 
-"""
+Input BAM files:
+BAM1:           %s
+BAM2:           %s
+
+Output and scratch:
+scratch dir:    %s
+Output report:  %s
+
+Input and output seem okay
+
+""" % (args.bam1, args.bam2, SCRATCH_DIR, REPORT_PATH)
 
 
 
@@ -322,9 +346,9 @@ Input and output seem okay
 # Checking and validating settings and parameters
 if args.verbose:
     print """
-================================
-Checking settings and parameters
-================================
+================================================================================
+CHECKING SETTINGS AND PARAMETERS
+================================================================================
 """
 
 #-------------------------------------------
@@ -340,7 +364,7 @@ if VCF_FILE == "":
 No variants file (VCF) has been specified.
 Use --vcf/-V at command line or VCF_FILE in the configuration file.
 """ % CONFIG_ERROR
-    sys.exit(1)
+    exit(1)
 
 # is it readable?
 VCF_FILE = os.path.abspath(VCF_FILE)
@@ -348,9 +372,7 @@ if os.access(VCF_FILE, os.R_OK) == False:
     print """%s
 Cannot find or read the variants VCF file: %s
 """ % (CONFIG_ERROR, VCF_FILE)
-    sys.exit(1)
-if args.verbose:
-    print "VCF file:      ", VCF_FILE
+    exit(1)
 
 #-------------------------------------------
 # DP threshold
@@ -361,11 +383,12 @@ if args.dp_threshold != None:
 # get from config file
 else:
     if DP_THRESH == "":
-        print """ %s
+        print """%s
 DP_threshold value was not specified in the config file or arguments.
 Default value (15) will be used instead.
 Setting DP_threshold = 15
 """ % WARNING_MSG
+        DP_THRESH = 15
     else:
         try:
             DP_THRESH = int(DP_THRESH)
@@ -373,10 +396,7 @@ Setting DP_threshold = 15
             print """%s
 DP_threshold value ('%s') in config file is not a valid integer.
 """ % (CONFIG_ERROR, DP_THRESH)
-            sys.exit(1)
-
-if args.verbose:
-    print "DP_threshold:  ", DP_THRESH
+            exit(1)
 
 #-------------------------------------------
 # Number of SNPs
@@ -401,9 +421,6 @@ if NUMBER_OF_SNPS <= 200 and NUMBER_OF_SNPS > 0:
 Using fewer than 200 SNPs is not recommended, may not be sufficient to
 correctly discriminate between samples.
 """ % WARNING_MSG
-
-if args.verbose:
-    print "number_of_SNPs:", NUMBER_OF_SNPS
 
 #-------------------------------------------
 # Fast Freebayes
@@ -435,8 +452,6 @@ Invalid value ('%s') was specified for fast_freebayes in the configuration file.
 Use 'False' or 'True'""" % (CONFIG_ERROR, FAST_FREEBAYES)
                 sys.exit(1)
 
-    if args.verbose:
-        print "fast_freebayes:", FAST_FREEBAYES
 
 #-------------------------------------------
 # GATK parameters
@@ -499,6 +514,7 @@ VARSCAN_MEM value ('%s') in the config file is not a valid integer.
 """ % (CONFIG_ERROR, VARSCAN_MEM)
             exit(1)
 
+
 #===============================================================================
 # References
 bam1_ref = ""
@@ -510,6 +526,7 @@ AVAILABLE_REFERENCES = []
 # if any of the reference options are used, disable all config REFERENCE settings
 if args.reference != None or args.ref_noChr != None or args.ref_wChr != None or args.bam1_reference != None or args.bam2_reference != None:
     REFERENCE = ""
+    REF_ALTERNATE = ""
     REF_noChr = ""
     REF_wChr  = ""
     if args.reference != None:
@@ -537,8 +554,6 @@ if args.bam1_reference == None and args.bam2_reference == None:
             sys.exit(1)
         # if all checks pass, add to list
         AVAILABLE_REFERENCES.append(ref)
-    if args.verbose:
-        print "Available references:\n  %s" % "\n  ".join(AVAILABLE_REFERENCES)
 
     # ----------
     # compare chromosomes between reference and bam files
@@ -574,31 +589,23 @@ if args.bam1_reference == None and args.bam2_reference == None:
             bam2_ref = ref
             bam2_ref_chr_ct_max = bam2_ref_chr_ct
 
-    if args.verbose:
-        print "BAM1 ('%s') is matched to reference ('%s')" % (args.bam1, bam1_ref)
-        print "BAM2 ('%s') is matched to reference ('%s')" % (args.bam2, bam2_ref)
     # ------------
     # check whether the matching was appropriate
     if bam1_ref_chr_ct_max < 5:
-        print "Fewer than 5 chromosome names in BAM1 ('%s') are found in the \
-matched reference ('%s')" % (args.bam1, bam1_ref)
+        print "%s\nFewer than 5 chromosome names in BAM1 ('%s') are found in the \
+matched reference ('%s')" % (CONFIG_ERROR, args.bam1, bam1_ref)
         print "Please check that correct reference files are supplied"
         sys.exit(1)
     if bam2_ref_chr_ct_max < 5:
-        print "Fewer than 5 chromosome names in BAM2 ('%s') are found in the \
-matched reference ('%s')" % (args.bam2, bam2_ref)
-        print "Please check that correct reference files are supplied"
-        sys.exit(1)
+        print "%s\nFewer than 5 chromosome names in BAM2 ('%s') are found in the \
+matched reference ('%s')" % (CONFIG_ERROR, args.bam2, bam2_ref)
+        print "\nPlease check that correct reference files are supplied"
+        exit(1)
 elif args.bam1_reference == None or args.bam2_reference == None:
     # if only one of these are supplied
-    print "When overriding REFERENCE settings using \
---bam1-reference/--bam2-reference, \
-BOTH need to be specified separately."
-    sys.exit(1)
-
-elif args.bam1_reference == None or args.bam2_reference == None:
-    print "both --bam1-reference and --bam2-reference must be specified when using these options"
-    sys.exit(1)
+    print "%s\nWhen overriding REFERENCE settings using \
+--bam1-reference(-B1R)/--bam2-reference(-B2R), BOTH need to be specified separately." % CONFIG_ERROR
+    exit(1)
 
 else:
     # both have been supplied
@@ -608,14 +615,18 @@ else:
     # check reference file and index
     for ref in [bam1_ref, bam2_ref]:
         if os.access(ref, os.R_OK) == False:
-            print "Specified reference file ('%s') is either not present or \
-readable" % ref
+            print "%s\nSpecified reference file ('%s') is either not present or \
+readable" % (CONFIG_ERROR, ref)
             sys.exit(1)
         ref_idx = ref + ".fai"
         if os.access(ref_idx, os.R_OK) == False:
-            print "Reference fasta file ('%s') needs to be indexed by \
-samtools" % ref
+            print "%s\nReference fasta file ('%s') needs to be indexed by \
+samtools" % (CONFIG_ERROR, ref)
             sys.exit(1)
+
+
+
+
 
 
 #===============================================================================
@@ -629,11 +640,6 @@ if args.recalculate:
     BATCH_USE_CACHED = False
 if args.do_not_cache:
     BATCH_WRITE_CACHE = False
-
-if args.verbose:
-    print "Using cached:  ", BATCH_USE_CACHED
-    print "Writing cache: ", BATCH_WRITE_CACHE
-
 if args.cache_dir != None:
     CACHE_DIR = args.cache_dir
 
@@ -661,6 +667,28 @@ Python error msg: %s
 CACHE_DIR = os.path.abspath(CACHE_DIR)
 
 
+#------------------------------------------
+# Print config settings
+
+if args.verbose:
+    print """CONFIG SETTINGS
+VCF file:          %s
+DP_threshold:      %d
+number_of_SNPs:    %d (if 0, all variants in VCF file will be used)
+
+Caller:            %s""" % (VCF_FILE, DP_THRESH, NUMBER_OF_SNPS, args.caller)
+
+    if args.caller == "freebayes":
+        print "fast_freebayes:   ", FAST_FREEBAYES
+
+    print "\nAvailable references:\n  %s" % "\n  ".join(AVAILABLE_REFERENCES)
+    print "\nBAM1 ('%s') is matched to reference ('%s')" % (args.bam1, bam1_ref)
+    print "BAM2 ('%s') is matched to reference ('%s')" % (args.bam2, bam2_ref)
+    print "\nUse cached wherever possible:    ", BATCH_USE_CACHED
+    print "Write cache data for new samples:", BATCH_WRITE_CACHE
+
+
+
 #===============================================================================
 # Finished configuration and arguments checking and loading
 #===============================================================================
@@ -674,6 +702,13 @@ CACHE_DIR = os.path.abspath(CACHE_DIR)
 #===============================================================================
 # Variant calling
 #===============================================================================
+
+if args.verbose:
+    print """
+================================================================================
+GENOTYPE CALLING
+================================================================================
+"""
 
 #-------------------------------------------------------------------------------
 # first look for cached data if using BATCH_USE_CACHED is True
@@ -719,7 +754,7 @@ if BATCH_USE_CACHED == False:
 # Test caller binaries
 if bam1_is_cached == False or bam2_is_cached==False:
     if args.verbose:
-        print "===============\nChecking caller\n===============\nCaller to use: %s\n" % args.caller
+        print "---------------\nChecking caller\n---------------"
     if not JAVA:
         print "%s\nJava command was not specified.\nDo this in the configuration file" % CONFIG_ERROR
         sys.exit(1)
@@ -731,64 +766,56 @@ if bam1_is_cached == False or bam2_is_cached==False:
         check_caller(args.caller, VARSCAN, JAVA, args.verbose, SAMTL=SAMTOOLS)
 
     if args.verbose:
-        print """Caller settings seem okay.
---------------------------
-"""
+        print "Caller settings seem okay.\n"
 else:
     if args.verbose:
         print """
-===============
+---------------
 Checking caller
-===============
+---------------
 Using cached data for both BAM files, so don't need to test caller.
-
 """
 
 
 #-------------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-#-------------------------------------------
+# generating intervals file for variant calling - only required if not using cached data
 # SNPs file
 # VCF_FILE, FILTER_VCF, NUMBER_OF_SNPS
 
 # default 1KG VCF file doesn't use chr
 # create intervals file
-if args.verbose:
-    print "Creating intervals file"
+if bam1_is_cached == False or bam2_is_cached == False:
+    if args.verbose:
+        print "Creating intervals file"
 
-# f_itv = os.path.join(SCRATCH_DIR, "%s.target.intervals" % vcf_random_str)
-f_itv = os.path.join(SCRATCH_DIR, "target.intervals")
-temp_files.append(f_itv)
-# convert variant VCF file to GATK intervals
-convert_vcf_to_intervals(VCF_FILE, f_itv, 0, NUMBER_OF_SNPS, args.caller)
+    # f_itv = os.path.join(SCRATCH_DIR, "%s.target.intervals" % vcf_random_str)
+    f_itv = os.path.join(SCRATCH_DIR, "target.intervals")
+    temp_files.append(f_itv)
+    # convert variant VCF file to GATK intervals
+    convert_vcf_to_intervals(VCF_FILE, f_itv, 0, NUMBER_OF_SNPS, args.caller)
 
-# Creating a version with 'chr'
-f_itv_chr = f_itv + "_chr"
-fin = open(f_itv, "r")
-fout = open(f_itv_chr, "w")
-for line in fin:
-    fout.write("chr" + line)
-fout.close()
-temp_files.append(f_itv_chr)
+    # Creating a version with 'chr'
+    f_itv_chr = f_itv + "_chr"
+    fin = open(f_itv, "r")
+    fout = open(f_itv_chr, "w")
+    for line in fin:
+        fout.write("chr" + line)
+    fout.close()
+    temp_files.append(f_itv_chr)
 
-# determining which one to use for each bam file
-if bam1_haschr:
-    bam1_itv = f_itv_chr
-else:
-    bam1_itv = f_itv
+    # determining which one to use for each bam file
+    if bam1_haschr:
+        bam1_itv = f_itv_chr
+    else:
+        bam1_itv = f_itv
 
-if bam2_haschr:
-    bam2_itv = f_itv_chr
-else:
-    bam2_itv = f_itv
+    if bam2_haschr:
+        bam2_itv = f_itv_chr
+    else:
+        bam2_itv = f_itv
+
+    interval_files_list = [bam1_itv, bam2_itv]
+
 
 #-------------------------------------------------------------------------------
 vcf1 = os.path.join(SCRATCH_DIR, "bam1.vcf")
@@ -801,7 +828,6 @@ pup2 = os.path.join(SCRATCH_DIR, "bam2.pileup")
 # lists
 bam_list           = [args.bam1, args.bam2]
 vcf_list           = [vcf1, vcf2]
-interval_files_list = [bam1_itv, bam2_itv]
 pup_list           = [pup1, pup2]
 ref_list           = [bam1_ref, bam2_ref]
 haschr_list        = [bam1_haschr, bam2_haschr]
@@ -820,11 +846,11 @@ temp_files += pup_list
 # 2. They may have been mapped to different reference files
 
 if args.verbose:
-    print "\n================\nCalling variants\n================\n"
+    print "\n----------------\nCalling variants\n----------------"
 
 for i in [0,1]:
     if args.verbose:
-        print "\n----------------------\nGenotype calling for BAM %d" % (i+1)
+        print "\nGenotype calling for BAM %d" % (i+1)
 
     if BATCH_USE_CACHED:
         if cached_list[i]:
@@ -840,7 +866,6 @@ for i in [0,1]:
     if args.verbose:
         print "input bam: \t%s" % in_bam
         print "output vcf:\t%s" % out_vcf
-
     # ----------------------------------------------------------
     # Genotype calling with GATK
     if args.caller == "gatk":
@@ -851,7 +876,7 @@ for i in [0,1]:
         varcall_cmd += ["--output_mode", "EMIT_ALL_SITES", "-nt", str(GATK_NT),
                         "-L", interval_file]
         if args.verbose:
-            print "GATK variant-calling command:\n(space in path not escaped \
+            print "\nGATK variant-calling command:\n(space in path not escaped \
 here, but should be fine in actual call command)"
             print " ".join(varcall_cmd)
         varcall_proc = subprocess.Popen(varcall_cmd, stdout=subprocess.PIPE,
@@ -910,7 +935,6 @@ here, but should be fine in actual call command)"
                         fout.write(line)
                 write_header = False
             fout.close()
-
     # ----------------------------------------------------------
     # Genotype calling with VarScan2
     elif args.caller == "varscan":
@@ -948,7 +972,6 @@ here, but should be fine in actual call command)"
         for line in varscan_proc.stdout:
             fout.write(line)
         fout.close()
-
     # ----------------------------------------------------------
     # need to re-sort VCF file if genome has 'chr'
     # as the bam file chr order is not the same as the reference
@@ -958,12 +981,10 @@ here, but should be fine in actual call command)"
         os.rename(out_vcf, old_vcf)
         ref_idx = ref + ".fai"
         sort_vcf_by_chrom_order(old_vcf, new_vcf, ref_idx)
-
 if args.verbose:
     print """
 
 Variant-calling finished
-=============================
 """
 
 
@@ -985,9 +1006,9 @@ Variant-calling finished
 
 if args.verbose:
     print """
-=============================
-Comparing VCF output
-
+================================================================================
+GENOTYPE DATA COMPARISON
+================================================================================
 """
 
 #-------------------------------------------------------------------------------
