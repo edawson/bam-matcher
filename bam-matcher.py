@@ -587,6 +587,7 @@ elif args.bam1_reference != None and args.bam2_reference != None:
 
 # When need to match BAM to correct reference file
 
+DOES NOT WORK AT THE MOMENT
 
 
 exit()
@@ -594,7 +595,6 @@ exit()
 
 # ---------------------------------------------------------
 # Matching the correct genome reference to use
-
 
 
 
