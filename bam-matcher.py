@@ -1107,6 +1107,9 @@ Check caller log: %s
     # ----------------------------------------------------------
     # need to re-sort VCF file if genome has 'chr'
     # as the bam file chr order is not the same as the reference
+
+WILL FAIL HERE
+
     if has_chr:
         old_vcf = out_vcf + ".bak"
         new_vcf = out_vcf
