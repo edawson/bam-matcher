@@ -43,23 +43,32 @@ def sort_vcf_by_chrom_order(invcf, outvcf, ref_index):
     return
 
 # Convert variants VCF file to intervals for variant callers
-def convert_vcf_to_intervals(invcf, output, window, ntries, format="gatk"):
+def convert_vcf_to_intervals(invcf, output, window, ntries, format="gatk", cmap=None):
     vcf_read = vcf.Reader(open(invcf, "r"))
     fout = open(output, "w")
     n_written = 0
 
     for var in vcf_read:
         # intervals format
+        chrom_ = var.CHROM
+        if cmap != None:
+            if var.CHROM not in cmap:
+                continue
+            else:
+                chrom_ = cmap[var.CHROM]
+
         if format == "gatk" or format == "varscan":
             start_pos = var.POS - window
             end_pos   = start_pos + window
-            fout.write("%s:%d-%d\n" % (var.CHROM, start_pos, end_pos))
+            fout.write("%s:%d-%d\n" % (chrom_, start_pos, end_pos))
+            n_written += 1
+
         # BED format
         elif format == "bed" or format == "freebayes":
             start_pos = var.POS - window - 1
             end_pos   = start_pos + window + 1
-            fout.write("%s\t%d\t%d\n" % (var.CHROM, start_pos, end_pos))
-        n_written += 1
+            fout.write("%s\t%d\t%d\n" % (chrom_, start_pos, end_pos))
+            n_written += 1
 
         if ntries >0:
             if n_written >= ntries:
@@ -155,16 +164,25 @@ def get_chrom_names_from_BAM(bam_file):
     return chrom_list
 
 
-def get_chrom_names_from_REF(ref_fasta):
-    # first check that the FASTA file is indexed
-    ref_idx = ref_fasta + ".fai"
+
+def check_fasta_index(fastafile):
+    ref_idx = fastafile + ".fai"
     if not check_file_read(ref_idx, "", None, silent=True):
         print """%s
 Specified reference FASTA file (%s) needs to be indexed by samtools:
 
 samtools faidx %s
-""" % (FILE_ERROR, ref_fasta, ref_fasta)
+""" % (FILE_ERROR, fastafile, fastafile)
+        return False
+    else:
+        return True
+
+
+def get_chrom_names_from_REF(ref_fasta):
+    # first check that the FASTA file is indexed
+    if not check_fasta_index(ref_fasta):
         exit(1)
+    ref_idx = ref_fasta + ".fai"
 
     chrom_list = []
     fin = open(ref_idx, "r")
@@ -227,7 +245,16 @@ Python error message:
     return value_
 
 
-def check_caller(caller, caller_binary, JAVA="java", verbose=False, SAMTL="samtools"):
+
+
+
+
+
+def check_caller(caller, caller_binary, JAVA="java", verbose=False, SAMTL="samtools", logfile=None):
+    logwrite = open(logfile, "w")
+    check_exitcode = 0
+    caller_cmd = []
+
     # ------------------------------------------
     # checking GATK
     if caller == "gatk":
@@ -236,26 +263,13 @@ def check_caller(caller, caller_binary, JAVA="java", verbose=False, SAMTL="samto
 GATK path was not specified.
 Do this in the configuration file""" % CONFIG_ERROR
             exit(1)
-
         if os.access(caller_binary, os.R_OK) == False:
             print """%s
 Cannot access GATK jar file (%s).
 It is either missing or not readable.""" % (CONFIG_ERROR, caller_binary)
             exit(1)
+        caller_cmd = [JAVA, "-jar", caller_binary, "-version"]
 
-        gatk_cmd = [JAVA, "-jar", caller_binary, "-version"]
-        try:
-            gatk_proc = subprocess.check_output(gatk_cmd, stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError as e:
-            print "%s\nSomething wrong with GATK settings" % CONFIG_ERROR
-            print "\nPython error msg:\n", e
-            print "\nJAVA/GATK error msg:"
-            gatk_proc = subprocess.Popen(gatk_cmd, stdout=subprocess.PIPE)
-            for line in gatk_proc.stdout:
-                print line
-            exit(1)
-        if verbose:
-            print "GATK version: ", gatk_proc
     # -------------------------------------------
     # Checking Freebayes
     elif caller == "freebayes":
@@ -264,24 +278,11 @@ It is either missing or not readable.""" % (CONFIG_ERROR, caller_binary)
 Freebayes path was not specified.
 Do this in the configuration file""" % CONFIG_ERROR
             exit(1)
-
-        free_cmd = [caller_binary, "--version"]
-        try:
-            free_proc = subprocess.check_output(free_cmd, stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError as e:
-            print "%s\nSomething wrong with Freebayes" % CONFIG_ERROR
-            print "\nPython error msg:\n", e
-            exit(1)
-        except Exception as e:
-            print "%s\nSomething wrong with Freebayes" % CONFIG_ERROR
-            print "\nPython error msg:\n", e
-            exit(1)
-        if verbose:
-            print "Freebayes", free_proc
+        caller_cmd = [caller_binary, "--version"]
 
     # ------------------------------------------
     # checking VARSCAN
-    if caller == "varscan":
+    elif caller == "varscan":
         # ===================================
         # Testing samtools
         if SAMTL == "":
@@ -290,25 +291,18 @@ SAMtools path was not specified.
 Do this in the configuration file""" % CONFIG_ERROR
             exit(1)
 
-#         if os.access(SAMTL, os.R_OK) == False:
-#             print """%s
-# Cannot access SAMtools binary (%s).
-# It is either missing or not readable.""" % (CONFIG_ERROR, SAMTL)
-#             exit(1)
-
         sam_cmd = [SAMTL, "--version"]
-        try:
-            sam_proc = subprocess.check_output(sam_cmd, stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError as e:
-            print "%s\nSomething wrong with SAMtools settings" % CONFIG_ERROR
-            print "\nPython error msg:\n", e
-            print "\nSAMtools error msg:"
-            sam_proc = subprocess.Popen(sam_cmd, stdout=subprocess.PIPE)
-            for line in sam_proc.stdout:
-                print line
-            exit(1)
+        sam_proc = subprocess.Popen(sam_cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         if verbose:
-            print "\n".join(sam_proc.split("\n")[:2])
+            for line in sam_proc.stdout:
+                print line.strip()
+        sam_proc.communicate()
+        sam_code = sam_proc.returncode
+        if sam_code != 0:
+            print """%s
+Samtools error. Please check samtools path and installation.
+""" % CALLER_ERROR
+            exit(1)
 
         # ===================================
         # Testing VarScan itself
@@ -317,29 +311,43 @@ Do this in the configuration file""" % CONFIG_ERROR
 VarScan2 path was not specified.
 Do this in the configuration file""" % CONFIG_ERROR
             exit(1)
-
         if os.access(caller_binary, os.R_OK) == False:
             print """%s
 Cannot access VarScan2 jar file (%s).
 It is either missing or not readable.""" % (CONFIG_ERROR, caller_binary)
             exit(1)
+        caller_cmd = [JAVA, "-jar", caller_binary]
 
-        var_cmd = [JAVA, "-jar", caller_binary]
-        try:
-            var_proc = subprocess.check_output(var_cmd, stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError as e:
-            print "%s\nSomething wrong with VarScan2 settings" % CONFIG_ERROR
-            print "\nPython error msg:\n", e
-            print "\nJAVA/VarScan2 error msg:"
-            var_proc = subprocess.Popen(var_cmd, stdout=subprocess.PIPE)
-            for line in var_proc.stdout:
-                print line
-            exit(1)
-        if verbose:
-            print "\n" + var_proc.split("\n")[0] + "\n"
+    # --------------------------------------------
+    caller_proc = subprocess.Popen(caller_cmd, stderr=logwrite, stdout=logwrite)
+    caller_proc.communicate()
+    check_exitcode = caller_proc.returncode
+    logwrite.close()
 
+    # --------------------------------------------
+    if check_exitcode != 0:
+        print """%s
+Caller check failed.
 
+See log file for error (%s)
+""" % (CALLER_ERROR, logfile)
+        exit(1)
 
+    # --------------------------------------------
+    if verbose:
+        fin = open(logfile, "r")
+        version_line = fin.readline()
+        fin.close()
+
+        if caller == "gatk":
+            print "GATK version", version_line
+        elif caller == "freebayes":
+            print "Freebayes", version_line
+        elif caller == "varscan":
+            print "\n"+version_line
+
+    # --------------------------------------------
+    return True
 
 
 
@@ -360,9 +368,6 @@ def get_bam_header(bam_file):
         else:
             header_lines.append(line.strip())
     return header_lines
-
-
-
 
 
 def check_file_read(file_path, file_object_name, error_type, silent=False):
@@ -386,6 +391,13 @@ Specified path for %s (%s) is not writable.
         return False
     else:
         return True
+
+
+
+
+
+
+
 
 
 
@@ -493,6 +505,12 @@ ARGUMENT_ERROR = """+----------------+
 | ARGUMENT ERROR |
 +----------------+"""
 
+CALLER_ERROR = """+-----------------------+
+| VARIANT CALLING ERROR |
++-----------------------+"""
+
+
+
 # --about-alternate-ref message
 
 ABOUT_ALTERNATE_REF_MSG = """
@@ -523,9 +541,23 @@ DEFAULT   ALTERNATE
 - chromosome names in 'DEFAULT' column  must match the chromosome names in the
   genome reference file, and 'ALTERNATE' match the alternate reference
 
+
+Chromosome map is also required when using --bam1-reference and --bam2-reference
+and when these two genome references are not the same. The format is similar
+
+REF1     REF2
+1        chr1
+11       chr11
+2        chr2
+3        chr3
+...etc
+
+The order of the columns won't matter, BAM-matcher will attempt to match the
+set of chromosome names to the correct genome reference.
+
 Notes:
 1. The input variants VCF file should be referencing the default genome reference
-(--reference/-R) if possible. Efforts have been made to resolve the hg19 "chr"
+(--reference/-R). Efforts have been made to resolve the hg19 "chr"
 issue, however, it is unclear whether it is sufficient for other types of
 compatible-but-not-quite-the-same genome references.
 
