@@ -463,12 +463,6 @@ REF_ALTERNATE:
 # this is mainly to deal with the hg19 "chr" issue
 CHROM_MAP:
 
-# These are deprecated.
-# Reference fasta file, with no chr in chromosome name (e.g. Broad19.fasta)
-REF_noChr: Broad19.fasta
-# Reference fasta file with 'chr' in chromosome names
-REF_wChr:  genome.fa
-
 [BatchOperations]
 CACHE_DIR:  cache_dir
 

@@ -109,12 +109,6 @@ def handle_args():
     parser_grp6.add_argument("--about-alternate-ref", "-A", required=False,
                              help="Print information about using --alternate-ref and --chromosome-map")
 
-    # THESE WILL BE DEPRECATED
-    parser_grp6.add_argument("--ref_noChr",      "-Rn", required=False,
-                             help="Reference fasta file, no 'chr' in chromosome names. Needs to be indexed with samtools faidx")
-    parser_grp6.add_argument("--ref_wChr",       "-Rw",  required=False,
-                             help="Reference fasta file, has 'chr' in chromosome names. Needs to be indexed with samtools faidx")
-
     # for batch operations
     parser_grp7 = parser.add_argument_group("BATCH OPERATIONS")
     parser_grp7.add_argument("--do-not-cache",    "-NC", required=False,
@@ -230,10 +224,6 @@ GATK_MEM       = fetch_config_value(config, "VariantCallerParameters", "GATK_MEM
 GATK_NT        = fetch_config_value(config, "VariantCallerParameters", "GATK_nt")
 VARSCAN_MEM    = fetch_config_value(config, "VariantCallerParameters", "VARSCAN_MEM")
 CACHE_DIR      = fetch_config_value(config, "BatchOperations", "CACHE_DIR")
-
-# THESE WILL BE DEPRECATED
-REF_noChr      = fetch_config_value(config, "GenomeReference", "REF_noCHR")
-REF_wChr       = fetch_config_value(config, "GenomeReference", "REF_wCHR")
 
 BATCH_RECALCULATE = False
 BATCH_USE_CACHED  = True
@@ -1127,8 +1117,9 @@ here, but should be fine in actual call command):\n"
                 pileup_log.close()
                 print_caller_failure_message(" ".join(varcall_cmd), caller_log_file)
                 exit(1)
-            pup_out.close()
-            pileup_log.close()
+
+        pup_out.close()
+        pileup_log.close()
 
         # calling with varscan
         fout = open(out_vcf, "w")
@@ -1137,7 +1128,7 @@ here, but should be fine in actual call command):\n"
                        "mpileup2snp", pup_file,
                        "--output-vcf", "--min-coverage", str(DP_THRESH) ]
         if args.verbose:
-            print "Varscan command:\n%s" % " ".join(varscan_cmd)
+            print "Varscan command:\n%s" % " ".join(varcall_cmd)
         varcall_proc = subprocess.Popen(varcall_cmd, stdout=fout, stderr=caller_log)
         varcall_proc.communicate()
 
@@ -1157,10 +1148,7 @@ here, but should be fine in actual call command):\n"
             fout.close()
             if args.verbose:
                 print "\nVariant calling successful.\n\n"
-
     # ----------------------------------------------------
-
-
 
 if args.verbose:
     print """
