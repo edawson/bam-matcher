@@ -922,7 +922,6 @@ bam_list           = [args.bam1, args.bam2]
 vcf_list           = [vcf1, vcf2]
 pup_list           = [pup1, pup2]
 ref_list           = [bam1_ref, bam2_ref]
-# haschr_list        = [bam1_haschr, bam2_haschr]
 cached_list        = [bam1_is_cached, bam2_is_cached]
 cache_path_list    = [bam1_cache_path, bam2_cache_path]
 
@@ -956,6 +955,10 @@ for i in [0,1]:
         print "input bam: \t%s" % in_bam
         print "output vcf:\t%s" % out_vcf
 
+    caller_log_file = os.path.join(SCRATCH_DIR, "caller%d.log" % i)
+    temp_files.append(caller_log_file)
+    caller_log = open(caller_log_file, "w")
+
     # ----------------------------------------------------------
     # Genotype calling with GATK
     if args.caller == "gatk":
@@ -970,27 +973,24 @@ for i in [0,1]:
 here, but should be fine in actual call command):\n"
             print " ".join(varcall_cmd) + "\n"
 
-        caller_log_file = os.path.join(SCRATCH_DIR, "caller%d.log" % i)
-        temp_files.append(caller_log_file)
-        caller_log = open(caller_log_file, "w")
         varcall_proc = subprocess.Popen(varcall_cmd, stdout=subprocess.PIPE, stderr=caller_log)
         varcall_proc.communicate()
-        caller_log.close()
         varcall_proc_returncode = varcall_proc.returncode
+
+        caller_log.close()
         if args.verbose:
             fin = open(caller_log_file, "r")
             for line in fin:
                 print line.strip()
+
+        # check calling was successful
         if varcall_proc_returncode != 0:
-            print """%s
-Variant calling failed.
-
-Check caller log: %s
-
-""" % (CALLER_ERROR, caller_log_file)
+            caller_log.close()
+            print_caller_failure_message(" ".join(varcall_cmd), caller_log_file)
             exit(1)
         else:
-            print "\nVariant calling successful."
+            if args.verbose:
+                print "\nVariant calling successful."
 
     # ----------------------------------------------------------
     # Genotype calling with Freebayes
@@ -999,7 +999,6 @@ Check caller log: %s
         # -----------------------
         # fast-Freebayes, single intervals file
         if FAST_FREEBAYES:
-
             varcall_cmd = [FREEBAYES, "--fasta-reference", ref, "--targets",
                            interval_file, "--no-indels", "--min-coverage",
                            str(DP_THRESH)]
@@ -1009,36 +1008,39 @@ Check caller log: %s
                 print "Freebayes variant-calling command:"
                 print " ".join(varcall_cmd)
 
-            caller_log_file = os.path.join(SCRATCH_DIR, "caller%d.log" % i)
-            temp_files.append(caller_log_file)
-            caller_log = open(caller_log_file, "w")
             varcall_proc = subprocess.Popen(varcall_cmd, stdout=fout, stderr=caller_log)
             varcall_proc.communicate()
-            caller_log.close()
             varcall_proc_returncode = varcall_proc.returncode
             fout.close()
 
+            caller_log.close()
             if args.verbose:
                 fin = open(caller_log_file, "r")
                 for line in fin:
                     print line.strip()
+
+            # check calling was successful
             if varcall_proc_returncode != 0:
-                print """%s
-    Variant calling failed.
-
-    Check caller log: %s
-
-    """ % (CALLER_ERROR, caller_log_file)
+                fout.close()
+                caller_log.close()
+                print_caller_failure_message(" ".join(varcall_cmd), caller_log_file)
                 exit(1)
             else:
-                print "\nVariant calling successful.\n\n"
+                fout.close()
+                if args.verbose:
+                    print "\nVariant calling successful.\n\n"
 
         else:
         # -----------------------
         # slow Freebayes,calling each site separately
-
             write_header = True
-            itv_list = []
+
+            # caller_log_file = os.path.join(SCRATCH_DIR, "caller%d.log" % i)
+            # temp_files.append(caller_log_file)
+            # caller_log = open(caller_log_file, "w")
+            caller_log.write("""## SLOW FREEBAYES CALLING
+## Calling each variant position separately, as some versions of Freebayes sometimes fail with --targets
+""")
             fin = open(interval_file, "r")
             for line in fin:
                 bits = line.strip("\n").split("\t")
@@ -1050,72 +1052,115 @@ Check caller log: %s
                                str(DP_THRESH)]
                 varcall_cmd += ["--report-all-haplotype-alleles",
                                 "--report-monomorphic", in_bam]
+                caller_log.write("FREEBAYES COMMAND:\n" + " ".join(varcall_cmd))
                 if args.verbose:
                     print "Freebayes variant-calling command:"
                     print " ".join(varcall_cmd)
-                varcall_proc = subprocess.Popen(varcall_cmd, stdout=subprocess.PIPE, stderr=STDERR_)
+
+                varcall_proc = subprocess.Popen(varcall_cmd, stdout=subprocess.PIPE, stderr=caller_log)
+                varcall_proc.communicate()
+
+                # write output, this is different to fastfreebayes,
+                # because we need to strip the header lines after the first call
+                have_header = False
                 for line in varcall_proc.stdout:
                     if line.startswith("#"):
+                        have_header = True
                         if write_header:
                             fout.write(line)
                     else:
                         if args.verbose:
                             print line.strip("\n")
                         fout.write(line)
-                write_header = False
+                # only switch write_header to False after confirming that header lines have been written once
+                if have_header:
+                    write_header = False
+
+                # if a call failed
+                if varcall_proc.returncode != 0:
+                    fout.close()
+                    caller_log.close()
+                    print_caller_failure_message(" ".join(varcall_cmd), caller_log_file)
+                    exit(1)
+
+            if args.verbose:
+                print "\nVariant calling successful.\n\n"
             fout.close()
-
-
 
     # ----------------------------------------------------------
     # Genotype calling with VarScan2
     elif args.caller == "varscan":
+
+        # Generate pileup with samtools
+        if args.verbose:
+            "Generate pileup using samtools.\n"
         pup_file = pup_list[i]
-        fout = open(pup_file, "w")
+        pup_out = open(pup_file, "w")
+        pileup_log_file = os.path.join(SCRATCH_DIR, "samtools_mpileup.log")
+        pileup_log = open(pileup_log_file, "w")
+        temp_files.append(pileup_log_file)
+
         # First need to do a pileup
         # not using the -l option in samtools mpileup because it doesn't seem to
         #   use indexed random BAM access, so ends up being much slower
-        itv_list = []
         fin = open(interval_file, "r")
         for line in fin:
             region_str = line.strip("\n")
-            sam_cmd = [SAMTOOLS, "mpileup", "-r", region_str, "-B", "-f",
-                       ref, in_bam]
+            sam_cmd = [SAMTOOLS, "mpileup", "-r", region_str, "-B", "-f", ref, in_bam]
             if args.verbose:
                 print "pileup command:\n%s" % " ".join(sam_cmd)
-            sam_proc = subprocess.Popen(sam_cmd, stdout=subprocess.PIPE,
-                                        stderr=STDERR_)
+            sam_proc = subprocess.Popen(sam_cmd, stdout=subprocess.PIPE, stderr=pileup_log)
+
+            # write samtools mpileup output
             for line in sam_proc.stdout:
+                if args.verbose:
+                    print line
                 bits = line.strip("\n").split("\t")
                 if int(bits[3]) < args.dp_threshold:
                     continue
-                fout.write(line)
+                pup_out.write(line)
+            sam_proc.communicate()
+
+            # catch errors
+            if sam_proc.returncode != 0:
+                pup_out.close()
+                pileup_log.close()
+                print_caller_failure_message(" ".join(varcall_cmd), caller_log_file)
+                exit(1)
+            pup_out.close()
+            pileup_log.close()
 
         # calling with varscan
-        varscan_cmd = [JAVA, "-XX:ParallelGCThreads=1",
+        fout = open(out_vcf, "w")
+        varcall_cmd = [JAVA, "-XX:ParallelGCThreads=1",
                        "-Xmx%dg" % VARSCAN_MEM, "-jar", VARSCAN,
                        "mpileup2snp", pup_file,
                        "--output-vcf", "--min-coverage", str(DP_THRESH) ]
         if args.verbose:
             print "Varscan command:\n%s" % " ".join(varscan_cmd)
-        fout = open(out_vcf, "w")
-        varscan_proc = subprocess.Popen(varscan_cmd, stdout=subprocess.PIPE,
-                                        stderr=STDERR_)
-        for line in varscan_proc.stdout:
-            fout.write(line)
-        fout.close()
-    # ----------------------------------------------------------
-    # need to re-sort VCF file if genome has 'chr'
-    # as the bam file chr order is not the same as the reference
+        varcall_proc = subprocess.Popen(varcall_cmd, stdout=fout, stderr=caller_log)
+        varcall_proc.communicate()
 
-WILL FAIL HERE
+        caller_log.close()
+        if args.verbose:
+            fin = open(caller_log_file, "r")
+            for line in fin:
+                print line.strip()
 
-    if has_chr:
-        old_vcf = out_vcf + ".bak"
-        new_vcf = out_vcf
-        os.rename(out_vcf, old_vcf)
-        ref_idx = ref + ".fai"
-        sort_vcf_by_chrom_order(old_vcf, new_vcf, ref_idx)
+        # check calling was successful
+        if varcall_proc.returncode != 0:
+            fout.close()
+            caller_log.close()
+            print_caller_failure_message(" ".join(varcall_cmd), caller_log_file)
+            exit(1)
+        else:
+            fout.close()
+            if args.verbose:
+                print "\nVariant calling successful.\n\n"
+
+    # ----------------------------------------------------
+
+
 
 if args.verbose:
     print """
@@ -1154,15 +1199,16 @@ if args.verbose:
     print "Converting VCF to table"
 
 for i in [0,1]:
+    # if cached
     if BATCH_USE_CACHED:
         if cached_list[i]:
             if args.verbose:
                 print "BAM %d has cached genotype data" % (i+1)
             continue
+    # otherwise, convert
     in_vcf  = vcf_list[i]
     out_tsv = tsv_list[i]
     in_bam  = bam_list[i]
-    has_chr = haschr_list[i]
     ref     = ref_list[i]
 
     if args.verbose:
@@ -1170,7 +1216,6 @@ for i in [0,1]:
 input bam:  %s
 reference:  %s
 """ % (in_bam, ref)
-
     VCFtoTSV(in_vcf, out_tsv, args.caller)
 
 

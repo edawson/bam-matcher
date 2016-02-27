@@ -394,7 +394,16 @@ Specified path for %s (%s) is not writable.
 
 
 
+def print_caller_failure_message(call_cmd, logfile_):
+    print """%s
+Variant calling failed.
 
+Caller command:
+%s
+
+Check caller log: %s
+
+""" % (CALLER_ERROR, call_cmd, logfile_)
 
 
 
