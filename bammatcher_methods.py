@@ -83,6 +83,8 @@ def VCFtoTSV(invcf, outtsv, caller):
     fout = open(outtsv, "w")
     vcf_in = vcf.Reader(open(invcf, "r"))
 
+    var_ct = 0
+
     if caller == "gatk" or caller == "varscan":
         fields_to_extract = ["CHROM", "POS", "REF", "ALT", "QUAL", "DP", "AD", "GT"]
     elif caller == "freebayes":
@@ -123,7 +125,9 @@ def VCFtoTSV(invcf, outtsv, caller):
 
         data_bits = [chrom_, pos_, ref_, alt_str, qual_, dp_, ad_str, gt_]
         fout.write("%s\n" % "\t".join(data_bits))
+        var_ct += 1
     fout.close()
+    return var_ct
 
 # GENOTYPE COMPARISON FUNCTIONS
 def is_hom(gt):

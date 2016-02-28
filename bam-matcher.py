@@ -232,8 +232,8 @@ CACHE_DIR      = fetch_config_value(config, "BatchOperations", "CACHE_DIR")
 BATCH_RECALCULATE = False
 BATCH_USE_CACHED  = True
 BATCH_WRITE_CACHE = True
-JUDGE_THRESHOLD   = 0.95
-RNA_THRESHOLD     = 0.9
+# JUDGE_THRESHOLD   = 0.95
+# RNA_THRESHOLD     = 0.9
 
 # don't write anything to standard output if not verbose
 STDERR_ = open("/dev/null", "w")
@@ -350,7 +350,7 @@ CHECKING SETTINGS AND PARAMETERS
 # Variants file
 
 # is it overridden by args?
-if args.vcf: VCF_FILE = args.vcf
+if args.vcf: VCF_FILE = os.path.abspath(args.vcf)
 
 # is it specified?
 if VCF_FILE == "":
@@ -812,6 +812,7 @@ Using cached data for both BAM files, so don't need to test caller.
 #-------------------------------------------------------------------------------
 # generating intervals file for variant calling - only required if not using cached data
 # VCF_FILE, NUMBER_OF_SNPS
+interval_files_list = []
 if bam1_is_cached == False or bam2_is_cached == False:
     if args.verbose:
         print "Creating intervals file"
@@ -842,10 +843,9 @@ if bam1_is_cached == False or bam2_is_cached == False:
 
 # check intervals files
 # if they are empty, then something is wrong
-
-for i in [0, 1]:
-    if os.path.getsize(interval_files_list[i]) == 0:
-        print """%s
+    for i in [0, 1]:
+        if os.path.getsize(interval_files_list[i]) == 0:
+            print """%s
 No intervals were extracted from variants list.
 Genotype calling have no targets and will either fail or generate an empty VCF file.
 
@@ -860,7 +860,7 @@ Default genome reference:   %s
 Alternate genome reference: %s
 chromosome map:             %s
 """ % (CONFIG_ERROR, VCF_FILE, REFERENCE, REF_ALTERNATE, CHROM_MAP)
-        exit(1)
+            exit(1)
 
 
 #-------------------------------------------------------------------------------
@@ -1179,7 +1179,18 @@ for i in [0,1]:
     # otherwise, convert
     in_vcf  = vcf_list[i]
     out_tsv = tsv_list[i]
-    VCFtoTSV(in_vcf, out_tsv, args.caller)
+    variants_wrote = VCFtoTSV(in_vcf, out_tsv, args.caller)
+
+    # write a warning if no variants were written
+    if variants_wrote == 0:
+        print """%s
+No genotype data were called for BAM%d (%s).
+
+You may need to check the variant list.
+""" % (WARNING_MSG, i+1, bam_list[i])
+
+
+
 
 #-------------------------------------------------------------------------------
 if BATCH_USE_CACHED:
@@ -1243,7 +1254,7 @@ for line in fin:
 fout = open(bam1_var, "w")
 fin = open(tsv1, "r")
 for line in fin:
-    if line.startswith("CHROM"):
+    if line.startswith("CHROM\t"):
         continue
     bits = line.strip("\n").split("\t")
     out_line = "%s\t%s\t%s\t%s\t%s\n" % (bits[0], bits[1], bits[2], bits[3], bits[7])
@@ -1257,7 +1268,7 @@ fout.close()
 fout = open(bam2_var, "w")
 fin = open(tsv2, "r")
 for line in fin:
-    if line.startswith("CHROM"):
+    if line.startswith("CHROM\t"):
         continue
     bits = line.strip("\n").split("\t")
     out_line = "%s\t%s\t%s\t%s\t%s\n" % (bits[0], bits[1], bits[2], bits[3],
@@ -1269,21 +1280,7 @@ for line in fin:
 fout.close()
 
 #-------------------------------------------------------------------------------
-# However, bam1_var and bam2_var may still be sorted differently
-# so sort to the same way
-# for fvar in [bam1_var, bam2_var]:
-#     f_sorted = os.path.join(SCRATCH_DIR, "sorted_variants_file")
-#     sort_cmd = "sort -k1n -k2n '%s' > '%s' " % (fvar, f_sorted)
-#     if args.verbose:
-#         print sort_cmd
-#     sort_proc = subprocess.Popen([sort_cmd], shell=True, stdout=subprocess.PIPE,
-#                                  stderr=STDERR_)
-#     sort_proc.communicate()
-#     shutil.copy(f_sorted, fvar)
-
-#-------------------------------------------------------------------------------
 # Results variables
-
 comm_het_ct = 0
 comm_hom_ct = 0
 diff_hom_ct = 0
@@ -1331,7 +1328,6 @@ for pos_ in pos_list:
             comm_het_ct += 1
     else:
         ct_diff += 1
-
         # both are hom and different
         if is_hom(gt1) and is_hom(gt2):
             diff_hom_ct += 1
@@ -1341,13 +1337,11 @@ for pos_ in pos_list:
         # one is hom, one is het, test for subset
         elif is_hom(gt1):
             if is_subset(gt1, gt2):
-#                print "%s is a subset of %s" % (gt1, gt2)
                 diff_1sub2_ct += 1
             else:
                 diff_hom_het_ct += 1
         elif is_hom(gt2):
             if is_subset(gt2, gt1):
-#                print "%s is a subset of %s" % (gt2, gt1)
                 diff_2sub1_ct += 1
             else:
                 diff_het_hom_ct += 1
@@ -1355,31 +1349,26 @@ for pos_ in pos_list:
 
 
 
-
-
-
-
 #===============================================================================
-# write reports
+# DETERMINING COMPARISON OUTCOME AND WRITE REPORT
 #===============================================================================
+
+if args.verbose:
+    print """
+#===============================================================================
+# DETERMINING COMPARISON OUTCOME AND WRITE REPORT
+#===============================================================================
+"""
+
+JUDGE_THRESHOLD   = 0.95
+RNA_THRESHOLD     = 0.9
 
 if args.verbose:
     print "Writing output report"
 total_compared = ct_common + ct_diff
-frac_common = float(ct_common)/total_compared
-
-
-
-
-
-# SAME PATIENT
-# JUDGE_THRESHOLD = 0.95
-# frac_common >= threshold & total_compared >= 50
-
-# POSSIBLE RNA?
-# check ratio of 1het-2sub and 1sub-2het
-
-# frac_common <= 0.70 & total_compared >= 50
+frac_common = 0
+if total_compared >0:
+    frac_common = float(ct_common)/total_compared
 
 # determine whether they are from the same patient
 judgement = "DIFFERENT SOURCES"
@@ -1387,32 +1376,20 @@ short_judgement = "Diff"
 if frac_common >= JUDGE_THRESHOLD:
     judgement = "SAME SOURCE"
     short_judgement = "Same"
-
-
-
-
-# but RNA-seq data...
-# 1sub2 or 2sub should account for most of the differences in ct_diff
-
-# p_1sub2 = pvalue(total_compared, diff_1sub2_ct, total_compared, ct_diff)
-# p_2sub1 = pvalue(total_compared, diff_2sub1_ct, total_compared, ct_diff)
 else:
-    if float(diff_1sub2_ct)/ct_diff >= RNA_THRESHOLD:
-        judgement = "Probably same sample. BAM1 is likely RNA-seq data of the same sample"
-        short_judgement = "Same (BAM1=RNA)"
-    if float(diff_2sub1_ct)/ct_diff >= RNA_THRESHOLD:
-        judgement = "Probably same sample. BAM2 is likely RNA-seq data of the same sample"
-        short_judgement = "Same (BAM2=RNA)"
+    if ct_diff > 0:
+        if float(diff_1sub2_ct)/ct_diff >= RNA_THRESHOLD:
+            judgement = "Probably same sample. BAM1 is likely RNA-seq data of the same sample"
+            short_judgement = "Same (BAM1=RNA)"
+        if float(diff_2sub1_ct)/ct_diff >= RNA_THRESHOLD:
+            judgement = "Probably same sample. BAM2 is likely RNA-seq data of the same sample"
+            short_judgement = "Same (BAM2=RNA)"
+    else:
+        judgement = "DIFFERENT SOURCES"
+        short_judgement = "Diff"
 
-
-
-
-
-
-
+# -------------------------------------------------------------
 # STANDARD FORMAT
-
-# assume that the most space required is 4 digits,
 # so pad numeric string to 6 spaces
 diff_hom = ("%d" % diff_hom_ct).rjust(5)
 diff_het = ("%d" % diff_het_ct).rjust(5)
@@ -1451,6 +1428,7 @@ CONCLUSION: %s
         ct_diff, diff_het, diff_hom_het, diff_1sub2, diff_het_hom, diff_hom, diff_2sub1,
         total_compared, frac_common, ct_common, total_compared, judgement)
 
+# -------------------------------------------------------------
 # SHORT FORMAT
 short_report_str = """# BAM1\t BAM2\t DP_thresh\t FracCommon\t Same\t Same_hom\t Same_het\t Different\t 1het-2het\t 1het-2hom\t 1het-2sub\t 1hom-2het\t 1hom-2hom\t 1sub-2het\t Conclusion
 %s\t%s\t%d\t%f\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s""" % (bam1_path,
@@ -1458,6 +1436,7 @@ short_report_str = """# BAM1\t BAM2\t DP_thresh\t FracCommon\t Same\t Same_hom\t
        ct_diff, diff_het_ct, diff_het_hom_ct, diff_2sub1_ct, diff_hom_het_ct,
        diff_hom_ct, diff_1sub2_ct, short_judgement)
 
+# -------------------------------------------------------------
 # HTML FORMAT
 if args.html:
     html_bam1_cached = "recalculated"
