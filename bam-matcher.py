@@ -516,7 +516,7 @@ already a default genome reference speficied.
 
 # overriding config REFERENCE
 if args.reference != None:
-    REFERENCE = args.reference
+    REFERENCE = os.path.abspath(args.reference)
     print """%s
 --reference/-R argument overrides config setting (REFERENCE).
 Default reference = %s
@@ -524,7 +524,7 @@ Default reference = %s
 
 # overriding config REF_ALTERNATE
 if args.ref_alternate != None:
-    REF_ALTERNATE = args.ref_alternate
+    REF_ALTERNATE = os.path.abspath(args.ref_alternate)
     print """%s
 --ref-alternate/-R2 argument overrides config setting (REF_ALTERNATE).
 Alternate reference = %s
@@ -831,13 +831,10 @@ print "BAM2 is cached:", bam2_is_cached
 if bam1_is_cached == False or bam2_is_cached==False:
     if args.verbose:
         print "\n---------------\nChecking caller\n---------------"
-
     if args.caller == "freebayes" and not JAVA:
         print "%s\nJava command was not specified.\nDo this in the configuration file" % CONFIG_ERROR
         sys.exit(1)
-
     caller_check_log = os.path.join(SCRATCH_DIR, "caller_check.log")
-
     if args.caller == "gatk":
         check_caller(args.caller, GATK,      JAVA, args.verbose, logfile=caller_check_log)
     elif args.caller == "freebayes":
@@ -854,12 +851,9 @@ Checking caller
 ---------------
 Using cached data for both BAM files, so don't need to test caller.
 """
-
-
 #-------------------------------------------------------------------------------
 # generating intervals file for variant calling - only required if not using cached data
 # VCF_FILE, NUMBER_OF_SNPS
-
 if bam1_is_cached == False or bam2_is_cached == False:
     if args.verbose:
         print "Creating intervals file"
@@ -882,7 +876,6 @@ if bam1_is_cached == False or bam2_is_cached == False:
                 convert_vcf_to_intervals(VCF_FILE, bam2_itv, 0, NUMBER_OF_SNPS, args.caller)
             else:
                 convert_vcf_to_intervals(VCF_FILE, bam2_itv, 0, NUMBER_OF_SNPS, args.caller, cmap=MAP_DEF2ALT)
-
         # else, assume that both are mapped to REFERENCE
         else:
             convert_vcf_to_intervals(VCF_FILE, bam1_itv, 0, NUMBER_OF_SNPS, args.caller)
@@ -900,13 +893,13 @@ if bam1_is_cached == False or bam2_is_cached == False:
 
 #-------------------------------------------------------------------------------
 # Caller output files
+if args.verbose:
+    print "\n----------------\nCalling variants\n----------------"
 vcf1 = os.path.join(SCRATCH_DIR, "bam1.vcf")
 vcf2 = os.path.join(SCRATCH_DIR, "bam2.vcf")
-
 # pileup files, for VarScan
 pup1 = os.path.join(SCRATCH_DIR, "bam1.pileup")
 pup2 = os.path.join(SCRATCH_DIR, "bam2.pileup")
-
 # lists
 bam_list           = [args.bam1, args.bam2]
 vcf_list           = [vcf1, vcf2]
@@ -914,7 +907,6 @@ pup_list           = [pup1, pup2]
 ref_list           = [bam1_ref, bam2_ref]
 cached_list        = [bam1_is_cached, bam2_is_cached]
 cache_path_list    = [bam1_cache_path, bam2_cache_path]
-
 # add temp files
 temp_files += [vcf1, vcf2]
 temp_files.append(vcf1+".idx")
@@ -925,10 +917,6 @@ temp_files += pup_list
 # even though this is possible for some callers, because:
 # 1. If the sample names are the same, this causes problems for GATK
 # 2. They may have been mapped to different reference files
-
-if args.verbose:
-    print "\n----------------\nCalling variants\n----------------"
-
 for i in [0,1]:
     if args.verbose:
         print "\nGenotype calling for BAM %d" % (i+1)
@@ -942,13 +930,11 @@ for i in [0,1]:
     ref = ref_list[i]
     interval_file = interval_files_list[i]
     if args.verbose:
-        print "input bam: \t%s" % in_bam
-        print "output vcf:\t%s" % out_vcf
-
+        print "input bam: \t%s\noutput vcf:\t%s" % (in_bam, out_vcf)
+    # set up caller log file
     caller_log_file = os.path.join(SCRATCH_DIR, "caller%d.log" % i)
     temp_files.append(caller_log_file)
     caller_log = open(caller_log_file, "w")
-
     # ----------------------------------------------------------
     # Genotype calling with GATK
     if args.caller == "gatk":
@@ -959,15 +945,13 @@ for i in [0,1]:
         varcall_cmd += ["--output_mode", "EMIT_ALL_SITES", "-nt", str(GATK_NT),
                         "-L", interval_file]
         if args.verbose:
-            print "\nGATK variant-calling command\n(space in path not escaped \
-here, but should be fine in actual call command):\n"
+            print "\nGATK variant-calling command (space in path not escaped here, but should be fine in actual call command):\n"
             print " ".join(varcall_cmd) + "\n"
-
         varcall_proc = subprocess.Popen(varcall_cmd, stdout=subprocess.PIPE, stderr=caller_log)
         varcall_proc.communicate()
         varcall_proc_returncode = varcall_proc.returncode
-
         caller_log.close()
+
         if args.verbose:
             fin = open(caller_log_file, "r")
             for line in fin:
@@ -975,7 +959,6 @@ here, but should be fine in actual call command):\n"
 
         # check calling was successful
         if varcall_proc_returncode != 0:
-            caller_log.close()
             print_caller_failure_message(" ".join(varcall_cmd), caller_log_file)
             exit(1)
         else:
@@ -992,18 +975,16 @@ here, but should be fine in actual call command):\n"
             varcall_cmd = [FREEBAYES, "--fasta-reference", ref, "--targets",
                            interval_file, "--no-indels", "--min-coverage",
                            str(DP_THRESH)]
-            varcall_cmd += ["--report-all-haplotype-alleles",
-                            "--report-monomorphic", in_bam]
+            varcall_cmd += ["--report-all-haplotype-alleles", "--report-monomorphic", in_bam]
             if args.verbose:
-                print "Freebayes variant-calling command:"
-                print " ".join(varcall_cmd)
+                print "Freebayes variant-calling command:\n" + " ".join(varcall_cmd)
 
             varcall_proc = subprocess.Popen(varcall_cmd, stdout=fout, stderr=caller_log)
             varcall_proc.communicate()
             varcall_proc_returncode = varcall_proc.returncode
             fout.close()
-
             caller_log.close()
+
             if args.verbose:
                 fin = open(caller_log_file, "r")
                 for line in fin:
@@ -1011,23 +992,15 @@ here, but should be fine in actual call command):\n"
 
             # check calling was successful
             if varcall_proc_returncode != 0:
-                fout.close()
-                caller_log.close()
                 print_caller_failure_message(" ".join(varcall_cmd), caller_log_file)
                 exit(1)
             else:
-                fout.close()
                 if args.verbose:
                     print "\nVariant calling successful.\n\n"
-
         else:
         # -----------------------
         # slow Freebayes,calling each site separately
             write_header = True
-
-            # caller_log_file = os.path.join(SCRATCH_DIR, "caller%d.log" % i)
-            # temp_files.append(caller_log_file)
-            # caller_log = open(caller_log_file, "w")
             caller_log.write("""## SLOW FREEBAYES CALLING
 ## Calling each variant position separately, as some versions of Freebayes sometimes fail with --targets
 """)
@@ -1040,13 +1013,10 @@ here, but should be fine in actual call command):\n"
                 varcall_cmd = [FREEBAYES, "--fasta-reference", ref, "--region",
                                region_str, "--no-indels", "--min-coverage",
                                str(DP_THRESH)]
-                varcall_cmd += ["--report-all-haplotype-alleles",
-                                "--report-monomorphic", in_bam]
+                varcall_cmd += ["--report-all-haplotype-alleles", "--report-monomorphic", in_bam]
                 caller_log.write("FREEBAYES COMMAND:\n" + " ".join(varcall_cmd))
                 if args.verbose:
-                    print "Freebayes variant-calling command:"
-                    print " ".join(varcall_cmd)
-
+                    print "Freebayes variant-calling command:\n" + " ".join(varcall_cmd)
                 varcall_proc = subprocess.Popen(varcall_cmd, stdout=subprocess.PIPE, stderr=caller_log)
                 varcall_proc.communicate()
 
@@ -1073,9 +1043,10 @@ here, but should be fine in actual call command):\n"
                     print_caller_failure_message(" ".join(varcall_cmd), caller_log_file)
                     exit(1)
 
+            fout.close()
+            caller_log.close()
             if args.verbose:
                 print "\nVariant calling successful.\n\n"
-            fout.close()
 
     # ----------------------------------------------------------
     # Genotype calling with VarScan2
@@ -1115,9 +1086,8 @@ here, but should be fine in actual call command):\n"
             if sam_proc.returncode != 0:
                 pup_out.close()
                 pileup_log.close()
-                print_caller_failure_message(" ".join(varcall_cmd), caller_log_file)
+                print_caller_failure_message(" ".join(sam_cmd), caller_log_file)
                 exit(1)
-
         pup_out.close()
         pileup_log.close()
 
@@ -1132,6 +1102,7 @@ here, but should be fine in actual call command):\n"
         varcall_proc = subprocess.Popen(varcall_cmd, stdout=fout, stderr=caller_log)
         varcall_proc.communicate()
 
+        fout.close()
         caller_log.close()
         if args.verbose:
             fin = open(caller_log_file, "r")
@@ -1145,7 +1116,6 @@ here, but should be fine in actual call command):\n"
             print_caller_failure_message(" ".join(varcall_cmd), caller_log_file)
             exit(1)
         else:
-            fout.close()
             if args.verbose:
                 print "\nVariant calling successful.\n\n"
     # ----------------------------------------------------
@@ -1169,6 +1139,11 @@ Variant-calling finished
 # Comparing variant data
 #===============================================================================
 
+tsv1 = os.path.join(SCRATCH_DIR, "bam1.tsv")
+tsv2 = os.path.join(SCRATCH_DIR, "bam2.tsv")
+tsv_list = [tsv1, tsv2]
+temp_files += tsv_list
+
 if args.verbose:
     print """
 ================================================================================
@@ -1177,15 +1152,52 @@ GENOTYPE DATA COMPARISON
 """
 
 #-------------------------------------------------------------------------------
-# extract relevant VCF data into TSV files
-tsv1 = os.path.join(SCRATCH_DIR, "bam1.tsv")
-tsv2 = os.path.join(SCRATCH_DIR, "bam2.tsv")
-tsv_list = [tsv1, tsv2]
-temp_files += tsv_list
-
+# 1. convert and reorder VCF file to REFERENCE
 if args.verbose:
     print "Converting VCF to table"
 
+# convert and re-order
+# only need to do this if alternate reference is used
+if using_chrom_map:
+    _, _, _, MAP_ALT2DEF = get_chrom_data_from_map(CHROM_MAP)
+
+    for i in [0, 1]:
+        # don't bother if using cached
+        if cached_list[i] == True:
+            continue
+
+        # only necessary if not using REFREENCE
+        if ref_list[i] == REFERENCE:
+            continue
+
+        # converting chrom names
+        ftemp = os.path.join(SCRATCH_DIR, "temp_file")
+        temp_files.append(ftemp)
+        fout = open(ftemp, "w")
+        fin = open(vcf_list[i])
+        for line in fin:
+            # ignore contig information, as we are changing reference
+            if line.startswith("##contig="):
+                continue
+            elif line.startswith("##reference=file://"):
+                fout.write("##reference=file://" + REFERENCE + "\n")
+            elif line.startswith("#"):
+                fout.write(line)
+            else:
+                bits = line.strip().split("\t")
+                bits[0] = MAP_ALT2DEF[bits[0]]
+                fout.write("\t".join(bits) + "\n")
+        fout.close()
+
+        shutil.copyfile(vcf_list[i], vcf_list[i]+".original")
+        temp_files.append(vcf_list[i]+".original")
+        # re-sorting VCF file
+        sort_vcf_by_chrom_order(ftemp, vcf_list[i], REFERENCE+".fai")
+
+
+
+#-------------------------------------------------------------------------------
+# extract relevant VCF data into TSV files
 for i in [0,1]:
     # if cached
     if BATCH_USE_CACHED:
@@ -1206,29 +1218,8 @@ reference:  %s
 """ % (in_bam, ref)
     VCFtoTSV(in_vcf, out_tsv, args.caller)
 
-
-if args.verbose:
-    print "removing chr from tsv files"
-
-for i, tsv in enumerate(tsv_list):
-    if BATCH_USE_CACHED:
-        if cached_list[i]:
-            if args.verbose:
-                print "BAM %d has cached genotype data" % (i+1)
-            continue
-    f_temp = os.path.join(SCRATCH_DIR, "temp_file")
-    fin = open(tsv, "r")
-    fout = open(f_temp, "w")
-    for line in fin:
-        fout.write(line.lstrip("chr"))
-    fout.close()
-    os.rename(f_temp, tsv)
-if args.verbose:
-    print "Finished VCF conversion"
-
 #-------------------------------------------------------------------------------
 # Cache the tsv files
-
 if BATCH_USE_CACHED:
     if bam1_is_cached:
         tsv1 = bam1_cache_path
@@ -1256,7 +1247,6 @@ bam2_var = os.path.join(SCRATCH_DIR, "bam2.variants")
 var_list = {}
 common_vars = {}
 temp_files += [bam1_var, bam2_var]
-
 #-------------------------------------------------------------------------------
 # first get list of passed variants in bam1
 fin = open(tsv1, "r")
@@ -1272,7 +1262,6 @@ for line in fin:
     else:
         # add variants to list
         var_list["\t".join(bits[:4])] = 1
-
 #-------------------------------------------------------------------------------
 # then parse second tsv file to get list of variants that passed in both bams
 fin = open(tsv2, "r")
@@ -1280,11 +1269,9 @@ for line in fin:
     if line.startswith("CHROM\t"):
         continue
     bits = line.strip("\n").split("\t")
-
     var_ = "\t".join(bits[:4])
     if var_ in var_list:
         var_list[var_] = 2
-
 #-------------------------------------------------------------------------------
 # write out bam1 variants
 fout = open(bam1_var, "w")
@@ -1293,14 +1280,12 @@ for line in fin:
     if line.startswith("CHROM"):
         continue
     bits = line.strip("\n").split("\t")
-    out_line = "%s\t%s\t%s\t%s\t%s\n" % (bits[0], bits[1], bits[2],
-                                         bits[3], bits[7])
+    out_line = "%s\t%s\t%s\t%s\t%s\n" % (bits[0], bits[1], bits[2], bits[3], bits[7])
     var_ = "\t".join(bits[:4])
     if var_ in var_list:
         if var_list[var_] == 2:
             fout.write(out_line)
 fout.close()
-
 #-------------------------------------------------------------------------------
 # write out bam2 variants
 fout = open(bam2_var, "w")
@@ -1321,8 +1306,6 @@ fout.close()
 # However, bam1_var and bam2_var may still be sorted differently
 # so sort to the same way
 for fvar in [bam1_var, bam2_var]:
-#    f_sorted = os.path.join(SCRATCH_DIR,
-#                            "%s.sorted_variants_file" % vcf_random_str)
     f_sorted = os.path.join(SCRATCH_DIR, "sorted_variants_file")
     sort_cmd = "sort -k1n -k2n '%s' > '%s' " % (fvar, f_sorted)
     if args.verbose:
