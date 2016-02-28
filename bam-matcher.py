@@ -780,8 +780,9 @@ bam2_is_cached = os.access(bam2_cache_path, os.R_OK)
 if BATCH_USE_CACHED == False:
     bam1_is_cached = False
     bam2_is_cached = False
-print "BAM1 is cached:", bam1_is_cached
-print "BAM2 is cached:", bam2_is_cached
+if args.verbose:
+    print "BAM1 is cached:", bam1_is_cached
+    print "BAM2 is cached:", bam2_is_cached
 
 # Only check callers if not using cached data
 # Test caller binaries
@@ -890,7 +891,8 @@ temp_files += pup_list
 # 2. They may have been mapped to different reference files
 for i in [0,1]:
     if args.verbose:
-        print "\nGenotype calling for BAM %d" % (i+1)
+        print "\nGenotype calling for BAM %d\n--------------------------" % (i+1)
+
     if BATCH_USE_CACHED:
         if cached_list[i]:
             if args.verbose:
@@ -1168,7 +1170,7 @@ if using_chrom_map:
 #-------------------------------------------------------------------------------
 # extract relevant VCF data into TSV files
 for i in [0,1]:
-    # if cached
+    # if cached then ignore
     if BATCH_USE_CACHED:
         if cached_list[i]:
             if args.verbose:
@@ -1177,24 +1179,16 @@ for i in [0,1]:
     # otherwise, convert
     in_vcf  = vcf_list[i]
     out_tsv = tsv_list[i]
-    in_bam  = bam_list[i]
-    ref     = ref_list[i]
-
-    if args.verbose:
-        print """
-input bam:  %s
-reference:  %s
-""" % (in_bam, ref)
     VCFtoTSV(in_vcf, out_tsv, args.caller)
 
 #-------------------------------------------------------------------------------
-# Cache the tsv files
 if BATCH_USE_CACHED:
     if bam1_is_cached:
         tsv1 = bam1_cache_path
     if bam2_is_cached:
         tsv2 = bam2_cache_path
 
+# Cache the tsv files, only if not using cached file
 if BATCH_WRITE_CACHE:
     for i in [0,1]:
         if cached_list[i] == False:
@@ -1202,8 +1196,8 @@ if BATCH_WRITE_CACHE:
                 if args.verbose:
                     print "copying BAM%d variant calling data to %s" % ( (i+1), cache_path_list[i])
                 shutil.copyfile(tsv_list[i], cache_path_list[i])
-            except IOError, e:
-                print "Unable to write cache results for BAM%d" % (i+1)
+            except IOError as e:
+                print "%s\nUnable to write cache results for BAM%d" % (FILE_ERROR, i+1)
                 print "Python error msg:", e
                 sys.exit(1)
 
@@ -1216,6 +1210,7 @@ bam2_var = os.path.join(SCRATCH_DIR, "bam2.variants")
 var_list = {}
 common_vars = {}
 temp_files += [bam1_var, bam2_var]
+
 #-------------------------------------------------------------------------------
 # first get list of passed variants in bam1
 fin = open(tsv1, "r")
@@ -1231,6 +1226,7 @@ for line in fin:
     else:
         # add variants to list
         var_list["\t".join(bits[:4])] = 1
+
 #-------------------------------------------------------------------------------
 # then parse second tsv file to get list of variants that passed in both bams
 fin = open(tsv2, "r")
@@ -1241,6 +1237,7 @@ for line in fin:
     var_ = "\t".join(bits[:4])
     if var_ in var_list:
         var_list[var_] = 2
+
 #-------------------------------------------------------------------------------
 # write out bam1 variants
 fout = open(bam1_var, "w")
@@ -1274,15 +1271,15 @@ fout.close()
 #-------------------------------------------------------------------------------
 # However, bam1_var and bam2_var may still be sorted differently
 # so sort to the same way
-for fvar in [bam1_var, bam2_var]:
-    f_sorted = os.path.join(SCRATCH_DIR, "sorted_variants_file")
-    sort_cmd = "sort -k1n -k2n '%s' > '%s' " % (fvar, f_sorted)
-    if args.verbose:
-        print sort_cmd
-    sort_proc = subprocess.Popen([sort_cmd], shell=True, stdout=subprocess.PIPE,
-                                 stderr=STDERR_)
-    sort_proc.communicate()
-    shutil.copy(f_sorted, fvar)
+# for fvar in [bam1_var, bam2_var]:
+#     f_sorted = os.path.join(SCRATCH_DIR, "sorted_variants_file")
+#     sort_cmd = "sort -k1n -k2n '%s' > '%s' " % (fvar, f_sorted)
+#     if args.verbose:
+#         print sort_cmd
+#     sort_proc = subprocess.Popen([sort_cmd], shell=True, stdout=subprocess.PIPE,
+#                                  stderr=STDERR_)
+#     sort_proc.communicate()
+#     shutil.copy(f_sorted, fvar)
 
 #-------------------------------------------------------------------------------
 # Results variables
