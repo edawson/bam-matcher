@@ -544,20 +544,6 @@ DEFAULT   ALTERNATE
 - chromosome names in 'DEFAULT' column  must match the chromosome names in the
   genome reference file, and 'ALTERNATE' match the alternate reference
 
-
-Chromosome map is also required when using --bam1-reference and --bam2-reference
-and when these two genome references are not the same. The format is similar
-
-REF1     REF2
-1        chr1
-11       chr11
-2        chr2
-3        chr3
-...etc
-
-The order of the columns won't matter, BAM-matcher will attempt to match the
-set of chromosome names to the correct genome reference.
-
 Notes:
 1. The input variants VCF file should be referencing the default genome reference
 (--reference/-R). Efforts have been made to resolve the hg19 "chr"

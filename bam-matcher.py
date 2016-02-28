@@ -95,19 +95,23 @@ def handle_args():
     parser_grp6.add_argument("--ref-alternate", "-R2",  required=False,
                              help="Alternate reference fasta file. Needs to be \
                              indexed with samtools faidx. Overrides config settings.")
-    parser_grp6.add_argument("--bam1-reference", "-B1R", required=False,
-                             help="Reference fasta file for BAM1. Requires \
-                             --bam2-reference/-B2R, overrides all other settings \
-                             (i.e. will ignore default or alternate reference if specified).")
-    parser_grp6.add_argument("--bam2-reference", "-B2R", required=False,
-                             help="Reference fasta file for BAM2. Requires \
-                             --bam1-reference/-B1R, overrides other settings \
-                             (i.e. will ignore default or alternate reference if specified).")
     parser_grp6.add_argument("--chromosome-map", "-M", required=False,
                              help="Required when using alternate reference. \
                              Run BAM-matcher with --about-alternate-ref for more details.")
     parser_grp6.add_argument("--about-alternate-ref", "-A", required=False,
                              help="Print information about using --alternate-ref and --chromosome-map")
+
+    # THESE WILL BE DEPRECATED
+    # parser_grp6.add_argument("--bam1-reference", "-B1R", required=False,
+    #                          help="Reference fasta file for BAM1. Requires \
+    #                          --bam2-reference/-B2R, overrides all other settings \
+    #                          (i.e. will ignore default or alternate reference if specified).")
+    # parser_grp6.add_argument("--bam2-reference", "-B2R", required=False,
+    #                          help="Reference fasta file for BAM2. Requires \
+    #                          --bam1-reference/-B1R, overrides other settings \
+    #                          (i.e. will ignore default or alternate reference if specified).")
+
+
 
     # for batch operations
     parser_grp7 = parser.add_argument_group("BATCH OPERATIONS")
@@ -504,7 +508,7 @@ bam1_ref = ""
 bam2_ref = ""
 
 # No references are specified anywhere
-if REFERENCE == "" and args.reference == None and args.bam1_reference == None and args.bam2_reference == None:
+if REFERENCE == "" and args.reference == None:
     print """%s
 No genome reference has been specified anywhere.
 Need to do this in either the configuration file or at run time (--reference/-R).
@@ -538,13 +542,6 @@ if args.chromosome_map != None:
 Chromosome map = %s
 """ % (WARNING_MSG, CHROM_MAP)
 
-# check that if bam1_reference or bam2_reference are both supplied
-if (args.bam1_reference == None and args.bam2_reference != None) or (args.bam1_reference != None and args.bam2_reference == None):
-    print """%s
-When using --bam1_reference(-B1R) and --bam2_reference(-B2R), both need to be specified.
-""" % (ARGUMENT_ERROR)
-    exit(1)
-
 # check that if ref_alternate is used, then chromosome_map is also supplied
 if REF_ALTERNATE:
     if not CHROM_MAP:
@@ -556,13 +553,11 @@ For more details, run BAM-matcher with --about-alternate-ref/-A.
         exit(1)
 
 # ---------------------------------------------------------
-GT_DATA_CONVERT_TO = ""
-
 using_default_reference = True
 using_chrom_map = False
 
 # When only 1 reference is available
-if args.bam1_reference == None and args.bam2_reference == None and REF_ALTERNATE == "":
+if REF_ALTERNATE == "":
     # just use REFERENCE
     bam1_ref = REFERENCE
     bam2_ref = REFERENCE
@@ -570,35 +565,6 @@ if args.bam1_reference == None and args.bam2_reference == None and REF_ALTERNATE
     # check REFERENCE
     if check_file_read(REFERENCE, "default reference", FILE_ERROR) == False: exit(1)
     if not check_fasta_index(REFERENCE): exit(1)
-
-    GT_DATA_CONVERT_TO = "REF"
-
-# When using bam1_reference and bam2_reference
-elif args.bam1_reference != None and args.bam2_reference != None:
-    bam1_ref = args.bam1_reference
-    bam2_ref = args.bam2_reference
-
-    # check the reference files
-    if not check_file_read(bam1_ref, "BAM1 reference", FILE_ERROR): exit(1)
-    if not check_file_read(bam2_ref, "BAM2 reference", FILE_ERROR): exit(1)
-    if not check_fasta_index(bam1_ref): exit(1)
-    if not check_fasta_index(bam2_ref): exit(1)
-
-    GT_DATA_CONVERT_TO = "B1REF"
-
-    # if B1R != B2R, then need a chromosome map too
-    if bam1_ref != bam2_ref:
-        using_chrom_map = True
-        # no CHROM_MAP
-        if CHROM_MAP == "":
-            print """%s
-When --bam1-reference and --bam2-reference are supplied but are not the same,
-a chromosome map (--CHROM-MAP/-M) is required.
-""" % (CONFIG_ERROR)
-            exit(1)
-
-    using_default_reference = False
-
 # When need to match BAM to correct reference file
 else:
     # get BAM chroms
@@ -622,7 +588,6 @@ else:
     # compare chromosomes
     MAP_REF_CHROMS, MAP_ALT_CHROMS, MAP_DEF2ALT, MAP_ALT2DEF = get_chrom_data_from_map(CHROM_MAP)
     n_chroms_expected = len(MAP_REF_CHROMS)
-
 
     # expect all REF_CHROMS to be in ref_chroms
     ref_chroms_diff = set(MAP_REF_CHROMS).difference(set(REF_CHROMS))
@@ -679,8 +644,6 @@ BAM2 (%s) is missing:
 - %d chromosomes against alternate reference (%s). Missing:
 """ % (CONFIG_ERROR, args.bam2, len(bam2_REF_diff), REFERENCE, len(bam2_ALT_diff), REF_ALTERNATE)
         exit(1)
-
-    GT_DATA_CONVERT_TO = "REF"
 
     # use chromosome map if either BAM1 or BAM2 are not using default REFERENCE
     if bam1_ref != REFERENCE or bam2_ref != REFERENCE:
@@ -793,10 +756,7 @@ m1.update(str(DP_THRESH))
 m1.update(bam1_mtime)
 m1.update(VCF_FILE)
 m1.update(bam1_ref)
-if GT_DATA_CONVERT_TO == "REF":
-    m1.update(REFERENCE)
-elif GT_DATA_CONVERT_TO == "B1R":
-    m1.update(bam1_ref)
+m1.update(REFERENCE)
 for line in get_bam_header(bam1_path):
     m1.update(line)
 
@@ -809,10 +769,7 @@ m2.update(str(DP_THRESH))
 m2.update(bam2_mtime)
 m2.update(VCF_FILE)
 m2.update(bam2_ref)
-if GT_DATA_CONVERT_TO == "REF":
-    m2.update(REFERENCE)
-elif GT_DATA_CONVERT_TO == "B1R":
-    m2.update(bam1_ref)
+m2.update(REFERENCE)
 for line in get_bam_header(bam2_path):
     m2.update(line)
 
@@ -880,16 +837,30 @@ if bam1_is_cached == False or bam2_is_cached == False:
         else:
             convert_vcf_to_intervals(VCF_FILE, bam1_itv, 0, NUMBER_OF_SNPS, args.caller)
             convert_vcf_to_intervals(VCF_FILE, bam2_itv, 0, NUMBER_OF_SNPS, args.caller)
-    else:
-        # ===============================================
-        # ===============================================
-        # ===============================================
-        # STILL NEED TO DO THE CASE for -B1R/-B2R
-        # ===============================================
-        # ===============================================
-        # ===============================================
-        pass
     interval_files_list = [bam1_itv, bam2_itv]
+
+# check intervals files
+# if they are empty, then something is wrong
+
+for i in [0, 1]:
+    if os.path.getsize(interval_files_list[i]) == 0:
+        print """%s
+No intervals were extracted from variants list.
+Genotype calling have no targets and will either fail or generate an empty VCF file.
+
+Check:
+1. input VCF file (whose genomic position format should match the DEFAULT genome reference fasta),
+2. default genome reference fasta
+3. alternate genome reference fasta if it is being used
+4. the chromosome map file if it is being used.
+
+Input VCF file:             %s
+Default genome reference:   %s
+Alternate genome reference: %s
+chromosome map:             %s
+""" % (CONFIG_ERROR, VCF_FILE, REFERENCE, REF_ALTERNATE, CHROM_MAP)
+        exit(1)
+
 
 #-------------------------------------------------------------------------------
 # Caller output files
@@ -1193,8 +1164,6 @@ if using_chrom_map:
         temp_files.append(vcf_list[i]+".original")
         # re-sorting VCF file
         sort_vcf_by_chrom_order(ftemp, vcf_list[i], REFERENCE+".fai")
-
-
 
 #-------------------------------------------------------------------------------
 # extract relevant VCF data into TSV files
