@@ -31,7 +31,6 @@ def handle_args():
     parser = ArgumentParser(description="Compare two BAM files to see if \
     they are from the same samples, using frequently occuring SNPs \
     reported in the 1000Genome database")
-
     # these are always required
     parser_grp1 = parser.add_argument_group("REQUIRED")
     parser_grp1.add_argument("--bam1",           "-B1", required=True,
@@ -48,7 +47,7 @@ def handle_args():
                              help="Specify where to generate configuration \
                              file template")
 
-    # Output needs to be specified at command line as it's usually per-run
+    # Output-related stuff cannot be specified by configuration file
     parser_grp3 = parser.add_argument_group("OUTPUT REPORT")
     parser_grp3.add_argument("--output",         "-o",  required=False,
                              help="Specify output report path (default = \
@@ -63,12 +62,12 @@ def handle_args():
     parser_grp3.add_argument("--scratch-dir",    "-s",  required=False,
                              help="Scratch directory for temporary files. If not specified, the report output directory will be used (default = /tmp/[random_string])")
 
-    # Usually defined in
+    # Variants VCF file
     parser_grp4 = parser.add_argument_group("VARIANTS")
     parser_grp4.add_argument("--vcf",            "-V",  required=False,
                              help="VCF file containing SNPs to check (default can be specified in config file instead)")
 
-    # Specifying these values here will override config values
+    # caller settings - setting these will override config
     parser_grp5 = parser.add_argument_group("CALLERS AND SETTINGS (will override config values)")
     parser_grp5.add_argument("--caller",         "-CL", required=False,
                              default="gatk",
@@ -87,7 +86,7 @@ def handle_args():
     parser_grp5.add_argument("--varscan-mem-gb", "-VM", required=False,
                              type=int, help="Specify Java heap size for VarScan2 (GB, int)")
 
-    # overriding reference matching
+    # Genome references
     parser_grp6 = parser.add_argument_group("REFERENCES")
     parser_grp6.add_argument("--reference",      "-R",  required=False,
                              help="Default reference fasta file. Needs to be \
@@ -100,18 +99,6 @@ def handle_args():
                              Run BAM-matcher with --about-alternate-ref for more details.")
     parser_grp6.add_argument("--about-alternate-ref", "-A", required=False,
                              help="Print information about using --alternate-ref and --chromosome-map")
-
-    # THESE WILL BE DEPRECATED
-    # parser_grp6.add_argument("--bam1-reference", "-B1R", required=False,
-    #                          help="Reference fasta file for BAM1. Requires \
-    #                          --bam2-reference/-B2R, overrides all other settings \
-    #                          (i.e. will ignore default or alternate reference if specified).")
-    # parser_grp6.add_argument("--bam2-reference", "-B2R", required=False,
-    #                          help="Reference fasta file for BAM2. Requires \
-    #                          --bam1-reference/-B1R, overrides other settings \
-    #                          (i.e. will ignore default or alternate reference if specified).")
-
-
 
     # for batch operations
     parser_grp7 = parser.add_argument_group("BATCH OPERATIONS")
@@ -137,8 +124,8 @@ def handle_args():
 # Before calling handle_args(), need to check if --generate-config was called
 GENERATE_CONFIG_SYMS = ["--generate-config", "--generate_config", "-G"]
 ALTERNATE_REF_SYMS = ["--about-alternate-ref", "--about_alternate_ref", "-A"]
-for idx, arg in enumerate(sys.argv):
 
+for idx, arg in enumerate(sys.argv):
     # generate config template
     if arg in GENERATE_CONFIG_SYMS:
         try:
@@ -164,13 +151,14 @@ Config template will be written to %s
         fout.close()
         exit()
 
-    # about alternate genome reference
+    # print information about alternate genome reference
     if arg in ALTERNATE_REF_SYMS:
         print ABOUT_ALTERNATE_REF_MSG
         exit()
 
 # okay to parse the arguments now
 args = handle_args()
+
 #-------------------------------------------------------------------------------
 # Some random-related stuff, this is for temp files
 random.seed()
@@ -232,8 +220,6 @@ CACHE_DIR      = fetch_config_value(config, "BatchOperations", "CACHE_DIR")
 BATCH_RECALCULATE = False
 BATCH_USE_CACHED  = True
 BATCH_WRITE_CACHE = True
-# JUDGE_THRESHOLD   = 0.95
-# RNA_THRESHOLD     = 0.9
 
 # don't write anything to standard output if not verbose
 STDERR_ = open("/dev/null", "w")
