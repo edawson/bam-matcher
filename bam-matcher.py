@@ -1504,6 +1504,7 @@ if args.html:
     html_bam2_cached = "recalculated"
     if BATCH_USE_CACHED and bam2_is_cached:
         html_bam2_cached = "cached"
+    judgement_html = judgement.replace("\n\n", "<p>").replace("\n", "<br>")
     html_namespace = {"BAM1"        : bam1_path,
                       "BAM2"        : bam2_path,
                       "DP_THRESH"   : DP_THRESH,
@@ -1525,7 +1526,7 @@ if args.html:
                       "diff_hom_het_ct": diff_hom_het_ct,
                       "diff_hom_ct"    : diff_hom_ct,
                       "diff_1sub2_ct"  : diff_1sub2_ct,
-                      "judgement"      : judgement
+                      "judgement"      : judgement_html
                      }
     template_file = os.path.join(SCRIPT_DIR, "bam_matcher_html_template")
     template = Template(file=template_file, searchList=html_namespace)
