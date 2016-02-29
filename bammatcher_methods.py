@@ -82,9 +82,7 @@ def convert_vcf_to_intervals(invcf, output, window, ntries, format="gatk", cmap=
 def VCFtoTSV(invcf, outtsv, caller):
     fout = open(outtsv, "w")
     vcf_in = vcf.Reader(open(invcf, "r"))
-
     var_ct = 0
-
     if caller == "gatk" or caller == "varscan":
         fields_to_extract = ["CHROM", "POS", "REF", "ALT", "QUAL", "DP", "AD", "GT"]
     elif caller == "freebayes":
@@ -132,6 +130,7 @@ def VCFtoTSV(invcf, outtsv, caller):
 # GENOTYPE COMPARISON FUNCTIONS
 def is_hom(gt):
     gt_ = gt.split("/")
+    print gt_
     if gt_[0] == gt_[1]:
         return True
     else:

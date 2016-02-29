@@ -24,6 +24,7 @@ import ConfigParser
 import shutil
 from Cheetah.Template import Template
 from hashlib import md5
+from fisher import pvalue
 from bammatcher_methods import *
 
 #============================================================================
@@ -1305,6 +1306,8 @@ for pos_ in pos_list:
     gt1 = bam1_gt[pos_]
     gt2 = bam2_gt[pos_]
 
+    print pos_
+
     # if genotypes are the same
     if same_gt(gt1, gt2):
         ct_common += 1
@@ -1333,12 +1336,9 @@ for pos_ in pos_list:
                 diff_het_hom_ct += 1
 #-------------------------------------------------------------------------------
 
-
-
 #===============================================================================
 # DETERMINING COMPARISON OUTCOME AND WRITE REPORT
 #===============================================================================
-
 if args.verbose:
     print """
 #===============================================================================
@@ -1352,27 +1352,98 @@ RNA_THRESHOLD     = 0.9
 if args.verbose:
     print "Writing output report"
 total_compared = ct_common + ct_diff
+frac_common_plus = 0
 frac_common = 0
 if total_compared >0:
     frac_common = float(ct_common)/total_compared
+    frac_common_plus = float(ct_common + max(diff_2sub1_ct, diff_1sub2_ct))/total_compared
 
-# determine whether they are from the same patient
-judgement = "DIFFERENT SOURCES"
-short_judgement = "Diff"
-if frac_common >= JUDGE_THRESHOLD:
-    judgement = "SAME SOURCE"
-    short_judgement = "Same"
-else:
-    if ct_diff > 0:
-        if float(diff_1sub2_ct)/ct_diff >= RNA_THRESHOLD:
-            judgement = "Probably same sample. BAM1 is likely RNA-seq data of the same sample"
-            short_judgement = "Same (BAM1=RNA)"
-        if float(diff_2sub1_ct)/ct_diff >= RNA_THRESHOLD:
-            judgement = "Probably same sample. BAM2 is likely RNA-seq data of the same sample"
-            short_judgement = "Same (BAM2=RNA)"
+# -------
+# test of allele-specific genotype subsets
+allele_subset = ""
+sub_sum = diff_1sub2_ct + diff_2sub1_ct
+
+
+# don't bother if fewer than 10
+if sub_sum > 10:
+    pv_set = pvalue(diff_1sub2_ct, diff_2sub1_ct, sub_sum/2, sub_sum/2)
+    pv_ = min(pv_set.left_tail, pv_set.right_tail)
+    if pv_ < 0.05:
+        if diff_1sub2_ct < diff_2sub1_ct:
+            allele_subset = "2sub1"
+            frac_common_plus = float(ct_common + diff_2sub1_ct) / total_compared
+        else:
+            allele_subset = "1sub2"
+            frac_common_plus = float(ct_common + diff_1sub2_ct) / total_compared
+
+
+# conclusions
+judgement = ""
+short_judgement = ""
+
+A_BIT_LOW = """the number of comparable genomic loci is a bit low.
+Try using a different variants list (--VCF) file which have more appropriate genomic positions for comparison."""
+
+
+# 1. too few points compared, too low
+if total_compared <= 20:
+    judgement = """INCONCLUSIVE: Too few comparable genomic loci between the samples.
+
+Read coverage may be too low in at least one of the samples.
+Or maybe try using a different variants list (--VCF) file which have more appropriate genomic positions for comparison.
+Or reduce threshold read depth (--dp-threshold) to increase genotype calling sensitivity (but at the cost of accuracy).
+"""
+    short_judgement = "INCONCLUSIVE"
+
+# 2. <= 50 sites compared, still low...
+elif total_compared <= 100:
+    # allow for 0.90 frac_common for low loci count
+    if frac_common >= 0.9 or frac_common_plus >= 0.9:
+        judgement = "LIKELY SAME SOURCE: %s" % A_BIT_LOW
+        short_judgement = "LIKELY SAME"
+        # if there is possible allele-specific genotype subset
+        if allele_subset == "1sub2" or allele_subset == "2sub1":
+            sub_ = allele_subset.split("sub")[0]
+            over_ = allele_subset.split("sub")[1]
+            judgement += """
+BAM%s genotype appears to be a subset of BAM%s.
+Possibly BAM%s is RNA-seq data or BAM%s is contaminated.
+""" % (sub_, over_, sub_, over_)
+            short_judgement += ". (BAM%s is subset of BAM%s)" % (sub_, over_)
+    elif frac_common <= 0.75:
+        judgement = "LIKELY FROM DIFFERENT SOURCES: %s" % A_BIT_LOW
+        short_judgement = "LIKELY DIFFERENT"
     else:
-        judgement = "DIFFERENT SOURCES"
-        short_judgement = "Diff"
+        judgement = "INCONCLUSIVE: %s" % A_BIT_LOW
+        short_judgement = "INCONCLUSIVE"
+# 3. <=200 sites compared
+else:
+    if frac_common >= 0.95:
+        judgement = "BAM FILES ARE FROM THE SAME SOURCE"
+        short_judgement = "SAME"
+    elif frac_common_plus >= 0.95:
+        judgement = "BAM FILES ARE VERY LIKELY FROM THE SAME SOURCE"
+        if allele_subset == "1sub2" or allele_subset == "2sub1":
+            sub_ = allele_subset.split("sub")[0]
+            over_ = allele_subset.split("sub")[1]
+            judgement += """, but with possible allele specific genotype.\n
+BAM%s genotype appears to be a subset of BAM%s.
+Possibly BAM%s is RNA-seq data or BAM%s is contaminated.
+""" % (sub_, over_, sub_, over_)
+            short_judgement += ". (BAM%s is subset of BAM%s)" % (sub_, over_)
+    elif frac_common <= 0.7:
+        judgement = "BAM FILES ARE FROM DIFFERENT SOURCES"
+        short_judgement = "DIFFERENT"
+    elif frac_common >= 0.8:
+        judgement = """LIKELY FROM THE SAME SOURCE.
+However, the fraction of sites with common genotype is lower than expected.
+This can happen with samples with low coverage.
+"""
+        short_judgement = "LIKELY SAME"
+    else:
+        judgement = "LIKELY FROM DIFFERENT SOURCES"
+        short_judgement = "LIKELY DIFFERENT"
+
 
 # -------------------------------------------------------------
 # STANDARD FORMAT
@@ -1408,7 +1479,9 @@ ________________________________________
 
 Total sites compared: %d
 Fraction of common: %f (%d/%d)
-CONCLUSION: %s
+________________________________________
+CONCLUSION:
+%s
 """  % (bam1_path, bam2_path, VCF_FILE, DP_THRESH,
         ct_common, comm_hom_ct, comm_het_ct,
         ct_diff, diff_het, diff_hom_het, diff_1sub2, diff_het_hom, diff_hom, diff_2sub1,
