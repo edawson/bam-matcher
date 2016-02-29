@@ -64,6 +64,7 @@ The repository also includes a VCF file ```(1KG_1500_exon_variants_noX.vcf)``` w
 * PyVCF
 * ConfigParser
 * Cheetah
+* fisher
 
 **Variant Callers**
 
