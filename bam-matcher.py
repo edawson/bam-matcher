@@ -71,7 +71,7 @@ def handle_args():
     # caller settings - setting these will override config
     parser_grp5 = parser.add_argument_group("CALLERS AND SETTINGS (will override config values)")
     parser_grp5.add_argument("--caller",         "-CL", required=False,
-                             default="gatk",
+                             default="none",
                              choices=('gatk', 'freebayes', 'varscan'),
                              help="Specify which caller to use (default = 'gatk')")
     parser_grp5.add_argument("--dp-threshold",   "-DP", required=False,
@@ -201,6 +201,7 @@ Missing required section in config file: %s
         exit(1)
 #-------------------------------------------------------------------------------
 # setting variables using the config file
+CALLER         = fetch_config_value(config, "VariantCallers", "caller")
 GATK           = fetch_config_value(config, "VariantCallers", "GATK")
 FREEBAYES      = fetch_config_value(config, "VariantCallers", "freebayes")
 SAMTOOLS       = fetch_config_value(config, "VariantCallers", "samtools")
@@ -332,6 +333,8 @@ if args.verbose:
 CHECKING SETTINGS AND PARAMETERS
 ================================================================================
 """
+
+
 
 #-------------------------------------------
 # Variants file
