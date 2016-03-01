@@ -201,7 +201,7 @@ Missing required section in config file: %s
         exit(1)
 #-------------------------------------------------------------------------------
 # setting variables using the config file
-CALLER         = fetch_config_value(config, "VariantCallers", "caller")
+CONFIG_CALLER  = fetch_config_value(config, "VariantCallers", "caller")
 GATK           = fetch_config_value(config, "VariantCallers", "GATK")
 FREEBAYES      = fetch_config_value(config, "VariantCallers", "freebayes")
 SAMTOOLS       = fetch_config_value(config, "VariantCallers", "samtools")
@@ -334,6 +334,33 @@ CHECKING SETTINGS AND PARAMETERS
 ================================================================================
 """
 
+#-------------------------------------------
+# which caller to use
+CALLER = ""
+# if set in config
+if CONFIG_CALLER != "":
+    CALLER = CONFIG_CALLER
+
+    # but override with arguments
+    if args.caller != "none": CALLER = args.caller
+# if not set in config, use argument
+else:
+    CALLER = args.caller
+
+# if not set in argument, default to GATK
+if CALLER == "none":
+    CALLER = "gatk"
+    print """%s
+No default caller was specified in the configuration file nor at runtime.
+Will default to GATK.
+"""
+elif CALLER not in ["gatk", "freebayes", "varscan"]:
+    print """%s
+Incorrect caller specified.
+The only values accepted for the caller parameter are: 'gatk', 'freebayes', and 'varscan'
+""" % (CONFIG_ERROR)
+    exit(1)
+
 
 
 #-------------------------------------------
@@ -405,7 +432,7 @@ correctly discriminate between samples.
 #-------------------------------------------
 # Fast Freebayes
 # only check if actually using Freebayes for variant calling
-if args.caller == "freebayes":
+if CALLER == "freebayes":
     # get from command line
     if args.fastfreebayes:
         FAST_FREEBAYES = args.fastfreebayes
@@ -433,7 +460,7 @@ Use 'False' or 'True'""" % (CONFIG_ERROR, FAST_FREEBAYES)
 
 #-------------------------------------------
 # GATK parameters
-if args.caller == "gatk":
+if CALLER == "gatk":
     # GATK_MEM
     if GATK_MEM == "":
         print """%s
@@ -471,7 +498,7 @@ GATK_nt value ('%s') in the config file is not a valid integer.
 
 #-------------------------------------------
 # VarScan parameters
-if args.caller == "varscan":
+if CALLER == "varscan":
     # get from config file
     if VARSCAN_MEM == "":
         print """
@@ -658,6 +685,7 @@ if BATCH_WRITE_CACHE or BATCH_USE_CACHED:
         print """%s
 No CACHE_DIR specified in configuration or at command line.
 Cached operations requires this to work.
+
 """ % CONFIG_ERROR
         sys.exit(1)
 
@@ -686,9 +714,9 @@ VCF file:          %s
 DP_threshold:      %d
 number_of_SNPs:    %d (if 0, all variants in VCF file will be used)
 
-Caller:            %s""" % (VCF_FILE, DP_THRESH, NUMBER_OF_SNPS, args.caller)
+Caller:            %s""" % (VCF_FILE, DP_THRESH, NUMBER_OF_SNPS, CALLER)
 
-    if args.caller == "freebayes":
+    if CALLER == "freebayes":
         print "fast_freebayes:   ", FAST_FREEBAYES
 
     print """
@@ -779,16 +807,16 @@ if args.verbose:
 if bam1_is_cached == False or bam2_is_cached==False:
     if args.verbose:
         print "\n---------------\nChecking caller\n---------------"
-    if args.caller == "freebayes" and not JAVA:
+    if CALLER == "freebayes" and not JAVA:
         print "%s\nJava command was not specified.\nDo this in the configuration file" % CONFIG_ERROR
         sys.exit(1)
     caller_check_log = os.path.join(SCRATCH_DIR, "caller_check.log")
-    if args.caller == "gatk":
-        check_caller(args.caller, GATK,      JAVA, args.verbose, logfile=caller_check_log)
-    elif args.caller == "freebayes":
-        check_caller(args.caller, FREEBAYES, JAVA, args.verbose, logfile=caller_check_log)
-    elif args.caller == "varscan":
-        check_caller(args.caller, VARSCAN,   JAVA, args.verbose, logfile=caller_check_log, SAMTL=SAMTOOLS)
+    if CALLER == "gatk":
+        check_caller(CALLER, GATK,      JAVA, args.verbose, logfile=caller_check_log)
+    elif CALLER == "freebayes":
+        check_caller(CALLER, FREEBAYES, JAVA, args.verbose, logfile=caller_check_log)
+    elif CALLER == "varscan":
+        check_caller(CALLER, VARSCAN,   JAVA, args.verbose, logfile=caller_check_log, SAMTL=SAMTOOLS)
     if args.verbose:
         print "Caller settings seem okay.\n"
 else:
@@ -818,17 +846,17 @@ if bam1_is_cached == False or bam2_is_cached == False:
         if using_chrom_map:
             _, _, MAP_DEF2ALT, _ = get_chrom_data_from_map(CHROM_MAP)
             if bam1_ref == REFERENCE:
-                convert_vcf_to_intervals(VCF_FILE, bam1_itv, 0, NUMBER_OF_SNPS, args.caller)
+                convert_vcf_to_intervals(VCF_FILE, bam1_itv, 0, NUMBER_OF_SNPS, CALLER)
             else:
-                convert_vcf_to_intervals(VCF_FILE, bam1_itv, 0, NUMBER_OF_SNPS, args.caller, cmap=MAP_DEF2ALT)
+                convert_vcf_to_intervals(VCF_FILE, bam1_itv, 0, NUMBER_OF_SNPS, CALLER, cmap=MAP_DEF2ALT)
             if bam2_ref == REFERENCE:
-                convert_vcf_to_intervals(VCF_FILE, bam2_itv, 0, NUMBER_OF_SNPS, args.caller)
+                convert_vcf_to_intervals(VCF_FILE, bam2_itv, 0, NUMBER_OF_SNPS, CALLER)
             else:
-                convert_vcf_to_intervals(VCF_FILE, bam2_itv, 0, NUMBER_OF_SNPS, args.caller, cmap=MAP_DEF2ALT)
+                convert_vcf_to_intervals(VCF_FILE, bam2_itv, 0, NUMBER_OF_SNPS, CALLER, cmap=MAP_DEF2ALT)
         # else, assume that both are mapped to REFERENCE
         else:
-            convert_vcf_to_intervals(VCF_FILE, bam1_itv, 0, NUMBER_OF_SNPS, args.caller)
-            convert_vcf_to_intervals(VCF_FILE, bam2_itv, 0, NUMBER_OF_SNPS, args.caller)
+            convert_vcf_to_intervals(VCF_FILE, bam1_itv, 0, NUMBER_OF_SNPS, CALLER)
+            convert_vcf_to_intervals(VCF_FILE, bam2_itv, 0, NUMBER_OF_SNPS, CALLER)
     interval_files_list = [bam1_itv, bam2_itv]
 
 # check intervals files
@@ -900,7 +928,7 @@ for i in [0,1]:
     caller_log = open(caller_log_file, "w")
     # ----------------------------------------------------------
     # Genotype calling with GATK
-    if args.caller == "gatk":
+    if CALLER == "gatk":
         varcall_cmd = [JAVA, "-jar", "-Xmx%dg" % GATK_MEM,
                        "-XX:ParallelGCThreads=1", GATK, "-T",
                        "UnifiedGenotyper", "-R", ref, "-I", in_bam,
@@ -930,7 +958,7 @@ for i in [0,1]:
 
     # ----------------------------------------------------------
     # Genotype calling with Freebayes
-    elif args.caller == "freebayes":
+    elif CALLER == "freebayes":
         fout = open(out_vcf, "w")
         # -----------------------
         # fast-Freebayes, single intervals file
@@ -1013,7 +1041,7 @@ for i in [0,1]:
 
     # ----------------------------------------------------------
     # Genotype calling with VarScan2
-    elif args.caller == "varscan":
+    elif CALLER == "varscan":
 
         # Generate pileup with samtools
         if args.verbose:
@@ -1128,11 +1156,9 @@ if using_chrom_map:
         # don't bother if using cached
         if cached_list[i] == True:
             continue
-
         # only necessary if not using REFREENCE
         if ref_list[i] == REFERENCE:
             continue
-
         # converting chrom names
         ftemp = os.path.join(SCRATCH_DIR, "temp_file")
         temp_files.append(ftemp)
@@ -1151,7 +1177,6 @@ if using_chrom_map:
                 bits[0] = MAP_ALT2DEF[bits[0]]
                 fout.write("\t".join(bits) + "\n")
         fout.close()
-
         shutil.copyfile(vcf_list[i], vcf_list[i]+".original")
         temp_files.append(vcf_list[i]+".original")
         # re-sorting VCF file
@@ -1169,7 +1194,7 @@ for i in [0,1]:
     # otherwise, convert
     in_vcf  = vcf_list[i]
     out_tsv = tsv_list[i]
-    variants_wrote = VCFtoTSV(in_vcf, out_tsv, args.caller)
+    variants_wrote = VCFtoTSV(in_vcf, out_tsv, CALLER)
 
     # write a warning if no variants were written
     if variants_wrote == 0:
@@ -1219,7 +1244,6 @@ for line in fin:
     if line.startswith("CHROM\t"):
         continue
     bits = line.strip("\n").split("\t")
-
     if bits[5] == "NA":
         continue
     elif int(bits[5]) < DP_THRESH:
@@ -1308,9 +1332,6 @@ for line in fin:
 for pos_ in pos_list:
     gt1 = bam1_gt[pos_]
     gt2 = bam2_gt[pos_]
-
-    print pos_
-
     # if genotypes are the same
     if same_gt(gt1, gt2):
         ct_common += 1
@@ -1511,7 +1532,7 @@ if args.html:
     html_namespace = {"BAM1"        : bam1_path,
                       "BAM2"        : bam2_path,
                       "DP_THRESH"   : DP_THRESH,
-                      "caller"      : args.caller,
+                      "caller"      : CALLER,
                       "variants"    : VCF_FILE,
                       "bam1_cached" : html_bam1_cached,
                       "bam2_cached" : html_bam2_cached,

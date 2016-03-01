@@ -130,7 +130,6 @@ def VCFtoTSV(invcf, outtsv, caller):
 # GENOTYPE COMPARISON FUNCTIONS
 def is_hom(gt):
     gt_ = gt.split("/")
-    print gt_
     if gt_[0] == gt_[1]:
         return True
     else:
@@ -432,6 +431,7 @@ CONFIG_TEMPLATE_STR = """# BAM-matcher configuration file
 # file paths to variant callers and other binaries
 # sometime you may need to specify full path to the binary (for freebayes, samtools and java)
 # full paths is always required for *.jar files (GATK and VarScan2)
+caller:    gatk
 GATK:      GenomeAnalysisTK.jar
 freebayes: freebayes
 samtools:  samtools
