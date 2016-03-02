@@ -336,6 +336,7 @@ CHECKING SETTINGS AND PARAMETERS
 
 #-------------------------------------------
 # which caller to use
+
 CALLER = ""
 # if set in config
 if CONFIG_CALLER != "":
@@ -347,12 +348,12 @@ if CONFIG_CALLER != "":
 else:
     CALLER = args.caller
 
-# if not set in argument, default to GATK
+# if not set in argument, default to Freebayes
 if CALLER == "none":
-    CALLER = "gatk"
+    CALLER = "freebayes"
     print """%s
 No default caller was specified in the configuration file nor at runtime.
-Will default to GATK.
+Will default to Freebayes.
 """
 elif CALLER not in ["gatk", "freebayes", "varscan"]:
     print """%s
