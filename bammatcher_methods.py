@@ -281,7 +281,6 @@ Freebayes path was not specified.
 Do this in the configuration file""" % CONFIG_ERROR
             exit(1)
         caller_cmd = [caller_binary, "--version"]
-
     # ------------------------------------------
     # checking VARSCAN
     elif caller == "varscan":
@@ -321,18 +320,23 @@ It is either missing or not readable.""" % (CONFIG_ERROR, caller_binary)
         caller_cmd = [JAVA, "-jar", caller_binary]
 
     # --------------------------------------------
-    caller_proc = subprocess.Popen(caller_cmd, stderr=logwrite, stdout=logwrite)
-    caller_proc.communicate()
-    check_exitcode = caller_proc.returncode
-    logwrite.close()
 
-    # --------------------------------------------
-    if check_exitcode != 0:
+    try:
+        caller_proc = subprocess.check_call(caller_cmd, stderr=logwrite, stdout=logwrite)
+    except Exception as e:
+        logwrite.close()
         print """%s
 Caller check failed.
 
-See log file for error (%s)
-""" % (CALLER_ERROR, logfile)
+Command tested:
+%s
+
+Python error msg:
+%s
+
+Please check the caller command or path to the binary.
+
+""" % (CALLER_ERROR, " ".join(caller_cmd), e)
         exit(1)
 
     # --------------------------------------------

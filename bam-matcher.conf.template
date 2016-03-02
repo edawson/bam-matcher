@@ -6,6 +6,7 @@
 # file paths to variant callers and other binaries
 # sometime you may need to specify full path to the binary (for freebayes, samtools and java)
 # full paths is always required for *.jar files (GATK and VarScan2)
+caller:    gatk
 GATK:      GenomeAnalysisTK.jar
 freebayes: freebayes
 samtools:  samtools
