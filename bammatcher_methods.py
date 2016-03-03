@@ -293,16 +293,21 @@ Do this in the configuration file""" % CONFIG_ERROR
             exit(1)
 
         sam_cmd = [SAMTL, "--version"]
-        sam_proc = subprocess.Popen(sam_cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-        if verbose:
-            for line in sam_proc.stdout:
-                print line.strip()
-        sam_proc.communicate()
-        sam_code = sam_proc.returncode
-        if sam_code != 0:
+        try:
+            sam_proc = subprocess.Popen(sam_cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        except Exception as e:
+            # for line in sam_proc.stdout:
+            #     print line.strip()
             print """%s
 Samtools error. Please check samtools path and installation.
-""" % CALLER_ERROR
+
+Command tested:
+%s --version
+
+Python error msg:
+%s
+
+""" % (CALLER_ERROR, SAMTL, e)
             exit(1)
 
         # ===================================
