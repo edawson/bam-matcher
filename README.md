@@ -2,6 +2,8 @@
 
 A simple tool for determining whether two [BAM files](https://samtools.github.io/hts-specs/SAMv1.pdf) contain reads sequenced from the same sample or patient by counting genotype matches at common SNPs.
 
+BAM-matcher is most useful at comparing whole-genome-sequencing (WGS), whole-exome-sequencing (WES) and RNA-sequencing (RNA-seq) human data, but can also be customised to compare panel data or non-human data.
+
 Once configuration file is setup, to compare two bam files (sample1.bam and sample2.bam) just run:
 ```
 bam-matcher.py -B1 sample1.bam -B2 sample2.bam
