@@ -175,7 +175,7 @@ config_file = ""
 if args.config == None:
     config_file = os.path.join(SCRIPT_DIR, "bam-matcher.conf")
 else:
-    config_file = args.config
+    config_file = os.path.abspath(os.path.expanduser(args.config))
 
 # Test if the config file exists
 if check_file_read(config_file, "config", CONFIG_ERROR) == False: exit(1)
@@ -237,8 +237,11 @@ CHECKING INPUT AND OUTPUT
 ================================================================================
 """
 
+BAM1 = os.path.abspath(os.path.expanduser(args.bam1))
+BAM2 = os.path.abspath(os.path.expanduser(args.bam2))
+
 # check input bams are readable and indexed
-for bam_file in [args.bam1, args.bam2]:
+for bam_file in [BAM1, BAM2]:
     if check_file_read(bam_file, "BAM", FILE_ERROR) == False: exit(1)
 
     # check bam files are indexed:
@@ -256,11 +259,11 @@ REPORT_PATH = ""
 current_dir = os.path.abspath("./")
 if args.output == None:
     REPORT_PATH = os.path.join(current_dir, "bam_matcher_report")
-    bam1_name = os.path.basename(args.bam1).rstrip(".bam").replace(".", "_")
-    bam2_name = os.path.basename(args.bam2).rstrip(".bam").replace(".", "_")
+    bam1_name = os.path.basename(BAM1).rstrip(".bam").replace(".", "_")
+    bam2_name = os.path.basename(BAM2).rstrip(".bam").replace(".", "_")
     REPORT_PATH = REPORT_PATH + ".%s_%s_%s" % (bam1_name, bam2_name, random_str)
 else:
-    REPORT_PATH = os.path.abspath(args.output)
+    REPORT_PATH = os.path.abspath(os.path.expanduser(args.output))
 if args.no_report:
     REPORT_PATH = "/dev/null"
     args.html = False
@@ -320,7 +323,7 @@ Output report:  %s
 
 Input and output seem okay
 
-""" % (args.bam1, args.bam2, SCRATCH_DIR, REPORT_PATH)
+""" % (BAM1, BAM2, SCRATCH_DIR, REPORT_PATH)
 
 
 
@@ -368,7 +371,7 @@ The only values accepted for the caller parameter are: 'gatk', 'freebayes', and 
 # Variants file
 
 # is it overridden by args?
-if args.vcf: VCF_FILE = os.path.abspath(args.vcf)
+if args.vcf: VCF_FILE = os.path.abspath(os.path.expanduser(args.vcf))
 
 # is it specified?
 if VCF_FILE == "":
@@ -379,7 +382,7 @@ Use --vcf/-V at command line or VCF_FILE in the configuration file.
     exit(1)
 
 # is it readable?
-VCF_FILE = os.path.abspath(VCF_FILE)
+VCF_FILE = os.path.abspath(os.path.expanduser(VCF_FILE))
 if check_file_read(VCF_FILE, "variants VCF", CONFIG_ERROR) == False: exit(1)
 
 #-------------------------------------------
@@ -538,7 +541,7 @@ already a default genome reference speficied.
 
 # overriding config REFERENCE
 if args.reference != None:
-    REFERENCE = os.path.abspath(args.reference)
+    REFERENCE = os.path.abspath(os.path.expanduser(args.reference))
     print """%s
 --reference/-R argument overrides config setting (REFERENCE).
 Default reference = %s
@@ -546,7 +549,7 @@ Default reference = %s
 
 # overriding config REF_ALTERNATE
 if args.ref_alternate != None:
-    REF_ALTERNATE = os.path.abspath(args.ref_alternate)
+    REF_ALTERNATE = os.path.abspath(os.path.expanduser(args.ref_alternate))
     print """%s
 --ref-alternate/-R2 argument overrides config setting (REF_ALTERNATE).
 Alternate reference = %s
@@ -554,7 +557,7 @@ Alternate reference = %s
 
 # overriding config CHROM_MAP
 if args.chromosome_map != None:
-    CHROM_MAP = args.chromosome_map
+    CHROM_MAP = os.path.abspath(os.path.expanduser(args.chromosome_map))
     print """%s
 --chromosome-map/-M argument overrides config setting (CHROM_MAP).
 Chromosome map = %s
@@ -586,8 +589,8 @@ if REF_ALTERNATE == "":
 # When need to match BAM to correct reference file
 else:
     # get BAM chroms
-    bam1_chroms = get_chrom_names_from_BAM(args.bam1)
-    bam2_chroms = get_chrom_names_from_BAM(args.bam2)
+    bam1_chroms = get_chrom_names_from_BAM(BAM1)
+    bam2_chroms = get_chrom_names_from_BAM(BAM2)
 
     # expect to have REFERENCE and ALTERNATE_REF
     # check ref files
@@ -632,35 +635,35 @@ Check that the correct genome reference files and chromosome map are used.
     if len(bam1_REF_diff) == 0:
         bam1_ref = REFERENCE
         if args.verbose:
-            print "BAM1 (%s) is matched to default genome reference (%s)" % (args.bam1, REFERENCE)
+            print "BAM1 (%s) is matched to default genome reference (%s)" % (BAM1, REFERENCE)
     elif len(bam1_ALT_diff) == 0:
         bam1_ref = REF_ALTERNATE
         if args.verbose:
-            print "BAM1 (%s) is matched to alternate genome reference (%s)" % (args.bam2, REF_ALTERNATE)
+            print "BAM1 (%s) is matched to alternate genome reference (%s)" % (BAM2, REF_ALTERNATE)
     else:
         print """%s
 Cannot match BAM1 to a genome reference
 BAM1 (%s) is missing:
 - %d chromosomes against default reference (%s). Missing:
 - %d chromosomes against alternate reference (%s). Missing:
-""" % (CONFIG_ERROR, args.bam1, len(bam1_REF_diff), REFERENCE, len(bam1_ALT_diff), REF_ALTERNATE)
+""" % (CONFIG_ERROR, BAM1, len(bam1_REF_diff), REFERENCE, len(bam1_ALT_diff), REF_ALTERNATE)
         exit(1)
 
     if len(bam2_REF_diff) == 0:
         bam2_ref = REFERENCE
         if args.verbose:
-            print "BAM2 (%s) is matched to default genome reference (%s)" % (args.bam1, REFERENCE)
+            print "BAM2 (%s) is matched to default genome reference (%s)" % (BAM1, REFERENCE)
     elif len(bam2_ALT_diff) == 0:
         bam2_ref = REF_ALTERNATE
         if args.verbose:
-            print "BAM2 (%s) is matched to alternate genome reference (%s)" % (args.bam2, REF_ALTERNATE)
+            print "BAM2 (%s) is matched to alternate genome reference (%s)" % (BAM2, REF_ALTERNATE)
     else:
         print """%s
 Cannot match BAM2 to a genome reference
 BAM2 (%s) is missing:
 - %d chromosomes against default reference (%s). Missing:
 - %d chromosomes against alternate reference (%s). Missing:
-""" % (CONFIG_ERROR, args.bam2, len(bam2_REF_diff), REFERENCE, len(bam2_ALT_diff), REF_ALTERNATE)
+""" % (CONFIG_ERROR, BAM2, len(bam2_REF_diff), REFERENCE, len(bam2_ALT_diff), REF_ALTERNATE)
         exit(1)
 
     # use chromosome map if either BAM1 or BAM2 are not using default REFERENCE
@@ -673,24 +676,45 @@ BAM2 (%s) is missing:
 
 BATCH_WRITE_CACHE = True
 BATCH_USE_CACHED  = True
+if CACHE_DIR != "":
+    CACHE_DIR = os.path.abspath(os.path.expanduser(CACHE_DIR))
 
 if args.recalculate:
     BATCH_USE_CACHED = False
 if args.do_not_cache:
     BATCH_WRITE_CACHE = False
 if args.cache_dir != None:
-    CACHE_DIR = args.cache_dir
+    CACHE_DIR = os.path.abspath(os.path.expanduser(args.cache_dir))
 
-if BATCH_WRITE_CACHE or BATCH_USE_CACHED:
+if BATCH_WRITE_CACHE:
     if CACHE_DIR == "":
         print """%s
 No CACHE_DIR specified in configuration or at command line.
 Cached operations requires this to work.
 
+If you don't want the cache the data, use the --do-not-cache/-NC flag.
+
 """ % CONFIG_ERROR
         sys.exit(1)
 
-    # test if CACHE_DIR is writable
+    # check if CACHE_DIR exists, if not, create it
+    if not os.path.isdir(CACHE_DIR):
+        if args.verbose:
+            print "\n\nSpecified cache directory %s does not exist. Will attempt to create it" % CACHE_DIR
+        try:
+            os.mkdir(CACHE_DIR)
+        except OSError as e:
+            print """%s
+Specified cache directory (%s) does not exist.
+Attempt to create the directory failed.
+You may not have permission to create this directory, or the parent directory also does not exist.
+
+Python error:
+%s\n
+""" % (FILE_ERROR, CACHE_DIR, e)
+            exit(1)
+
+    # check if cache directory is write-able
     try:
         test_cache_file = os.path.join(CACHE_DIR, "cache_test")
         test_cache = open( test_cache_file, "w"   )
@@ -700,10 +724,19 @@ Cached operations requires this to work.
     except IOError, e:
         print """%s
 Unable to write to specified cache directory ('%s')
-Python error msg: %s
+You may not have permission to write to this directory.
+Either specify another cache directory (--cache-dir/-CD), or use --do-not-cache/-NC.
+
+Python error msg:
+%s
 """ % (CONFIG_ERROR, CACHE_DIR, e)
         sys.exit(1)
-CACHE_DIR = os.path.abspath(CACHE_DIR)
+
+    # check if cache directory is readable
+    if os.access(CACHE_DIR, os.R_OK) == False:
+        print "%s\n\nSpecified cache directory (%s) is not readable!\n\n\n\n" % (WARNING_MSG, CACHE_DIR)
+
+
 
 
 #------------------------------------------
@@ -733,9 +766,10 @@ chromosome map:             %s
 """ % (using_chrom_map, CHROM_MAP)
 
     print """
+cache directory:                  %s
 use cached wherever possible:     %r
 write cache data for new samples: %r
-""" % (BATCH_USE_CACHED, BATCH_WRITE_CACHE)
+""" % (CACHE_DIR, BATCH_USE_CACHED, BATCH_WRITE_CACHE)
 
 #===============================================================================
 # Finished configuration and arguments checking and loading
@@ -767,7 +801,7 @@ GENOTYPE CALLING
 # - VCF file path (list of variants to check)
 
 m1 = md5()
-bam1_path = os.path.abspath(args.bam1)
+bam1_path = os.path.abspath(BAM1)
 bam1_mtime = str(os.path.getmtime(bam1_path))
 m1.update(bam1_path)
 m1.update(str(NUMBER_OF_SNPS))
@@ -780,7 +814,7 @@ for line in get_bam_header(bam1_path):
     m1.update(line)
 
 m2 = md5()
-bam2_path = os.path.abspath(args.bam2)
+bam2_path = os.path.abspath(BAM2)
 bam2_mtime = str(os.path.getmtime(bam2_path))
 m2.update(bam2_path)
 m2.update(str(NUMBER_OF_SNPS))
@@ -892,7 +926,7 @@ vcf2 = os.path.join(SCRATCH_DIR, "bam2.vcf")
 pup1 = os.path.join(SCRATCH_DIR, "bam1.pileup")
 pup2 = os.path.join(SCRATCH_DIR, "bam2.pileup")
 # lists
-bam_list           = [args.bam1, args.bam2]
+bam_list           = [BAM1, BAM2]
 vcf_list           = [vcf1, vcf2]
 pup_list           = [pup1, pup2]
 ref_list           = [bam1_ref, bam2_ref]

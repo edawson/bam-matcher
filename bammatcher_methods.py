@@ -438,9 +438,13 @@ CONFIG_TEMPLATE_STR = """# BAM-matcher configuration file
 
 [VariantCallers]
 # file paths to variant callers and other binaries
-# sometime you may need to specify full path to the binary (for freebayes, samtools and java)
-# full paths is always required for *.jar files (GATK and VarScan2)
+
+# This is the default caller to use
 caller:    gatk
+
+# These are paths (or commands) to the caller executables
+# full paths is always required for *.jar files (GATK and VarScan2)
+# sometime you may need to specify full path to the binary (for freebayes, samtools and java)
 GATK:      GenomeAnalysisTK.jar
 freebayes: freebayes
 samtools:  samtools
@@ -476,7 +480,8 @@ REF_ALTERNATE:
 CHROM_MAP:
 
 [BatchOperations]
-CACHE_DIR:  cache_dir
+# you MUST specify a cache directory, this directory should be read/write-able by all BAM-matcher users
+CACHE_DIR:
 
 [Miscellaneous]
 """
