@@ -1,0 +1,345 @@
+# ========================================================
+# Freebayes (v1.0.1-1-g683b3cc)
+
+
+bam1:	sample1.bam
+bam2:	sample2.bam
+variants:	1kg.exome.highAF.1511.vcf
+depth threshold: 15
+________________________________________
+
+Positions with same genotype:   117
+     breakdown:    hom: 27
+                   het: 90
+________________________________________
+
+Positions with diff genotype:   39
+     breakdown:
+                       BAM 1
+               | het  | hom  | subset
+        -------+------+------+-------
+         het   |    0 |    0 |   15 |
+        -------+------+------+-------
+BAM 2    hom   |    0 |    0 |   -  |
+        -------+------+------+-------
+         subset|   24 |   -  |   -  |
+________________________________________
+
+Total sites compared: 156
+Fraction of common: 0.750000 (117/156)
+________________________________________
+CONCLUSION:
+LIKELY FROM DIFFERENT SOURCES
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ========================================================
+# GATK (3.4-0-g7e26428)
+
+
+bam1:	sample1.bam
+bam2:	sample2.bam
+variants:	1kg.exome.highAF.1511.vcf
+depth threshold: 15
+________________________________________
+
+Positions with same genotype:   126
+     breakdown:    hom: 29
+                   het: 97
+________________________________________
+
+Positions with diff genotype:   42
+     breakdown:
+                       BAM 1
+               | het  | hom  | subset
+        -------+------+------+-------
+         het   |    0 |    0 |   16 |
+        -------+------+------+-------
+BAM 2    hom   |    0 |    0 |   -  |
+        -------+------+------+-------
+         subset|   26 |   -  |   -  |
+________________________________________
+
+Total sites compared: 168
+Fraction of common: 0.750000 (126/168)
+________________________________________
+CONCLUSION:
+LIKELY FROM DIFFERENT SOURCES
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ========================================================
+# VarScan (v2.3)
+
+
+
+
+bam1:	sample1.bam
+bam2:	sample2.bam
+variants:	1kg.exome.highAF.1511.vcf
+depth threshold: 15
+________________________________________
+
+Positions with same genotype:   109
+     breakdown:    hom: 22
+                   het: 87
+________________________________________
+
+Positions with diff genotype:   32
+     breakdown:
+                       BAM 1
+               | het  | hom  | subset
+        -------+------+------+-------
+         het   |    0 |    0 |   13 |
+        -------+------+------+-------
+BAM 2    hom   |    0 |    0 |   -  |
+        -------+------+------+-------
+         subset|   19 |   -  |   -  |
+________________________________________
+
+Total sites compared: 141
+Fraction of common: 0.773050 (109/141)
+________________________________________
+CONCLUSION:
+LIKELY FROM DIFFERENT SOURCES
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ========================================================
+# Using a different VCF file (--VCF/-V)
+
+# Freebayes
+# VCF = 1kg.exome.highAF.3680.vcf
+
+bam1:	sample1.bam
+bam2:	sample2.bam
+variants:	1kg.exome.highAF.3680.vcf
+depth threshold: 15
+________________________________________
+
+Positions with same genotype:   31
+     breakdown:    hom: 10
+                   het: 21
+________________________________________
+
+Positions with diff genotype:   8
+     breakdown:
+                       BAM 1
+               | het  | hom  | subset
+        -------+------+------+-------
+         het   |    0 |    0 |    3 |
+        -------+------+------+-------
+BAM 2    hom   |    0 |    0 |   -  |
+        -------+------+------+-------
+         subset|    5 |   -  |   -  |
+________________________________________
+
+Total sites compared: 39
+Fraction of common: 0.794872 (31/39)
+________________________________________
+CONCLUSION:
+LIKELY SAME SOURCE: the number of comparable genomic loci is a bit low.
+Try using a different variants list (--VCF) file which have more appropriate genomic positions for comparison.
+
+
+
+
+
+
+
+
+
+# ========================================================
+# Change threshold depth (--dp-threshold/-DP)
+# Freebayes (v1.0.1-1-g683b3cc)
+# DP = 8
+
+bam1:	sample1.bam
+bam2:	sample2.bam
+variants:	1kg.exome.highAF.1511.vcf
+depth threshold: 8
+________________________________________
+
+Positions with same genotype:   128
+     breakdown:    hom: 30
+                   het: 98
+________________________________________
+
+Positions with diff genotype:   43
+     breakdown:
+                       BAM 1
+               | het  | hom  | subset
+        -------+------+------+-------
+         het   |    0 |    0 |   18 |
+        -------+------+------+-------
+BAM 2    hom   |    0 |    0 |   -  |
+        -------+------+------+-------
+         subset|   25 |   -  |   -  |
+________________________________________
+
+Total sites compared: 171
+Fraction of common: 0.748538 (128/171)
+________________________________________
+CONCLUSION:
+LIKELY FROM DIFFERENT SOURCES
+
+
+
+
+
+
+
+
+
+
+# ========================================================
+# using a VCF with positions at which there are no read data in the BAM files
+# Freebayes (v1.0.1-1-g683b3cc)
+# VCF = test.vcf (in test_data directory)
+
++---------+
+| WARNING |
++---------+
+No genotype data were called for BAM1 (/home/paul/localwork/bam-matcher/test_data/sample1.bam).
+
+You may need to check the variant list.
+
++---------+
+| WARNING |
++---------+
+No genotype data were called for BAM2 (/home/paul/localwork/bam-matcher/test_data/sample2.bam).
+
+You may need to check the variant list.
+
+bam1:	sample1.bam
+bam2:	sample2.bam
+variants:	test_data/test.vcf
+depth threshold: 15
+________________________________________
+
+Positions with same genotype:   0
+     breakdown:    hom: 0
+                   het: 0
+________________________________________
+
+Positions with diff genotype:   0
+     breakdown:
+                       BAM 1
+               | het  | hom  | subset
+        -------+------+------+-------
+         het   |    0 |    0 |    0 |
+        -------+------+------+-------
+BAM 2    hom   |    0 |    0 |   -  |
+        -------+------+------+-------
+         subset|    0 |   -  |   -  |
+________________________________________
+
+Total sites compared: 0
+Fraction of common: 0.000000 (0/0)
+________________________________________
+CONCLUSION:
+INCONCLUSIVE: Too few comparable genomic loci between the samples.
+
+Read coverage may be too low in at least one of the samples.
+Or maybe try using a different variants list (--VCF) file which have more appropriate genomic positions for comparison.
+Or reduce threshold read depth (--dp-threshold) to increase genotype calling sensitivity (but at the cost of accuracy).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ========================================================
+# Comparing sample1 against a BAM file which is merged from sample1 and sample2
+# Freebayes (v1.0.1-1-g683b3cc)
+# sample1.bam vs merged.RG.bam
+
+
+bam1:	sample1.bam
+bam2:	merged.RG.bam
+variants:	1kg.exome.highAF.1511.vcf
+depth threshold: 15
+________________________________________
+
+Positions with same genotype:   171
+     breakdown:    hom: 28
+                   het: 143
+________________________________________
+
+Positions with diff genotype:   25
+     breakdown:
+                       BAM 1
+               | het  | hom  | subset
+        -------+------+------+-------
+         het   |    0 |    0 |   24 |
+        -------+------+------+-------
+BAM 2    hom   |    0 |    0 |   -  |
+        -------+------+------+-------
+         subset|    1 |   -  |   -  |
+________________________________________
+
+Total sites compared: 196
+Fraction of common: 0.872449 (171/196)
+________________________________________
+CONCLUSION:
+BAM FILES ARE VERY LIKELY FROM THE SAME SOURCE, but with possible allele specific genotype.
+
+BAM1 genotype appears to be a subset of BAM2.
+Possibly BAM1 is RNA-seq data or BAM2 is contaminated.
+
+
+
