@@ -1,6 +1,6 @@
 # BAM-matcher #
 
-A simple tool for determining whether two BAM files contain reads sequenced from the same sample or patient by counting genotype matches at common SNPs.
+A simple tool for determining whether two BAM files[https://samtools.github.io/hts-specs/SAMv1.pdf](https://samtools.github.io/hts-specs/SAMv1.pdf) contain reads sequenced from the same sample or patient by counting genotype matches at common SNPs.
 
 Once configuration file is setup, to compare two bam files (sample1.bam and sample2.bam) just run:
 ```
