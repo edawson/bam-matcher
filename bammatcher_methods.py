@@ -1,5 +1,5 @@
 '''
-Created on 23/22/2016
+Created on 23/2/2016
 
 @author: Paul Wang (ppswang@gmail.com)
 
@@ -13,6 +13,7 @@ import vcf
 import os
 import ConfigParser
 import subprocess
+
 
 # Sort VCF entries by chromosome order ordered by the reference index
 # This is somewhat fugly... requires some unix commands
@@ -418,17 +419,6 @@ Caller command:
 Check caller log: %s
 
 """ % (CALLER_ERROR, call_cmd, logfile_)
-
-
-
-
-
-
-
-
-
-
-
 
 
 

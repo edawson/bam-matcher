@@ -1603,6 +1603,39 @@ else:
     print std_report_str
 fout.close()
 
+
+
+
+
+
+
+
+#===============================================================================
+# Experimental
+
+# generate allele frequency distribution
+
+bin_count = 50
+
+if args.allele_freq:
+    for i in [0,1]:
+        fig_out = os.path.join(REPORT_DIR, "bam%d_vaf.png" % i)
+        bam_aflist, bam_afbins = count_AF_bins(tsv_list[i], CALLER, bin_count)
+        plot_VAF(bam_aflist, bin_count, fig_out)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #===============================================================================
 # house keeping
 if args.debug == False:
