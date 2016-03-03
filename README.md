@@ -41,16 +41,24 @@ CONCLUSION: DIFFERENT SOURCES
 
 
 
-## Installation ##
+# Installation #
+
+See the [wiki page](Installation) for detailed installation guide.
 
 ```
 cd /directory/path/where/bam-matcher/is/to/be/installed/
 git clone https://bitbucket.org/sacgf/bam-matcher.git
 ```
 
-Either include the path to BAM-matcher to the environment variable PATH, or move ```bam-matcher.py```, ```bam-matcher.conf``` and ```bam_matcher_html_template``` to a directory that is in the PATH already.
+The repository includes 3 VCF files which can be used for comparing human data (hg19/GRCh37). 
 
-The repository also includes a VCF file ```(1KG_1500_exon_variants_noX.vcf)``` with variants extracted from 1000 Genomes project which are all exonic and have high likelihood of switching between REF and ALT alleles. 
+These VCF files also contain variants extracted from 1000 Genomes project which are all exonic and have high likelihood of switching between REF and ALT alleles (global allele frequency between 0.45 and 0.55). 
+The only difference between them is the number of variants contained within.
+
+The repository also includes several BAM files which can be used for testing (under test_data directory), as well as the expected results for various settings.
+
+See the [tutorial](Usage) for details on how to test BAM-matcher using the example data.
+
 
 
 ## Dependencies ##
