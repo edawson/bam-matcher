@@ -339,9 +339,12 @@ Command tested:
 Python error msg:
 %s
 
+See log file for system error msg:
+%s
+
 Please check the caller command or path to the binary.
 
-""" % (CALLER_ERROR, " ".join(caller_cmd), e)
+""" % (CALLER_ERROR, " ".join(caller_cmd), e, logfile)
         exit(1)
 
     # --------------------------------------------
