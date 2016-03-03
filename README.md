@@ -106,6 +106,9 @@ If configured correctly, to compare two bam files, you just need to run:
 bam-matcher.py --bam1 sample1.bam --bam2 sample2.bam -o output_report.txt
 ```
 
+For detailed information on runtime arguments and parameters, see the [wiki page](https://bitbucket.org/sacgf/bam-matcher/wiki/Arguments).
+
+-----
 
 
 # LICENCE #
