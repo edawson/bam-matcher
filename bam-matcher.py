@@ -27,6 +27,9 @@ from hashlib import md5
 from fisher import pvalue
 from bammatcher_methods import *
 
+
+from bammatcher_exp import *
+
 #============================================================================
 def handle_args():
     parser = ArgumentParser(description="Compare two BAM files to see if \
@@ -111,6 +114,12 @@ def handle_args():
                              help="Don't use cached variant calling data, redo variant-calling. Will overwrite cached data unless told not to (-NC)")
     parser_grp7.add_argument("--cache-dir",      "-CD", required=False,
                              help="Specify directory for cached data. Overrides configuration")
+
+    # Experimental features
+    parser_grp8 = parser.add_argument_group("EXPERIMENTAL")
+    parser_grp8.add_argument("--allele-freq",    "-AF", required=False,
+                             default=False, action="store_true",
+                             help="Plot variant allele frequency graphs")
 
     # optional, not in config
     parser.add_argument("--debug", "-d", required=False, action="store_true",
@@ -801,29 +810,29 @@ GENOTYPE CALLING
 # - VCF file path (list of variants to check)
 
 m1 = md5()
-bam1_path = os.path.abspath(BAM1)
-bam1_mtime = str(os.path.getmtime(bam1_path))
-m1.update(bam1_path)
+# bam1_path = os.path.abspath(BAM1)
+bam1_mtime = str(os.path.getmtime(BAM1))
+m1.update(BAM1)
 m1.update(str(NUMBER_OF_SNPS))
 m1.update(str(DP_THRESH))
 m1.update(bam1_mtime)
 m1.update(VCF_FILE)
 m1.update(bam1_ref)
 m1.update(REFERENCE)
-for line in get_bam_header(bam1_path):
+for line in get_bam_header(BAM1):
     m1.update(line)
 
 m2 = md5()
-bam2_path = os.path.abspath(BAM2)
-bam2_mtime = str(os.path.getmtime(bam2_path))
-m2.update(bam2_path)
+# bam2_path = os.path.abspath(BAM2)
+bam2_mtime = str(os.path.getmtime(BAM2))
+m2.update(BAM2)
 m2.update(str(NUMBER_OF_SNPS))
 m2.update(str(DP_THRESH))
 m2.update(bam2_mtime)
 m2.update(VCF_FILE)
 m2.update(bam2_ref)
 m2.update(REFERENCE)
-for line in get_bam_header(bam2_path):
+for line in get_bam_header(BAM2):
     m2.update(line)
 
 bam1_cache_path = os.path.join(CACHE_DIR, m1.hexdigest())
@@ -1249,6 +1258,8 @@ if BATCH_USE_CACHED:
     if bam2_is_cached:
         tsv2 = bam2_cache_path
 
+tsv_list = [tsv1, tsv2]
+
 # Cache the tsv files, only if not using cached file
 if BATCH_WRITE_CACHE:
     for i in [0,1]:
@@ -1541,7 +1552,7 @@ Fraction of common: %f (%d/%d)
 ________________________________________
 CONCLUSION:
 %s
-"""  % (bam1_path, bam2_path, VCF_FILE, DP_THRESH,
+"""  % (BAM1, BAM2, VCF_FILE, DP_THRESH,
         ct_common, comm_hom_ct, comm_het_ct,
         ct_diff, diff_het, diff_hom_het, diff_1sub2, diff_het_hom, diff_hom, diff_2sub1,
         total_compared, frac_common, ct_common, total_compared, judgement)
@@ -1549,8 +1560,8 @@ CONCLUSION:
 # -------------------------------------------------------------
 # SHORT FORMAT
 short_report_str = """# BAM1\t BAM2\t DP_thresh\t FracCommon\t Same\t Same_hom\t Same_het\t Different\t 1het-2het\t 1het-2hom\t 1het-2sub\t 1hom-2het\t 1hom-2hom\t 1sub-2het\t Conclusion
-%s\t%s\t%d\t%f\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s""" % (bam1_path,
-       bam2_path, DP_THRESH, frac_common, ct_common, comm_hom_ct, comm_het_ct,
+%s\t%s\t%d\t%f\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s""" % (BAM1,
+       BAM2, DP_THRESH, frac_common, ct_common, comm_hom_ct, comm_het_ct,
        ct_diff, diff_het_ct, diff_het_hom_ct, diff_2sub1_ct, diff_hom_het_ct,
        diff_hom_ct, diff_1sub2_ct, short_judgement)
 
@@ -1564,8 +1575,8 @@ if args.html:
     if BATCH_USE_CACHED and bam2_is_cached:
         html_bam2_cached = "cached"
     judgement_html = judgement.replace("\n\n", "<p>").replace("\n", "<br>")
-    html_namespace = {"BAM1"        : bam1_path,
-                      "BAM2"        : bam2_path,
+    html_namespace = {"BAM1"        : BAM1,
+                      "BAM2"        : BAM2,
                       "DP_THRESH"   : DP_THRESH,
                       "caller"      : CALLER,
                       "variants"    : VCF_FILE,
@@ -1616,14 +1627,13 @@ fout.close()
 # generate allele frequency distribution
 
 bin_count = 50
-
+vaf_txt_fig = []
 if args.allele_freq:
     for i in [0,1]:
-        fig_out = os.path.join(REPORT_DIR, "bam%d_vaf.png" % i)
+        fig_out = REPORT_PATH + "_bam%d_vaf.png" % (i+1)
         bam_aflist, bam_afbins = count_AF_bins(tsv_list[i], CALLER, bin_count)
-        plot_VAF(bam_aflist, bin_count, fig_out)
-
-
+        plot_VAF(bam_aflist, bin_count, fig_out, bam_list[i])
+#        aplot = plot_ascii_VAF(bam_aflist)
 
 
 
