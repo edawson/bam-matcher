@@ -90,27 +90,56 @@ def VCFtoTSV(invcf, outtsv, caller):
         fields_to_extract = ["CHROM", "POS", "REF", "ALT", "QUAL", "DP", "AO", "GT"]
     fout.write("%s\n" % "\t".join(fields_to_extract))
     for var in vcf_in:
-        if var.var_type != "snp":
-            continue
+
         chrom_ = var.CHROM
         pos_   = str(var.POS)
         ref_   = var.REF
-        alt_   = var.ALT[0]
-        alt_str = "."
-        if alt_ != None:
-            alt_str = alt_.sequence
-        qual_ = str(var.QUAL)
+        qual_  = str(var.QUAL)
         if caller == "varscan":
             qual_ = str(var.samples[0]["GQ"])
-        if caller == "freebayes" or caller == "gatk":
-            dp_ = str(var.INFO["DP"])
-        else:
-            dp_ = str(var.INFO["ADP"])
 
+        dp_    = "0"
         ad_or_ao = "NA"
         ad_str = "NA"
         gt_ = "NA"
-        if var.samples[0].called:
+        alt_str = ""
+
+        if var.samples[0].called == False:
+            continue
+
+        # usually need to bypass indels, however, homozygous REF is considered indel by pyvcf... WTF?
+        if var.var_type != "snp":
+            if var.samples[0].data.GT != "0/0":
+                continue
+
+            # but need to rescue homozygous REF
+            alt_str = "."
+            gt_ = "%s/%s" % (ref_, ref_)
+
+            if caller == "freebayes":
+                dp_ = var.samples[0].data.DP
+                ro_ = var.samples[0].data.RO
+                ad_str = str(dp_ - ro_)
+            elif caller == "gatk":
+                dp_ = var.samples[0].data.DP
+                ad_str = "0"
+            elif caller == "varscan":
+                dp_
+            dp_ = str(dp_)
+
+
+        else:
+            alt_   = var.ALT[0]
+            alt_str = "."
+            if alt_ != None:
+                alt_str = alt_.sequence
+            if caller == "freebayes" or caller == "gatk":
+                dp_ = str(var.INFO["DP"])
+            else:
+                dp_ = str(var.INFO["ADP"])
+
+            gt_ = var.samples[0].gt_bases
+
             if caller == "gatk":
                 ad_ = var.samples[0]["AD"]
                 for a_ in ad_:
@@ -120,7 +149,9 @@ def VCFtoTSV(invcf, outtsv, caller):
                 ad_str = str(var.samples[0]["AD"])
             else:
                 ad_str = str(var.samples[0]["AO"])
-            gt_ = var.samples[0].gt_bases
+
+        if ad_str == "NA":
+            ad_str = "0"
 
         data_bits = [chrom_, pos_, ref_, alt_str, qual_, dp_, ad_str, gt_]
         fout.write("%s\n" % "\t".join(data_bits))

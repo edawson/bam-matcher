@@ -14,7 +14,7 @@ from matplotlib import pyplot as plt
 
 
 
-def count_AF_bins(gt_data, caller_, n_bins):
+def count_AF_bins(gt_data, n_bins):
     freq_list = []
     fin = open(gt_data, "r")
     fin.readline() # ignore first line
@@ -22,12 +22,20 @@ def count_AF_bins(gt_data, caller_, n_bins):
         bits = line.strip("\n").split("\t")
         dp_ = int(bits[5])
         vdp_ = bits[6]
-        if caller_ == "gatk":
-            vdp_ = int(vdp_.split(",")[2])
+
+        if "," in vdp_: # then this is probably GATK output
+            if vdp_.startswith("[") == False:
+                vdp_ = int(vdp_.split(",")[2])
+            else:
+                vdp_ = vdp_.replace("[", "").replace("]", "").split(",")[0]
+        elif vdp_ == "NA":
+            vdp_ = 0
         else:
             vdp_ = int(vdp_)
-        vaf_ = float(vdp_)/dp_
-        freq_list.append(vaf_)
+        if dp_ >0:
+            vaf_ = float(vdp_)/dp_
+            freq_list.append(vaf_)
+
     freq_bins = [0]*n_bins
     window = 1.0/n_bins
     for fq_ in freq_list:
