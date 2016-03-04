@@ -1,5 +1,5 @@
 pyvcf
 numpy
-matplotlib
-HTSeq
 Cheetah
+fisher
+ConfigParser
