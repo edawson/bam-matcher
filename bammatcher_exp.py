@@ -8,8 +8,10 @@ Experimental methods for bam-matcher
 '''
 
 import math
-from matplotlib import pyplot as plt
+import matplotlib
+matplotlib.use("Agg")
 
+from matplotlib import pyplot as plt
 
 
 

@@ -457,6 +457,13 @@ Check caller log: %s
 
 
 CONFIG_TEMPLATE_STR = """# BAM-matcher configuration file
+
+# All parameters are in the format:
+# KEYWORD:  VALUE
+
+## DO NOT REMOVE SECTION HEADERS (e.g. [Variantcallers])
+## DO NOT REMOVE PARAMETER KEYWORDS
+
 # If not setting a specific parameter, just leave it blank, rather than deleting or commenting out the line
 # Missing parameter keywords will generate errors
 
@@ -483,6 +490,8 @@ number_of_SNPs:
 # set to False will use --region, each variant is called separately
 fast_freebayes: True
 
+# This is the file containing variant positions to use for genotype calling
+# The format of the variant genomic positions should match the default reference (REFERENCE)
 VCF_file: variants.vcf
 
 [VariantCallerParameters]
