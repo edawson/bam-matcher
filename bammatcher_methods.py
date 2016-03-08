@@ -108,14 +108,9 @@ def VCFtoTSV(invcf, outtsv, caller):
             continue
 
         # usually need to bypass indels, however, homozygous REF is considered indel by pyvcf... WTF?
-        if var.monomorphic:
-            # if var.samples[0].data.GT != "0/0":
-            #     continue
-
-            # but need to rescue homozygous REF
+        if var.is_monomorphic:
             alt_str = "."
             gt_ = "%s/%s" % (ref_, ref_)
-
             if caller == "freebayes":
                 dp_ = var.samples[0].data.DP
                 ro_ = var.samples[0].data.RO
@@ -126,7 +121,6 @@ def VCFtoTSV(invcf, outtsv, caller):
             elif caller == "varscan":
                 dp_
             dp_ = str(dp_)
-
 
         else:
             alt_   = var.ALT[0]
