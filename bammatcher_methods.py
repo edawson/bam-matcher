@@ -108,9 +108,9 @@ def VCFtoTSV(invcf, outtsv, caller):
             continue
 
         # usually need to bypass indels, however, homozygous REF is considered indel by pyvcf... WTF?
-        if var.var_type != "snp":
-            if var.samples[0].data.GT != "0/0":
-                continue
+        if var.monomorphic:
+            # if var.samples[0].data.GT != "0/0":
+            #     continue
 
             # but need to rescue homozygous REF
             alt_str = "."
@@ -470,7 +470,7 @@ CONFIG_TEMPLATE_STR = """# BAM-matcher configuration file
 [VariantCallers]
 # file paths to variant callers and other binaries
 
-# This is the default caller to use
+# This is the default caller to use (gatk, freebayes, or varscan)
 caller:    gatk
 
 # These are paths (or commands) to the caller executables

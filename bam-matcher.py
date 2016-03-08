@@ -1248,9 +1248,6 @@ No genotype data were called for BAM%d (%s).
 You may need to check the variant list.
 """ % (WARNING_MSG, i+1, bam_list[i])
 
-
-
-
 #-------------------------------------------------------------------------------
 if BATCH_USE_CACHED:
     if bam1_is_cached:
@@ -1296,7 +1293,7 @@ for line in fin:
         continue
     else:
         # add variants to list
-        var_list["\t".join(bits[:4])] = 1
+        var_list["\t".join(bits[:2])] = 1
 
 #-------------------------------------------------------------------------------
 # then parse second tsv file to get list of variants that passed in both bams
@@ -1305,7 +1302,8 @@ for line in fin:
     if line.startswith("CHROM\t"):
         continue
     bits = line.strip("\n").split("\t")
-    var_ = "\t".join(bits[:4])
+    var_ = "\t".join(bits[:2])
+
     if var_ in var_list:
         var_list[var_] = 2
 
@@ -1318,7 +1316,7 @@ for line in fin:
         continue
     bits = line.strip("\n").split("\t")
     out_line = "%s\t%s\t%s\t%s\t%s\n" % (bits[0], bits[1], bits[2], bits[3], bits[7])
-    var_ = "\t".join(bits[:4])
+    var_ = "\t".join(bits[:2])
     if var_ in var_list:
         if var_list[var_] == 2:
             fout.write(out_line)
@@ -1333,11 +1331,12 @@ for line in fin:
     bits = line.strip("\n").split("\t")
     out_line = "%s\t%s\t%s\t%s\t%s\n" % (bits[0], bits[1], bits[2], bits[3],
                                          bits[7])
-    var_ = "\t".join(bits[:4])
+    var_ = "\t".join(bits[:2])
     if var_ in var_list:
         if var_list[var_] == 2:
             fout.write(out_line)
 fout.close()
+
 
 #-------------------------------------------------------------------------------
 # Results variables
@@ -1404,6 +1403,9 @@ for pos_ in pos_list:
                 diff_2sub1_ct += 1
             else:
                 diff_het_hom_ct += 1
+        else:
+            print "WTF?"
+            print gt1, gt2
 #-------------------------------------------------------------------------------
 
 #===============================================================================
