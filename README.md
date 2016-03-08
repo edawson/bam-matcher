@@ -145,9 +145,6 @@ At the very minimum, you will need to specify in the configuration file:
 - ```CACHE_DIR:``` You must supply the path to a directory with read and write permission for all users. This is used to store cached genotype data.
 
 
-
-See the [tutorial](https://bitbucket.org/sacgf/bam-matcher/wiki/Usage) for details on how to test BAM-matcher using the example data.
-
 Most configuration settings can also be overridden at run time.
 
 For detailed instruction on how to set up a configuration file, see the [wiki page](https://bitbucket.org/sacgf/bam-matcher/wiki/Configuration).
