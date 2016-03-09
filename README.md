@@ -60,6 +60,7 @@ See the [wiki page](https://bitbucket.org/sacgf/bam-matcher/wiki/Installation) f
 * PyVCF
 * ConfigParser
 * Cheetah
+* pysam (requires python-dev and zlib1g-dev libraries)
 * fisher (requires numpy and python-dev libraries).
 
 ## Variant Callers ##
