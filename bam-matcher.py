@@ -631,7 +631,7 @@ else:
         if len(chrdiff) > 0: # - n_chroms_expected < 0:
             print """%s
 Number of matching chromosomes in the %s reference genome (%d) is fewer than expected from the chromosome map (%d).\n
-Missing chromosome: %r\n
+Missing chromosome: %s\n
 Check that the correct genome reference files and chromosome map are used.
 """ % (CONFIG_ERROR, reftype, n_chroms_expected-len(chrdiff), n_chroms_expected, ", ".join(chrdiff))
             exit(1)
@@ -651,13 +651,29 @@ Check that the correct genome reference files and chromosome map are used.
         bam1_ref = REF_ALTERNATE
         if args.verbose:
             print "BAM1 (%s) is matched to alternate genome reference (%s)" % (BAM2, REF_ALTERNATE)
+    # allow some missing chroms
+    elif len(bam1_ALT_diff) < n_chroms_expected/2 or len(bam1_ALT_diff) < n_chroms_expected/2:
+        if len(bam1_ALT_diff) < len(bam1_REF_diff):
+            bam1_ref = REF_ALTERNATE
+        else:
+            bam1_ref = REFERENCE
+        if args.verbose:
+            print """%s
+BAM1 (%s) is missing:
+- %d chromosomes against default reference (%s). Missing: %s
+- %d chromosomes against alternate reference (%s). Missing: %s
+
+BAM1 is more likely matched to: %s
+""" % (CONFIG_ERROR, BAM1, len(bam1_REF_diff), REFERENCE, ", ".join(bam1_REF_diff),
+      len(bam1_ALT_diff), REF_ALTERNATE, ", ".join(bam1_ALT_diff), bam1_ref)
     else:
         print """%s
 Cannot match BAM1 to a genome reference
 BAM1 (%s) is missing:
-- %d chromosomes against default reference (%s). Missing:
-- %d chromosomes against alternate reference (%s). Missing:
-""" % (CONFIG_ERROR, BAM1, len(bam1_REF_diff), REFERENCE, len(bam1_ALT_diff), REF_ALTERNATE)
+- %d chromosomes against default reference (%s). Missing: %s
+- %d chromosomes against alternate reference (%s). Missing: %s
+""" % (WARNING_MSG, BAM1, len(bam1_REF_diff), REFERENCE, ", ".join(bam1_REF_diff),
+      len(bam1_ALT_diff), REF_ALTERNATE, ", ".join(bam1_ALT_diff))
         exit(1)
 
     if len(bam2_REF_diff) == 0:
@@ -668,13 +684,29 @@ BAM1 (%s) is missing:
         bam2_ref = REF_ALTERNATE
         if args.verbose:
             print "BAM2 (%s) is matched to alternate genome reference (%s)" % (BAM2, REF_ALTERNATE)
+    # allow some missing chroms
+    elif len(bam2_ALT_diff) < n_chroms_expected/2 or len(bam2_ALT_diff) < n_chroms_expected/2:
+        if len(bam2_ALT_diff) < len(bam2_REF_diff):
+            bam2_ref = REF_ALTERNATE
+        else:
+            bam2_ref = REFERENCE
+        if args.verbose:
+            print """%s
+BAM2 (%s) is missing:
+- %d chromosomes against default reference (%s). Missing: %s
+- %d chromosomes against alternate reference (%s). Missing: %s
+
+BAM2 is more likely matched to: %s
+""" % (WARNING_MSG, BAM2, len(bam2_REF_diff), REFERENCE, ", ".join(bam2_REF_diff),
+      len(bam2_ALT_diff), REF_ALTERNATE, ", ".join(bam2_ALT_diff), bam2_ref)
     else:
         print """%s
 Cannot match BAM2 to a genome reference
 BAM2 (%s) is missing:
-- %d chromosomes against default reference (%s). Missing:
-- %d chromosomes against alternate reference (%s). Missing:
-""" % (CONFIG_ERROR, BAM2, len(bam2_REF_diff), REFERENCE, len(bam2_ALT_diff), REF_ALTERNATE)
+- %d chromosomes against default reference (%s). Missing: %s
+- %d chromosomes against alternate reference (%s). Missing: %s
+""" % (CONFIG_ERROR, BAM2, len(bam2_REF_diff), REFERENCE, ", ".join(bam2_REF_diff),
+       len(bam2_ALT_diff), REF_ALTERNATE, ", ".join(bam2_ALT_diff))
         exit(1)
 
     # use chromosome map if either BAM1 or BAM2 are not using default REFERENCE
