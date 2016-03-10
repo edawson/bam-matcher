@@ -13,7 +13,7 @@ import vcf
 import os
 import ConfigParser
 import subprocess
-
+import pysam
 
 # Sort VCF entries by chromosome order ordered by the reference index
 # This is somewhat fugly... requires some unix commands
@@ -182,14 +182,21 @@ def is_subset(hom_gt, het_gt):
 # Get list of chromosome names from the BAM file
 def get_chrom_names_from_BAM(bam_file):
     chrom_list = []
-    inbam = gzip.open(bam_file, "r")
-    for line in get_bam_header(bam_file):
-        if line.startswith("@SQ"):
-            bits = line.strip().split("\t")
-            for chunk_ in bits:
-                if chunk_.startswith("SN:"):
-                    chrom_list.append(chunk_[3:])
+    # inbam = gzip.open(bam_file, "r")
+    # for line in get_bam_header(bam_file):
+    #     if line.startswith("@SQ"):
+    #         bits = line.strip().split("\t")
+    #         for chunk_ in bits:
+    #             if chunk_.startswith("SN:"):
+    #                 chrom_list.append(chunk_[3:])
+
+    inbam = pysam.AlignmentFile(bam_file, "rb")
+    header_sq = inbam.header["SQ"]
+    for sq_ in header_sq:
+        chrom_list.append(sq_["SN"])
     return chrom_list
+
+
 
 
 
@@ -398,16 +405,19 @@ Please check the caller command or path to the binary.
 
 
 def get_bam_header(bam_file):
-    header_lines = []
-    fin = gzip.open(bam_file, "r")
-    firstline = fin.readline().strip()
-    header_lines.append("@HD"+firstline.split("@HD")[1])
-    for line in fin:
-        if line.startswith("@") == False:
-            break
-        else:
-            header_lines.append(line.strip())
-    return header_lines
+    # header_lines = []
+    # fin = gzip.open(bam_file, "r")
+    # firstline = fin.readline().strip()
+    # header_lines.append("@HD"+firstline.split("@HD")[1])
+    # for line in fin:
+    #     if line.startswith("@") == False:
+    #         break
+    #     else:
+    #         header_lines.append(line.strip())
+    # return header_lines
+    inbam = pysam.AlignmentFile(bam_file, "rb")
+    return inbam.text
+
 
 
 def check_file_read(file_path, file_object_name, error_type, silent=False):
