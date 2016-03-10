@@ -8,28 +8,29 @@ variants:	1kg.exome.highAF.1511.vcf
 depth threshold: 15
 ________________________________________
 
-Positions with same genotype:   117
-     breakdown:    hom: 27
-                   het: 90
+Positions with same genotype:   162
+     breakdown:    hom: 71
+                   het: 91
 ________________________________________
 
-Positions with diff genotype:   39
+Positions with diff genotype:   108
      breakdown:
                        BAM 1
                | het  | hom  | subset
         -------+------+------+-------
-         het   |    0 |    0 |   15 |
+         het   |    1 |    0 |   31 |
         -------+------+------+-------
-BAM 2    hom   |    0 |    0 |   -  |
+BAM 2    hom   |    0 |   21 |   -  |
         -------+------+------+-------
-         subset|   24 |   -  |   -  |
+         subset|   55 |   -  |   -  |
 ________________________________________
 
-Total sites compared: 156
-Fraction of common: 0.750000 (117/156)
+Total sites compared: 270
+Fraction of common: 0.600000 (162/270)
 ________________________________________
 CONCLUSION:
-LIKELY FROM DIFFERENT SOURCES
+BAM FILES ARE FROM DIFFERENT SOURCES
+
 
 
 
@@ -56,25 +57,25 @@ variants:	1kg.exome.highAF.1511.vcf
 depth threshold: 15
 ________________________________________
 
-Positions with same genotype:   126
-     breakdown:    hom: 29
+Positions with same genotype:   170
+     breakdown:    hom: 73
                    het: 97
 ________________________________________
 
-Positions with diff genotype:   42
+Positions with diff genotype:   112
      breakdown:
                        BAM 1
                | het  | hom  | subset
         -------+------+------+-------
-         het   |    0 |    0 |   16 |
+         het   |    0 |    0 |   32 |
         -------+------+------+-------
-BAM 2    hom   |    0 |    0 |   -  |
+BAM 2    hom   |    0 |   22 |   -  |
         -------+------+------+-------
-         subset|   26 |   -  |   -  |
+         subset|   58 |   -  |   -  |
 ________________________________________
 
-Total sites compared: 168
-Fraction of common: 0.750000 (126/168)
+Total sites compared: 282
+Fraction of common: 0.602837 (170/282)
 ________________________________________
 CONCLUSION:
 LIKELY FROM DIFFERENT SOURCES
@@ -106,28 +107,28 @@ variants:	1kg.exome.highAF.1511.vcf
 depth threshold: 15
 ________________________________________
 
-Positions with same genotype:   109
-     breakdown:    hom: 22
+Positions with same genotype:   158
+     breakdown:    hom: 71
                    het: 87
 ________________________________________
 
-Positions with diff genotype:   32
+Positions with diff genotype:   107
      breakdown:
                        BAM 1
                | het  | hom  | subset
         -------+------+------+-------
-         het   |    0 |    0 |   13 |
+         het   |    0 |    0 |   30 |
         -------+------+------+-------
-BAM 2    hom   |    0 |    0 |   -  |
+BAM 2    hom   |    0 |   24 |   -  |
         -------+------+------+-------
-         subset|   19 |   -  |   -  |
+         subset|   53 |   -  |   -  |
 ________________________________________
 
-Total sites compared: 141
-Fraction of common: 0.773050 (109/141)
+Total sites compared: 265
+Fraction of common: 0.596226 (158/265)
 ________________________________________
 CONCLUSION:
-LIKELY FROM DIFFERENT SOURCES
+BAM FILES ARE FROM DIFFERENT SOURCES
 
 
 
@@ -155,38 +156,36 @@ LIKELY FROM DIFFERENT SOURCES
 # Using a different VCF file (--VCF/-V)
 
 # Freebayes
-# VCF = 1kg.exome.highAF.3680.vcf
+# VCF = 1kg.exome.highAF.7550.vcf
 
 bam1:	sample1.bam
 bam2:	sample2.bam
-variants:	1kg.exome.highAF.3680.vcf
+variants:	1kg.exome.highAF.7550.vcf
 depth threshold: 15
 ________________________________________
 
-Positions with same genotype:   31
-     breakdown:    hom: 10
-                   het: 21
+Positions with same genotype:   139
+     breakdown:    hom: 57
+                   het: 82
 ________________________________________
 
-Positions with diff genotype:   8
+Positions with diff genotype:   77
      breakdown:
                        BAM 1
                | het  | hom  | subset
         -------+------+------+-------
-         het   |    0 |    0 |    3 |
+         het   |    1 |    0 |   21 |
         -------+------+------+-------
-BAM 2    hom   |    0 |    0 |   -  |
+BAM 2    hom   |    0 |   12 |   -  |
         -------+------+------+-------
-         subset|    5 |   -  |   -  |
+         subset|   43 |   -  |   -  |
 ________________________________________
 
-Total sites compared: 39
-Fraction of common: 0.794872 (31/39)
+Total sites compared: 216
+Fraction of common: 0.643519 (139/216)
 ________________________________________
 CONCLUSION:
-LIKELY SAME SOURCE: the number of comparable genomic loci is a bit low.
-Try using a different variants list (--VCF) file which have more appropriate genomic positions for comparison.
-
+LIKELY FROM DIFFERENT SOURCES
 
 
 
@@ -315,31 +314,28 @@ variants:	1kg.exome.highAF.1511.vcf
 depth threshold: 15
 ________________________________________
 
-Positions with same genotype:   171
-     breakdown:    hom: 28
-                   het: 143
+Positions with same genotype:   217
+     breakdown:    hom: 76
+                   het: 141
 ________________________________________
 
-Positions with diff genotype:   25
+Positions with diff genotype:   62
      breakdown:
                        BAM 1
                | het  | hom  | subset
         -------+------+------+-------
-         het   |    0 |    0 |   24 |
+         het   |    0 |    0 |   52 |
         -------+------+------+-------
-BAM 2    hom   |    0 |    0 |   -  |
+BAM 2    hom   |    0 |    1 |   -  |
         -------+------+------+-------
-         subset|    1 |   -  |   -  |
+         subset|    9 |   -  |   -  |
 ________________________________________
 
-Total sites compared: 196
-Fraction of common: 0.872449 (171/196)
+Total sites compared: 279
+Fraction of common: 0.777778 (217/279)
 ________________________________________
 CONCLUSION:
 BAM FILES ARE VERY LIKELY FROM THE SAME SOURCE, but with possible allele specific genotype.
 
 BAM1 genotype appears to be a subset of BAM2.
 Possibly BAM1 is RNA-seq data or BAM2 is contaminated.
-
-
-

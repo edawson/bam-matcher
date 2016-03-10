@@ -1164,7 +1164,7 @@ for i in [0,1]:
         fout = open(out_vcf, "w")
         varcall_cmd = [JAVA, "-XX:ParallelGCThreads=1",
                        "-Xmx%dg" % VARSCAN_MEM, "-jar", VARSCAN,
-                       "mpileup2snp", pup_file,
+                       "mpileup2cns", pup_file,
                        "--output-vcf", "--min-coverage", str(DP_THRESH) ]
         if args.verbose:
             print "Varscan command:\n%s" % " ".join(varcall_cmd)
@@ -1317,7 +1317,11 @@ temp_files += [bam1_var, bam2_var]
 #-------------------------------------------------------------------------------
 # first get list of passed variants in bam1
 fin = open(tsv1, "r")
+
+#ct_ = 0
 for line in fin:
+#    ct_ += 1
+
     if line.startswith("CHROM\t"):
         continue
     bits = line.strip("\n").split("\t")
@@ -1328,6 +1332,11 @@ for line in fin:
     else:
         # add variants to list
         var_list["\t".join(bits[:2])] = 1
+
+# print ct_
+# print var_list, len(var_list)
+#
+# exit()
 
 #-------------------------------------------------------------------------------
 # then parse second tsv file to get list of variants that passed in both bams
@@ -1340,6 +1349,7 @@ for line in fin:
 
     if var_ in var_list:
         var_list[var_] = 2
+
 
 #-------------------------------------------------------------------------------
 # write out bam1 variants
@@ -1355,6 +1365,7 @@ for line in fin:
         if var_list[var_] == 2:
             fout.write(out_line)
 fout.close()
+
 #-------------------------------------------------------------------------------
 # write out bam2 variants
 fout = open(bam2_var, "w")
@@ -1469,10 +1480,9 @@ if total_compared >0:
 allele_subset = ""
 sub_sum = diff_1sub2_ct + diff_2sub1_ct
 
-
 # don't bother if fewer than 10
 if sub_sum > 10:
-    pv_set = pvalue(diff_1sub2_ct, diff_2sub1_ct, sub_sum/2, sub_sum/2)
+    pv_set = pvalue(diff_1sub2_ct, diff_2sub1_ct, ct_diff/2, ct_diff/2)
     pv_ = min(pv_set.left_tail, pv_set.right_tail)
     if pv_ < 0.05:
         if diff_1sub2_ct < diff_2sub1_ct:
@@ -1516,13 +1526,13 @@ BAM%s genotype appears to be a subset of BAM%s.
 Possibly BAM%s is RNA-seq data or BAM%s is contaminated.
 """ % (sub_, over_, sub_, over_)
             short_judgement += ". (BAM%s is subset of BAM%s)" % (sub_, over_)
-    elif frac_common <= 0.75:
+    elif frac_common <= 0.6:
         judgement = "LIKELY FROM DIFFERENT SOURCES: %s" % A_BIT_LOW
         short_judgement = "LIKELY DIFFERENT"
     else:
         judgement = "INCONCLUSIVE: %s" % A_BIT_LOW
         short_judgement = "INCONCLUSIVE"
-# 3. <=200 sites compared
+# 3. >100 sites compared
 else:
     if frac_common >= 0.95:
         judgement = "BAM FILES ARE FROM THE SAME SOURCE"
@@ -1537,7 +1547,7 @@ BAM%s genotype appears to be a subset of BAM%s.
 Possibly BAM%s is RNA-seq data or BAM%s is contaminated.
 """ % (sub_, over_, sub_, over_)
             short_judgement += ". (BAM%s is subset of BAM%s)" % (sub_, over_)
-    elif frac_common <= 0.7:
+    elif frac_common <= 0.6:
         judgement = "BAM FILES ARE FROM DIFFERENT SOURCES"
         short_judgement = "DIFFERENT"
     elif frac_common >= 0.8:

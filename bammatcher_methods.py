@@ -119,9 +119,8 @@ def VCFtoTSV(invcf, outtsv, caller):
                 dp_ = var.samples[0].data.DP
                 ad_str = "0"
             elif caller == "varscan":
-                dp_
+                dp_ = var.INFO["ADP"]
             dp_ = str(dp_)
-
         else:
             alt_   = var.ALT[0]
             alt_str = "."
