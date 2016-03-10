@@ -401,7 +401,7 @@ def get_bam_header(bam_file):
     header_lines = []
     fin = gzip.open(bam_file, "r")
     firstline = fin.readline().strip()
-    header_lines.append("@HD"+firstline.split("@HD")[1])
+    header_lines.append("@"+firstline.split("@")[1])
     for line in fin:
         if line.startswith("@") == False:
             break
@@ -485,8 +485,10 @@ number_of_SNPs:
 fast_freebayes: True
 
 # This is the file containing variant positions to use for genotype calling
-# The format of the variant genomic positions should match the default reference (REFERENCE)
+# The format of the variant genomic positions must match the default reference (REFERENCE)
+# not the alternate reference (REF_ALTERNATE)
 VCF_file: variants.vcf
+
 
 [VariantCallerParameters]
 # GATK memory usage in GB
