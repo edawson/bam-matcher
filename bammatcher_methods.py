@@ -496,7 +496,7 @@ fast_freebayes: True
 # This is the file containing variant positions to use for genotype calling
 # The format of the variant genomic positions must match the default reference (REFERENCE)
 # not the alternate reference (REF_ALTERNATE)
-VCF_file: variants.vcf
+VCF_file: /path/to/variants.vcf
 
 
 [VariantCallerParameters]
