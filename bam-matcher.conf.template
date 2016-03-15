@@ -1,11 +1,18 @@
 # BAM-matcher configuration file
+
+# All parameters are in the format:
+# KEYWORD:  VALUE
+
+## DO NOT REMOVE SECTION HEADERS (e.g. [Variantcallers])
+## DO NOT REMOVE PARAMETER KEYWORDS
+
 # If not setting a specific parameter, just leave it blank, rather than deleting or commenting out the line
 # Missing parameter keywords will generate errors
 
 [VariantCallers]
 # file paths to variant callers and other binaries
 
-# This is the default caller to use
+# This is the default caller to use (gatk, freebayes, or varscan)
 caller:    gatk
 
 # These are paths (or commands) to the caller executables
@@ -25,7 +32,11 @@ number_of_SNPs:
 # set to False will use --region, each variant is called separately
 fast_freebayes: True
 
-VCF_file: variants.vcf
+# This is the file containing variant positions to use for genotype calling
+# The format of the variant genomic positions must match the default reference (REFERENCE)
+# not the alternate reference (REF_ALTERNATE)
+VCF_file: /path/to/variants.vcf
+
 
 [VariantCallerParameters]
 # GATK memory usage in GB
