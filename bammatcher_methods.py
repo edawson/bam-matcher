@@ -474,7 +474,7 @@ CONFIG_TEMPLATE_STR = """# BAM-matcher configuration file
 # file paths to variant callers and other binaries
 
 # This is the default caller to use (gatk, freebayes, or varscan)
-caller:    gatk
+caller:    freebayes
 
 # These are paths (or commands) to the caller executables
 # full paths is always required for *.jar files (GATK and VarScan2)
