@@ -140,7 +140,8 @@ BAM-matcher.py --generate-config path_to_file_to_be_generated
 At the very minimum, you will need to specify in the configuration file:
 
 - ```caller:``` this is the default variant/genotype caller to use (gatk, varscan, or freebayes)
-- settings for whichever caller you have chosen. For GATK, you will need to provide the path to the GATK jar file (```GATK:```); for VarScan, you will need to provide both the path to the VarScan jar file and the command to call SAMtools; for Freebayes, you will need to provide the command/path to call freebayes.
+- settings for whichever caller you have chosen. For GATK, you will need to provide the path to the GATK jar file (```GATK:```); for VarScan, you will need to provide both the path to the VarScan jar file and the command to call SAMtools; for Freebayes, you will need to provide the command/path to call freebayes. GATK and VarScan will also require Java. 
+
 - ```VCF_file:``` Specify the **FULL PATH** to the VCF file containing the variant loci to compare. Three VCF files are provided with BAM-matcher for human hg19 data.
 - ```REFERENCE:``` The reference file used for mapping the reads in the input BAM files. This should also be the same version of genome reference for the VCF file.
 - ```CACHE_DIR:``` You **must** supply the path to a directory with read and write permission for all users. This is used to store cached genotype data.
