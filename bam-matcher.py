@@ -118,10 +118,13 @@ def handle_args():
                              help="Specify directory for cached data. Overrides configuration")
 
     # Experimental features
-    # parser_grp8 = parser.add_argument_group("EXPERIMENTAL")
-    # parser_grp8.add_argument("--allele-freq",    "-AF", required=False,
-    #                          default=False, action="store_true",
-    #                          help="Plot variant allele frequency graphs")
+    parser_grp8 = parser.add_argument_group("EXPERIMENTAL")
+    parser_grp8.add_argument("--experimental", "-X", required=False,
+                             default=False, action="store_true",
+                             help="Enable experimental features")
+    parser_grp8.add_argument("--allele-freq",    "-AF", required=False,
+                             default=False, action="store_true",
+                             help="Plot variant allele frequency graphs")
 
     # optional, not in config
     parser.add_argument("--debug", "-d", required=False, action="store_true",
@@ -170,6 +173,27 @@ Config template will be written to %s
 
 # okay to parse the arguments now
 args = handle_args()
+
+
+
+# EXPERIMENTAL METHODS
+if args.experimental:
+    from bammatcher_exp import *
+
+# if experimental is not enabled, need some error-catching
+if args.experimental == False:
+
+    # trying to generate AF graphs without --experimental
+    if args.allele_freq:
+        print """%s\nThe --allele-freq is an experimental feature,
+To use this feature, you must also select --experimental
+""" % ARGUMENT_ERROR
+        sys.exit(1)
+
+    # trying to use SNP panel data without --experimental
+
+
+
 
 #-------------------------------------------------------------------------------
 # Some random-related stuff, this is for temp files
