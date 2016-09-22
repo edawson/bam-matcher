@@ -172,9 +172,16 @@ See the [tutorial](https://bitbucket.org/sacgf/bam-matcher/wiki/Usage) on how to
 
 # LICENCE #
 
-The code is released under the Creative Commons by Attribution licence (http://creativecommons.org/licenses/by/4.0/). You are free to use and modify it for any purpose (including commercial), so long as you cite/link ....
+The code is released under the Creative Commons by Attribution licence (http://creativecommons.org/licenses/by/4.0/). You are free to use and modify it for any purpose (including commercial), so long as you include appropriate attribution. 
 
+# Citation #
 
+*BAM-matcher: a tool for rapid NGS sample matching*
+
+Paul P.S. Wang; Wendy T. Parker; Susan Branford; Andreas W. Schreiber
+Bioinformatics 2016
+
+[doi: 10.1093/bioinformatics/btw239](http://bioinformatics.oxfordjournals.org/content/early/2016/05/01/bioinformatics.btw239.abstract)
 
 
 # Who do I talk to? #
