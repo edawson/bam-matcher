@@ -2,7 +2,7 @@
 ## This script takes in the required arguments for BAM-Matcher.conf, fills out the config,
 ## and passes it to bam-matcher
 
-bmdir=/app/bam-matcher
+bmdir=$4
 
 firstbam=$1
 secondbam=$2
@@ -21,4 +21,4 @@ sed -i "s/_VCFTARGET_/${vcf}/g" ${bmdir}/bam-matcher.default.conf
 cp ${bmdir}/bam-matcher.default.conf ${bmdir}/bam-matcher.conf
 
 
-bam-matcher.py --bam1 ${firstbam} --bam2 ${secondbam} -o ${reportname}
+${bmdir} bam-matcher.py --bam1 ${firstbam} --bam2 ${secondbam} -o ${reportname}
