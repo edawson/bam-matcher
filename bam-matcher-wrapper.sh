@@ -12,11 +12,12 @@ cache=$4
 vcf=/app/bam-matcher/1kg.exome.highAF.7550.vcf
 
 # Fill in the cache 
-sed -i "s/_CACHETARGET_/${cache}/g" ${bmdir}/bam-matcher.default.conf
+# pass @ as the sed delimiter (thanks https://stackoverflow.com/questions/9366816/sed-fails-with-unknown-option-to-s-error)
+sed -i "s@_CACHETARGET_@${cache}@g" ${bmdir}/bam-matcher.default.conf
 # Fill in the reference
-sed -i "s/_FASTATARGET_/${ref}/g" ${bmdir}/bam-matcher.default.conf
+sed -i "s@_FASTATARGET_@${ref}@g" ${bmdir}/bam-matcher.default.conf
 # Fill in the VCF
-sed -i "s/_VCFTARGET_/${vcf}/g" ${bmdir}/bam-matcher.default.conf
+sed -i "s@_VCFTARGET_@${vcf}@g" ${bmdir}/bam-matcher.default.conf
 
 cp ${bmdir}/bam-matcher.default.conf ${bmdir}/bam-matcher.conf
 
