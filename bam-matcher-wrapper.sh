@@ -9,7 +9,7 @@ reportname=$(basename ${firstbam} .bam).$(basename $secondbam .bam).bam-matcher-
 ref=$3
 bmdir=$4
 cache=$5
-vcf=${bmdir}1kg.exome.highAF.7550.vcf
+vcf=${bmdir}/1kg.exome.highAF.7550.vcf
 
 # Fill in the cache 
 # pass @ as the sed delimiter (thanks https://stackoverflow.com/questions/9366816/sed-fails-with-unknown-option-to-s-error)
