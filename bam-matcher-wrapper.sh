@@ -2,14 +2,14 @@
 ## This script takes in the required arguments for BAM-Matcher.conf, fills out the config,
 ## and passes it to bam-matcher
 
-bmdir=$4
 
 firstbam=$1
 secondbam=$2
 reportname=$(basename ${firstbam} .bam).$(basename $secondbam .bam).bam-matcher-report.txt
 ref=$3
-cache=$4
-vcf=/app/bam-matcher/1kg.exome.highAF.7550.vcf
+bmdir=$4
+cache=$5
+vcf=${bmdir}1kg.exome.highAF.7550.vcf
 
 # Fill in the cache 
 # pass @ as the sed delimiter (thanks https://stackoverflow.com/questions/9366816/sed-fails-with-unknown-option-to-s-error)
@@ -22,4 +22,4 @@ sed -i "s@_VCFTARGET_@${vcf}@g" ${bmdir}/bam-matcher.default.conf
 cp ${bmdir}/bam-matcher.default.conf ${bmdir}/bam-matcher.conf
 
 
-${bmdir} bam-matcher.py --bam1 ${firstbam} --bam2 ${secondbam} -o ${reportname}
+${bmdir}/bam-matcher.py --bam1 ${firstbam} --bam2 ${secondbam} -o ${reportname}
