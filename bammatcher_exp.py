@@ -157,7 +157,7 @@ def convert_snp_to_genotype(snp_data_file, gt_data_file):
     # verify that the SNP data file contains all required columns
     for col in snp_data_cols:
         if col not in snp_data_col_indices:
-            print "SNP DATA ERROR:\nInput SNP array data file (%s) is missing expected column (%s)" % (snp_data_file, col)
+            print ("SNP DATA ERROR:\nInput SNP array data file (%s) is missing expected column (%s)" % (snp_data_file, col))
             exit(1)
 
     # extract required information

@@ -147,19 +147,19 @@ for idx, arg in enumerate(sys.argv):
             config_template_output = os.path.abspath(sys.argv[idx+1])
         except:
             config_template_output = os.path.abspath("bam-matcher.conf.template")
-        print """
+        print ("""
 ====================================
 Generating configuration file template
 ====================================
 
 Config template will be written to %s
 
-""" % config_template_output
+""" % config_template_output)
 
         # make sure that it doesn't overwrite anything!
         if os.path.isfile(config_template_output):
-            print "%s\nThe specified path ('%s') for config template exists already." % (FILE_ERROR, config_template_output)
-            print "Write to another file."
+            print ("%s\nThe specified path ('%s') for config template exists already." % (FILE_ERROR, config_template_output))
+            print ("Write to another file.")
             sys.exit(1)
         fout = open(config_template_output, "w")
         fout.write(CONFIG_TEMPLATE_STR)
@@ -168,7 +168,7 @@ Config template will be written to %s
 
     # print information about alternate genome reference
     if arg in ALTERNATE_REF_SYMS:
-        print ABOUT_ALTERNATE_REF_MSG
+        print (ABOUT_ALTERNATE_REF_MSG)
         exit()
 
 # okay to parse the arguments now
@@ -185,9 +185,9 @@ if args.experimental == False:
 
     # trying to generate AF graphs without --experimental
     if args.allele_freq:
-        print """%s\nThe --allele-freq is an experimental feature,
+        print ("""%s\nThe --allele-freq is an experimental feature,
 To use this feature, you must also select --experimental
-""" % ARGUMENT_ERROR
+""" % ARGUMENT_ERROR)
         sys.exit(1)
 
     # trying to use SNP panel data without --experimental
@@ -220,7 +220,7 @@ config = ConfigParser.ConfigParser()
 try:
     config.read(config_file)
 except ConfigParser.Error as e:
-    print "%s\nUnspecified configuration file error. Please check configuration file.\n\nPython error msg:\n%s" % (CONFIG_ERROR, e)
+    print ("%s\nUnspecified configuration file error. Please check configuration file.\n\nPython error msg:\n%s" % (CONFIG_ERROR, e))
     exit(1)
 
 # are all the sections there?
@@ -230,9 +230,9 @@ REQUIRED_CONFIG_SECTIONS = ["GenomeReference", "VariantCallerParameters",
                             "BatchOperations"]
 for sect in REQUIRED_CONFIG_SECTIONS:
     if sect not in config_sections:
-        print """%s
-Missing required section in config file: %s
-""" % (CONFIG_ERROR, sect)
+        print ("""%s
+Missing required section in config file: %s)
+""" % (CONFIG_ERROR, sect))
         exit(1)
 #-------------------------------------------------------------------------------
 # setting variables using the config file
@@ -266,11 +266,11 @@ if args.verbose:
 #-------------------------------------------------------------------------------
 # Input and output files
 if args.verbose:
-    print """
+    print ("""
 ================================================================================
 CHECKING INPUT AND OUTPUT
 ================================================================================
-"""
+""")
 
 BAM1 = os.path.abspath(os.path.expanduser(args.bam1))
 BAM2 = os.path.abspath(os.path.expanduser(args.bam2))
@@ -284,8 +284,8 @@ for bam_file in [BAM1, BAM2]:
     bam_index1 = bam_file + ".bai"
     if (os.access(bam_index1, os.R_OK) == False and
         os.access(bam_index2, os.R_OK) == False):
-        print "%s\nInput BAM file (%s) is either missing index or the index \
-file is not readable." % (FILE_ERROR, bam_file)
+        print ("%s\nInput BAM file (%s) is either missing index or the index \
+file is not readable." % (FILE_ERROR, bam_file))
         exit(1)
 
 # ----------------------------
@@ -320,7 +320,7 @@ if args.html:
 SCRATCH_DIR = "/tmp/%s" % random_str
 if args.scratch_dir == None:
     if args.verbose:
-        print "Making scratch directory: %s" % SCRATCH_DIR
+        print ("Making scratch directory: %s" % SCRATCH_DIR)
     os.mkdir(SCRATCH_DIR)
 else:
     SCRATCH_DIR = args.scratch_dir
@@ -331,22 +331,22 @@ else:
     # if not, make it
     else:
         if args.verbose:
-            print "Creating scratch directory: %s" % SCRATCH_DIR
+            print ("Creating scratch directory: %s" % SCRATCH_DIR)
         try:
             os.mkdir(SCRATCH_DIR)
         except OSError as e:
-            print """%s
+            print ("""%s
 Unable to create specified scratch directory: %s
 Python error: %s
-""" % (FILE_ERROR, SCRATCH_DIR, e)
+""" % (FILE_ERROR, SCRATCH_DIR, e))
         except Exception as e:
-            print """%s
+            print ("""%s
 Unknown error while trying to create scratch directory (%s)
 Python error message: %s
-""" % (FILE_ERROR, SCRATCH_DIR, e)
+""" % (FILE_ERROR, SCRATCH_DIR, e))
 
 if args.verbose:
-    print """
+    print ("""
 
 Input BAM files:
 BAM1:           %s
@@ -358,7 +358,7 @@ Output report:  %s
 
 Input and output seem okay
 
-""" % (BAM1, BAM2, SCRATCH_DIR, REPORT_PATH)
+""" % (BAM1, BAM2, SCRATCH_DIR, REPORT_PATH))
 
 
 
@@ -366,11 +366,11 @@ Input and output seem okay
 #===============================================================================
 # Checking and validating settings and parameters
 if args.verbose:
-    print """
+    print ("""
 ================================================================================
 CHECKING SETTINGS AND PARAMETERS
 ================================================================================
-"""
+""")
 
 #-------------------------------------------
 # which caller to use
@@ -389,15 +389,15 @@ else:
 # if not set in argument, default to Freebayes
 if CALLER == "none":
     CALLER = "freebayes"
-    print """%s
+    print ("""%s
 No default caller was specified in the configuration file nor at runtime.
 Will default to Freebayes.
-"""
+""")
 elif CALLER not in ["gatk", "freebayes", "varscan"]:
-    print """%s
+    print ("""%s
 Incorrect caller specified.
 The only values accepted for the caller parameter are: 'gatk', 'freebayes', and 'varscan'
-""" % (CONFIG_ERROR)
+""" % (CONFIG_ERROR))
     exit(1)
 
 
@@ -410,10 +410,10 @@ if args.vcf: VCF_FILE = os.path.abspath(os.path.expanduser(args.vcf))
 
 # is it specified?
 if VCF_FILE == "":
-    print """%s
+    print ("""%s
 No variants file (VCF) has been specified.
 Use --vcf/-V at command line or VCF_FILE in the configuration file.
-""" % CONFIG_ERROR
+""" % CONFIG_ERROR)
     exit(1)
 
 # is it readable?
@@ -429,19 +429,19 @@ if args.dp_threshold != None:
 # get from config file
 else:
     if DP_THRESH == "":
-        print """%s
+        print ("""%s
 DP_threshold value was not specified in the config file or arguments.
 Default value (15) will be used instead.
 Setting DP_threshold = 15
-""" % WARNING_MSG
+""" % WARNING_MSG)
         DP_THRESH = 15
     else:
         try:
             DP_THRESH = int(DP_THRESH)
-        except ValueError, e:
-            print """%s
+        except (ValueError) as e:
+            print ("""%s
 DP_threshold value ('%s') in config file is not a valid integer.
-""" % (CONFIG_ERROR, DP_THRESH)
+""" % (CONFIG_ERROR, DP_THRESH))
             exit(1)
 
 #-------------------------------------------
@@ -456,17 +456,17 @@ else:
     else:
         try:
             NUMBER_OF_SNPS = int(NUMBER_OF_SNPS)
-        except ValueError, e:
-            print """%s
+        except (ValueError) as e:
+            print ("""%s
 number_of_SNPs value ('%s') in config file is not a valid integer.
-""" % (CONFIG_ERROR, NUMBER_OF_SNPS)
+""" % (CONFIG_ERROR, NUMBER_OF_SNPS))
             sys.exit(1)
 
 if NUMBER_OF_SNPS <= 200 and NUMBER_OF_SNPS > 0:
-    print """%s
+    print ("""%s
 Using fewer than 200 SNPs is not recommended, may not be sufficient to
 correctly discriminate between samples.
-""" % WARNING_MSG
+""" % WARNING_MSG)
 
 #-------------------------------------------
 # Fast Freebayes
@@ -479,12 +479,12 @@ if CALLER == "freebayes":
     # get from config file
     else:
         if FAST_FREEBAYES == "":
-            print """%s
+            print ("""%s
 fast_freebayes was not set in the configuration file.
 Default value (False) will be used instead.
 
 Setting fast_freebayes = False
-""" % WARNING_MSG
+""" % WARNING_MSG)
             FAST_FREEBAYES = False
         else:
             if FAST_FREEBAYES in ["False", "false", "F", "FALSE"]:
@@ -492,9 +492,9 @@ Setting fast_freebayes = False
             elif FAST_FREEBAYES in ["True", "true", "T", "TRUE"]:
                 FAST_FREEBAYES = True
             else:
-                print """%s
+                print ("""%s
 Invalid value ('%s') was specified for fast_freebayes in the configuration file.
-Use 'False' or 'True'""" % (CONFIG_ERROR, FAST_FREEBAYES)
+Use 'False' or 'True'""" % (CONFIG_ERROR, FAST_FREEBAYES))
                 sys.exit(1)
 
 #-------------------------------------------
@@ -502,37 +502,37 @@ Use 'False' or 'True'""" % (CONFIG_ERROR, FAST_FREEBAYES)
 if CALLER == "gatk":
     # GATK_MEM
     if GATK_MEM == "":
-        print """%s
+        print ("""%s
 GATK_MEM was not specified in the configuration file.
 Default value (4G) will be used instead.
 
 Setting GATK_MEM = 4G
-""" % WARNING_MSG
+""" % WARNING_MSG)
         GATK_MEM = 4
     else:
         try:
             GATK_MEM = int(GATK_MEM)
-        except ValueError, e:
-            print """%s
+        except (ValueError) as e:
+            print ("""%s
 GATK_MEM value ('%s') in the config file is not a valid integer.
-""" % (CONFIG_ERROR, GATK_MEM)
+""" % (CONFIG_ERROR, GATK_MEM))
             sys.exit(1)
 
     # GATK_nt
     if GATK_NT == "":
-        print """ %s GATK_nt was not specified in the configuration file.
+        print (""" %s GATK_nt was not specified in the configuration file.
 Default value (1) will be used instead.
 
 Setting GATK_nt = 1
-""" % WARNING_MSG
+""" % WARNING_MSG)
         GATK_NT = 1
     else:
         try:
             GATK_NT = int(GATK_NT)
-        except ValueError, e:
-            print """%s
+        except (ValueError) as e:
+            print ("""%s
 GATK_nt value ('%s') in the config file is not a valid integer.
-""" % (CONFIG_ERROR, GATK_NT)
+""" % (CONFIG_ERROR, GATK_NT))
             sys.exit(1)
 
 #-------------------------------------------
@@ -540,20 +540,20 @@ GATK_nt value ('%s') in the config file is not a valid integer.
 if CALLER == "varscan":
     # get from config file
     if VARSCAN_MEM == "":
-        print """
+        print ("""
 VARSCAN_MEM was not specified in the configuration file.
 Default value (4GB) will be used instead.
 
 Setting VARSCAN_MEM = 4GB
-""" % WARNING_MSG
+""" % WARNING_MSG)
         VARSCAN_MEM = 4
     else:
         try:
             VARSCAN_MEM = int(VARSCAN_MEM)
-        except ValueError, e:
-            print """%s
+        except (ValueError) as e:
+            print ("""%s
 VARSCAN_MEM value ('%s') in the config file is not a valid integer.
-""" % (CONFIG_ERROR, VARSCAN_MEM)
+""" % (CONFIG_ERROR, VARSCAN_MEM))
             exit(1)
 
 
@@ -565,47 +565,47 @@ bam2_ref = ""
 
 # No references are specified anywhere
 if REFERENCE == "" and args.reference == None:
-    print """%s
+    print ("""%s
 No genome reference has been specified anywhere.
 Need to do this in either the configuration file or at run time (--reference/-R).
 
 ALTERNATE_REF (in config) or --alternate_ref/-A should only be used if there is
 already a default genome reference speficied.
-""" % CONFIG_ERROR
+""" % CONFIG_ERROR)
     exit(1)
 
 # overriding config REFERENCE
 if args.reference != None:
     REFERENCE = os.path.abspath(os.path.expanduser(args.reference))
-    print """%s
+    print ("""%s
 --reference/-R argument overrides config setting (REFERENCE).
 Default reference = %s
-""" % (WARNING_MSG, REFERENCE)
+""" % (WARNING_MSG, REFERENCE))
 
 # overriding config REF_ALTERNATE
 if args.ref_alternate != None:
     REF_ALTERNATE = os.path.abspath(os.path.expanduser(args.ref_alternate))
-    print """%s
+    print ("""%s
 --ref-alternate/-R2 argument overrides config setting (REF_ALTERNATE).
 Alternate reference = %s
-""" % (WARNING_MSG, REF_ALTERNATE)
+""" % (WARNING_MSG, REF_ALTERNATE))
 
 # overriding config CHROM_MAP
 if args.chromosome_map != None:
     CHROM_MAP = os.path.abspath(os.path.expanduser(args.chromosome_map))
-    print """%s
+    print ("""%s
 --chromosome-map/-M argument overrides config setting (CHROM_MAP).
 Chromosome map = %s
-""" % (WARNING_MSG, CHROM_MAP)
+""" % (WARNING_MSG, CHROM_MAP))
 
 # check that if ref_alternate is used, then chromosome_map is also supplied
 if REF_ALTERNATE:
     if not CHROM_MAP:
-        print """%s
+        print ("""%s
 When using an alternate genome reference (--ref-alternate), chromosome map
 (--chromosome-map/-M or CHROM_MAP in config) must also be supplied.
 For more details, run BAM-matcher with --about-alternate-ref/-A.
-""" % (CONFIG_ERROR)
+""" % (CONFIG_ERROR))
         exit(1)
 
 # ---------------------------------------------------------
@@ -653,15 +653,15 @@ else:
     for rid, reftype in enumerate(["default", "alternate"]):
         chrdiff = chrom_diffs[rid]
         if len(chrdiff) > 0: # - n_chroms_expected < 0:
-            print """%s
+            print ("""%s
 Number of matching chromosomes in the %s reference genome (%d) is fewer than expected from the chromosome map (%d).\n
 Missing chromosome: %s\n
 Check that the correct genome reference files and chromosome map are used.
-""" % (CONFIG_ERROR, reftype, n_chroms_expected-len(chrdiff), n_chroms_expected, ", ".join(chrdiff))
+""" % (CONFIG_ERROR, reftype, n_chroms_expected-len(chrdiff), n_chroms_expected, ", ".join(chrdiff)))
             exit(1)
 
     if args.verbose:
-        print "Matching BAM files and genome references"
+        print ("Matching BAM files and genome references")
     bam1_REF_diff = set(MAP_REF_CHROMS).difference(set(bam1_chroms))
     bam2_REF_diff = set(MAP_REF_CHROMS).difference(set(bam2_chroms))
     bam1_ALT_diff = set(MAP_ALT_CHROMS).difference(set(bam1_chroms))
@@ -670,11 +670,11 @@ Check that the correct genome reference files and chromosome map are used.
     if len(bam1_REF_diff) == 0:
         bam1_ref = REFERENCE
         if args.verbose:
-            print "BAM1 (%s) is matched to default genome reference (%s)" % (BAM1, REFERENCE)
+            print ("BAM1 (%s) is matched to default genome reference (%s)" % (BAM1, REFERENCE))
     elif len(bam1_ALT_diff) == 0:
         bam1_ref = REF_ALTERNATE
         if args.verbose:
-            print "BAM1 (%s) is matched to alternate genome reference (%s)" % (BAM2, REF_ALTERNATE)
+            print ("BAM1 (%s) is matched to alternate genome reference (%s)" % (BAM2, REF_ALTERNATE))
     # allow some missing chroms
     elif len(bam1_ALT_diff) < n_chroms_expected/2 or len(bam1_ALT_diff) < n_chroms_expected/2:
         if len(bam1_ALT_diff) < len(bam1_REF_diff):
@@ -682,32 +682,32 @@ Check that the correct genome reference files and chromosome map are used.
         else:
             bam1_ref = REFERENCE
         if args.verbose:
-            print """%s
+            print ("""%s
 BAM1 (%s) is missing:
 - %d chromosomes against default reference (%s). Missing: %s
 - %d chromosomes against alternate reference (%s). Missing: %s
 
 BAM1 is more likely matched to: %s
 """ % (CONFIG_ERROR, BAM1, len(bam1_REF_diff), REFERENCE, ", ".join(bam1_REF_diff),
-      len(bam1_ALT_diff), REF_ALTERNATE, ", ".join(bam1_ALT_diff), bam1_ref)
+      len(bam1_ALT_diff), REF_ALTERNATE, ", ".join(bam1_ALT_diff), bam1_ref))
     else:
-        print """%s
+        print ("""%s
 Cannot match BAM1 to a genome reference
 BAM1 (%s) is missing:
 - %d chromosomes against default reference (%s). Missing: %s
 - %d chromosomes against alternate reference (%s). Missing: %s
 """ % (WARNING_MSG, BAM1, len(bam1_REF_diff), REFERENCE, ", ".join(bam1_REF_diff),
-      len(bam1_ALT_diff), REF_ALTERNATE, ", ".join(bam1_ALT_diff))
+      len(bam1_ALT_diff), REF_ALTERNATE, ", ".join(bam1_ALT_diff)))
         exit(1)
 
     if len(bam2_REF_diff) == 0:
         bam2_ref = REFERENCE
         if args.verbose:
-            print "BAM2 (%s) is matched to default genome reference (%s)" % (BAM1, REFERENCE)
+            print ("BAM2 (%s) is matched to default genome reference (%s)" % (BAM1, REFERENCE))
     elif len(bam2_ALT_diff) == 0:
         bam2_ref = REF_ALTERNATE
         if args.verbose:
-            print "BAM2 (%s) is matched to alternate genome reference (%s)" % (BAM2, REF_ALTERNATE)
+            print ("BAM2 (%s) is matched to alternate genome reference (%s)" % (BAM2, REF_ALTERNATE))
     # allow some missing chroms
     elif len(bam2_ALT_diff) < n_chroms_expected/2 or len(bam2_ALT_diff) < n_chroms_expected/2:
         if len(bam2_ALT_diff) < len(bam2_REF_diff):
@@ -715,22 +715,22 @@ BAM1 (%s) is missing:
         else:
             bam2_ref = REFERENCE
         if args.verbose:
-            print """%s
+            print ("""%s
 BAM2 (%s) is missing:
 - %d chromosomes against default reference (%s). Missing: %s
 - %d chromosomes against alternate reference (%s). Missing: %s
 
 BAM2 is more likely matched to: %s
 """ % (WARNING_MSG, BAM2, len(bam2_REF_diff), REFERENCE, ", ".join(bam2_REF_diff),
-      len(bam2_ALT_diff), REF_ALTERNATE, ", ".join(bam2_ALT_diff), bam2_ref)
+      len(bam2_ALT_diff), REF_ALTERNATE, ", ".join(bam2_ALT_diff), bam2_ref))
     else:
-        print """%s
+        print ("""%s
 Cannot match BAM2 to a genome reference
 BAM2 (%s) is missing:
 - %d chromosomes against default reference (%s). Missing: %s
 - %d chromosomes against alternate reference (%s). Missing: %s
 """ % (CONFIG_ERROR, BAM2, len(bam2_REF_diff), REFERENCE, ", ".join(bam2_REF_diff),
-       len(bam2_ALT_diff), REF_ALTERNATE, ", ".join(bam2_ALT_diff))
+       len(bam2_ALT_diff), REF_ALTERNATE, ", ".join(bam2_ALT_diff)))
         exit(1)
 
     # use chromosome map if either BAM1 or BAM2 are not using default REFERENCE
@@ -755,30 +755,30 @@ if args.cache_dir != None:
 
 if BATCH_WRITE_CACHE:
     if CACHE_DIR == "":
-        print """%s
+        print ("""%s
 No CACHE_DIR specified in configuration or at command line.
 Cached operations requires this to work.
 
 If you don't want the cache the data, use the --do-not-cache/-NC flag.
 
-""" % CONFIG_ERROR
+""" % CONFIG_ERROR)
         sys.exit(1)
 
     # check if CACHE_DIR exists, if not, create it
     if not os.path.isdir(CACHE_DIR):
         if args.verbose:
-            print "\n\nSpecified cache directory %s does not exist. Will attempt to create it" % CACHE_DIR
+            print ("\n\nSpecified cache directory %s does not exist. Will attempt to create it" % CACHE_DIR)
         try:
             os.mkdir(CACHE_DIR)
         except OSError as e:
-            print """%s
+            print ("""%s
 Specified cache directory (%s) does not exist.
 Attempt to create the directory failed.
 You may not have permission to create this directory, or the parent directory also does not exist.
 
 Python error:
 %s\n
-""" % (FILE_ERROR, CACHE_DIR, e)
+""" % (FILE_ERROR, CACHE_DIR, e))
             exit(1)
 
     # check if cache directory is write-able
@@ -788,20 +788,20 @@ Python error:
         test_cache.write("")
         test_cache.close()
         os.remove(test_cache_file)
-    except IOError, e:
-        print """%s
+    except (IOError) as e:
+        print ("""%s
 Unable to write to specified cache directory ('%s')
 You may not have permission to write to this directory.
 Either specify another cache directory (--cache-dir/-CD), or use --do-not-cache/-NC.
 
 Python error msg:
 %s
-""" % (CONFIG_ERROR, CACHE_DIR, e)
+""" % (CONFIG_ERROR, CACHE_DIR, e))
         sys.exit(1)
 
     # check if cache directory is readable
     if os.access(CACHE_DIR, os.R_OK) == False:
-        print "%s\n\nSpecified cache directory (%s) is not readable!\n\n\n\n" % (WARNING_MSG, CACHE_DIR)
+        print ("%s\n\nSpecified cache directory (%s) is not readable!\n\n\n\n" % (WARNING_MSG, CACHE_DIR))
 
 
 
@@ -810,33 +810,33 @@ Python error msg:
 # Print config settings
 
 if args.verbose:
-    print """\n\nCONFIG SETTINGS
+    print ("""\n\nCONFIG SETTINGS
 VCF file:          %s
 DP_threshold:      %d
 number_of_SNPs:    %d (if 0, all variants in VCF file will be used)
 
-Caller:            %s""" % (VCF_FILE, DP_THRESH, NUMBER_OF_SNPS, CALLER)
+Caller:            %s""" % (VCF_FILE, DP_THRESH, NUMBER_OF_SNPS, CALLER))
 
     if CALLER == "freebayes":
-        print "fast_freebayes:   ", FAST_FREEBAYES
+        print ("fast_freebayes:   ", FAST_FREEBAYES)
 
-    print """
+    print ("""
 default genome reference:   %s
 alternate genome reference: %s
 BAM1 matched to:            %s
-BAM2 matched to:            %s""" % (REFERENCE, REF_ALTERNATE, bam1_ref, bam2_ref)
+BAM2 matched to:            %s""" % (REFERENCE, REF_ALTERNATE, bam1_ref, bam2_ref))
 
     if using_chrom_map:
-        print """
+        print ("""
 using chromosome map:       %r
 chromosome map:             %s
-""" % (using_chrom_map, CHROM_MAP)
+""" % (using_chrom_map, CHROM_MAP))
 
-    print """
+    print ("""
 cache directory:                  %s
 use cached wherever possible:     %r
 write cache data for new samples: %r
-""" % (CACHE_DIR, BATCH_USE_CACHED, BATCH_WRITE_CACHE)
+""" % (CACHE_DIR, BATCH_USE_CACHED, BATCH_WRITE_CACHE))
 
 #===============================================================================
 # Finished configuration and arguments checking and loading
@@ -851,11 +851,11 @@ write cache data for new samples: %r
 #===============================================================================
 
 if args.verbose:
-    print """
+    print ("""
 ================================================================================
 GENOTYPE CALLING
 ================================================================================
-"""
+""")
 
 #-------------------------------------------------------------------------------
 # first look for cached data if using BATCH_USE_CACHED is True
@@ -901,16 +901,16 @@ if BATCH_USE_CACHED == False:
     bam1_is_cached = False
     bam2_is_cached = False
 if args.verbose:
-    print "BAM1 is cached:", bam1_is_cached
-    print "BAM2 is cached:", bam2_is_cached
+    print ("BAM1 is cached:", bam1_is_cached)
+    print ("BAM2 is cached:", bam2_is_cached)
 
 # Only check callers if not using cached data
 # Test caller binaries
 if bam1_is_cached == False or bam2_is_cached==False:
     if args.verbose:
-        print "\n---------------\nChecking caller\n---------------"
+        print ("\n---------------\nChecking caller\n---------------")
     if CALLER == "freebayes" and not JAVA:
-        print "%s\nJava command was not specified.\nDo this in the configuration file" % CONFIG_ERROR
+        print ("%s\nJava command was not specified.\nDo this in the configuration file" % CONFIG_ERROR)
         sys.exit(1)
     caller_check_log = os.path.join(SCRATCH_DIR, "caller_check.log")
     if CALLER == "gatk":
@@ -920,22 +920,22 @@ if bam1_is_cached == False or bam2_is_cached==False:
     elif CALLER == "varscan":
         check_caller(CALLER, VARSCAN,   JAVA, args.verbose, logfile=caller_check_log, SAMTL=SAMTOOLS)
     if args.verbose:
-        print "Caller settings seem okay.\n"
+        print ("Caller settings seem okay.\n")
 else:
     if args.verbose:
-        print """
+        print ("""
 ---------------
 Checking caller
 ---------------
 Using cached data for both BAM files, so don't need to test caller.
-"""
+""")
 #-------------------------------------------------------------------------------
 # generating intervals file for variant calling - only required if not using cached data
 # VCF_FILE, NUMBER_OF_SNPS
 interval_files_list = []
 if bam1_is_cached == False or bam2_is_cached == False:
     if args.verbose:
-        print "Creating intervals file"
+        print ("Creating intervals file")
     bam1_itv = os.path.join(SCRATCH_DIR, "bam1.intervals")
     bam2_itv = os.path.join(SCRATCH_DIR, "bam2.intervals")
     temp_files.append(bam1_itv)
@@ -965,7 +965,7 @@ if bam1_is_cached == False or bam2_is_cached == False:
 # if they are empty, then something is wrong
     for i in [0, 1]:
         if os.path.getsize(interval_files_list[i]) == 0:
-            print """%s
+            print ("""%s
 No intervals were extracted from variants list.
 Genotype calling have no targets and will either fail or generate an empty VCF file.
 
@@ -979,14 +979,14 @@ Input VCF file:             %s
 Default genome reference:   %s
 Alternate genome reference: %s
 chromosome map:             %s
-""" % (CONFIG_ERROR, VCF_FILE, REFERENCE, REF_ALTERNATE, CHROM_MAP)
+""" % (CONFIG_ERROR, VCF_FILE, REFERENCE, REF_ALTERNATE, CHROM_MAP))
             exit(1)
 
 
 #-------------------------------------------------------------------------------
 # Caller output files
 if args.verbose:
-    print "\n----------------\nCalling variants\n----------------"
+    print ("\n----------------\nCalling variants\n----------------")
 vcf1 = os.path.join(SCRATCH_DIR, "bam1.vcf")
 vcf2 = os.path.join(SCRATCH_DIR, "bam2.vcf")
 # pileup files, for VarScan
@@ -1011,19 +1011,19 @@ temp_files += pup_list
 # 2. They may have been mapped to different reference files
 for i in [0,1]:
     if args.verbose:
-        print "\nGenotype calling for BAM %d\n--------------------------" % (i+1)
+        print ("\nGenotype calling for BAM %d\n--------------------------" % (i+1))
 
     if BATCH_USE_CACHED:
         if cached_list[i]:
             if args.verbose:
-                print "BAM %d has cached genotype data" % (i+1)
+                print ("BAM %d has cached genotype data" % (i+1))
             continue
     in_bam = bam_list[i]
     out_vcf = vcf_list[i]
     ref = ref_list[i]
     interval_file = interval_files_list[i]
     if args.verbose:
-        print "input bam: \t%s\noutput vcf:\t%s" % (in_bam, out_vcf)
+        print ("input bam: \t%s\noutput vcf:\t%s" % (in_bam, out_vcf))
     # set up caller log file
     caller_log_file = os.path.join(SCRATCH_DIR, "caller%d.log" % i)
     temp_files.append(caller_log_file)
@@ -1038,8 +1038,8 @@ for i in [0,1]:
         varcall_cmd += ["--output_mode", "EMIT_ALL_SITES", "-nt", str(GATK_NT),
                         "-L", interval_file]
         if args.verbose:
-            print "\nGATK variant-calling command (space in path not escaped here, but should be fine in actual call command):\n"
-            print " ".join(varcall_cmd) + "\n"
+            print ("\nGATK variant-calling command (space in path not escaped here, but should be fine in actual call command):\n")
+            print (" ".join(varcall_cmd) + "\n")
         varcall_proc = subprocess.Popen(varcall_cmd, stdout=subprocess.PIPE, stderr=caller_log)
         varcall_proc.communicate()
         varcall_proc_returncode = varcall_proc.returncode
@@ -1048,7 +1048,7 @@ for i in [0,1]:
         if args.verbose:
             fin = open(caller_log_file, "r")
             for line in fin:
-                print line.strip()
+                print (line.strip())
 
         # check calling was successful
         if varcall_proc_returncode != 0:
@@ -1056,7 +1056,7 @@ for i in [0,1]:
             exit(1)
         else:
             if args.verbose:
-                print "\nVariant calling successful."
+                print ("\nVariant calling successful.")
 
     # ----------------------------------------------------------
     # Genotype calling with Freebayes
@@ -1070,7 +1070,7 @@ for i in [0,1]:
                            str(DP_THRESH)]
             varcall_cmd += ["--report-all-haplotype-alleles", "--report-monomorphic", in_bam]
             if args.verbose:
-                print "Freebayes variant-calling command:\n" + " ".join(varcall_cmd)
+                print ("Freebayes variant-calling command:\n" + " ".join(varcall_cmd))
 
             varcall_proc = subprocess.Popen(varcall_cmd, stdout=fout, stderr=caller_log)
             varcall_proc.communicate()
@@ -1081,7 +1081,7 @@ for i in [0,1]:
             if args.verbose:
                 fin = open(caller_log_file, "r")
                 for line in fin:
-                    print line.strip()
+                    print (line.strip())
 
             # check calling was successful
             if varcall_proc_returncode != 0:
@@ -1089,7 +1089,7 @@ for i in [0,1]:
                 exit(1)
             else:
                 if args.verbose:
-                    print "\nVariant calling successful.\n\n"
+                    print ("\nVariant calling successful.\n\n")
         else:
         # -----------------------
         # slow Freebayes,calling each site separately
@@ -1109,7 +1109,7 @@ for i in [0,1]:
                 varcall_cmd += ["--report-all-haplotype-alleles", "--report-monomorphic", in_bam]
                 caller_log.write("FREEBAYES COMMAND:\n" + " ".join(varcall_cmd))
                 if args.verbose:
-                    print "Freebayes variant-calling command:\n" + " ".join(varcall_cmd)
+                    print ("Freebayes variant-calling command:\n" + " ".join(varcall_cmd))
                 varcall_proc = subprocess.Popen(varcall_cmd, stdout=subprocess.PIPE, stderr=caller_log)
                 varcall_proc.communicate()
 
@@ -1123,7 +1123,7 @@ for i in [0,1]:
                             fout.write(line)
                     else:
                         if args.verbose:
-                            print line.strip("\n")
+                            print (line.strip("\n"))
                         fout.write(line)
                 # only switch write_header to False after confirming that header lines have been written once
                 if have_header:
@@ -1139,7 +1139,7 @@ for i in [0,1]:
             fout.close()
             caller_log.close()
             if args.verbose:
-                print "\nVariant calling successful.\n\n"
+                print ("\nVariant calling successful.\n\n")
 
     # ----------------------------------------------------------
     # Genotype calling with VarScan2
@@ -1162,13 +1162,13 @@ for i in [0,1]:
             region_str = line.strip("\n")
             sam_cmd = [SAMTOOLS, "mpileup", "-r", region_str, "-B", "-f", ref, in_bam]
             if args.verbose:
-                print "pileup command:\n%s" % " ".join(sam_cmd)
+                print ("pileup command:\n%s" % " ".join(sam_cmd))
             sam_proc = subprocess.Popen(sam_cmd, stdout=subprocess.PIPE, stderr=pileup_log)
 
             # write samtools mpileup output
             for line in sam_proc.stdout:
                 if args.verbose:
-                    print line
+                    print (line)
                 bits = line.strip("\n").split("\t")
                 if int(bits[3]) < args.dp_threshold:
                     continue
@@ -1191,7 +1191,7 @@ for i in [0,1]:
                        "mpileup2cns", pup_file,
                        "--output-vcf", "--min-coverage", str(DP_THRESH) ]
         if args.verbose:
-            print "Varscan command:\n%s" % " ".join(varcall_cmd)
+            print ("Varscan command:\n%s" % " ".join(varcall_cmd))
         varcall_proc = subprocess.Popen(varcall_cmd, stdout=fout, stderr=caller_log)
         varcall_proc.communicate()
 
@@ -1200,7 +1200,7 @@ for i in [0,1]:
         if args.verbose:
             fin = open(caller_log_file, "r")
             for line in fin:
-                print line.strip()
+                print (line.strip())
 
         # check calling was successful
         if varcall_proc.returncode != 0:
@@ -1210,14 +1210,14 @@ for i in [0,1]:
             exit(1)
         else:
             if args.verbose:
-                print "\nVariant calling successful.\n\n"
+                print ("\nVariant calling successful.\n\n")
     # ----------------------------------------------------
 
 if args.verbose:
-    print """
+    print ("""
 
 Variant-calling finished
-"""
+""")
 
 #===============================================================================
 # Finished variant calling
@@ -1238,16 +1238,16 @@ tsv_list = [tsv1, tsv2]
 temp_files += tsv_list
 
 if args.verbose:
-    print """
+    print ("""
 ================================================================================
 GENOTYPE DATA COMPARISON
 ================================================================================
-"""
+""")
 
 #-------------------------------------------------------------------------------
 # 1. convert and reorder VCF file to REFERENCE
 if args.verbose:
-    print "Converting VCF to table"
+    print ("Converting VCF to table")
 
 # convert and re-order
 # only need to do this if alternate reference is used
@@ -1291,7 +1291,7 @@ for i in [0,1]:
     if BATCH_USE_CACHED:
         if cached_list[i]:
             if args.verbose:
-                print "BAM %d has cached genotype data" % (i+1)
+                print ("BAM %d has cached genotype data" % (i+1))
             continue
     # otherwise, convert
     in_vcf  = vcf_list[i]
@@ -1300,11 +1300,11 @@ for i in [0,1]:
 
     # write a warning if no variants were written
     if variants_wrote == 0:
-        print """%s
+        print ("""%s
 No genotype data were called for BAM%d (%s).
 
 You may need to check the variant list.
-""" % (WARNING_MSG, i+1, bam_list[i])
+""" % (WARNING_MSG, i+1, bam_list[i]))
 
 #-------------------------------------------------------------------------------
 if BATCH_USE_CACHED:
@@ -1321,17 +1321,17 @@ if BATCH_WRITE_CACHE:
         if cached_list[i] == False:
             try:
                 if args.verbose:
-                    print "copying BAM%d variant calling data to %s" % ( (i+1), cache_path_list[i])
+                    print ("copying BAM%d variant calling data to %s" % ( (i+1), cache_path_list[i]))
                 shutil.copyfile(tsv_list[i], cache_path_list[i])
             except IOError as e:
-                print "%s\nUnable to write cache results for BAM%d" % (FILE_ERROR, i+1)
-                print "Python error msg:", e
+                print ("%s\nUnable to write cache results for BAM%d" % (FILE_ERROR, i+1))
+                print ("Python error msg:", e)
                 sys.exit(1)
 
 #-------------------------------------------------------------------------------
 # apply depth filter
 if args.verbose:
-    print "Variant comparison"
+    print ("Variant comparison")
 bam1_var = os.path.join(SCRATCH_DIR, "bam1.variants")
 bam2_var = os.path.join(SCRATCH_DIR, "bam2.variants")
 var_list = {}
@@ -1473,25 +1473,25 @@ for pos_ in pos_list:
             else:
                 diff_het_hom_ct += 1
         else:
-            print "WTF?"
-            print gt1, gt2
+            print ("WTF?")
+            print (gt1, gt2)
 #-------------------------------------------------------------------------------
 
 #===============================================================================
 # DETERMINING COMPARISON OUTCOME AND WRITE REPORT
 #===============================================================================
 if args.verbose:
-    print """
+    print ("""
 #===============================================================================
 # DETERMINING COMPARISON OUTCOME AND WRITE REPORT
 #===============================================================================
-"""
+""")
 
 JUDGE_THRESHOLD   = 0.95
 RNA_THRESHOLD     = 0.9
 
 if args.verbose:
-    print "Writing output report"
+    print ("Writing output report")
 total_compared = ct_common + ct_diff
 frac_common_plus = 0
 frac_common = 0
@@ -1678,10 +1678,10 @@ if args.html:
 fout = open(REPORT_PATH, "w")
 if args.short_output:
     fout.write(short_report_str)
-    print short_report_str
+    print (short_report_str)
 else:
     fout.write(std_report_str)
-    print std_report_str
+    print (std_report_str)
 fout.close()
 
 
@@ -1724,9 +1724,9 @@ if args.debug == False:
         os.remove(fpath)
     os.rmdir(SCRATCH_DIR)
 else:
-    print """
+    print ("""
 ##DEBUG##
 Temporary files were written to: %s
-""" % SCRATCH_DIR
+""" % SCRATCH_DIR)
 
 #===============================================================================

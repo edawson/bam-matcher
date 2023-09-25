@@ -202,11 +202,11 @@ def get_chrom_names_from_BAM(bam_file):
 def check_fasta_index(fastafile):
     ref_idx = fastafile + ".fai"
     if not check_file_read(ref_idx, "", None, silent=True):
-        print """%s
+        print ("""%s
 Specified reference FASTA file (%s) needs to be indexed by samtools:
 
 samtools faidx %s
-""" % (FILE_ERROR, fastafile, fastafile)
+""") % (FILE_ERROR, fastafile, fastafile)
         return False
     else:
         return True
@@ -256,7 +256,7 @@ def fetch_config_value(config_obj, config_section, config_keyword):
     try:
         value_ = config_obj.get(config_section, config_keyword)
     except ConfigParser.NoOptionError as e:
-        print """%s
+        print ("""%s
 
 Missing keyword '%s' in configuration file.
 Do not remove or comment out keywords in the config file.
@@ -264,16 +264,16 @@ Just leave blank value if not using the parameter.
 
 Python error message:
 %s
-""" % (CONFIG_ERROR, config_keyword, e)
+""" % (CONFIG_ERROR, config_keyword, e))
         exit(1)
     except Exception as e:
-        print """%s
+        print ("""%s
 
 Unknown config error.
 
 Python error message:
 %s
-""" (CONFIG_ERROR, e)
+""" (CONFIG_ERROR, e))
         exit(1)
     # if all good, return value_
     return value_
@@ -293,14 +293,14 @@ def check_caller(caller, caller_binary, JAVA="java", verbose=False, SAMTL="samto
     # checking GATK
     if caller == "gatk":
         if caller_binary == "":
-            print """%s
+            print ("""%s
 GATK path was not specified.
-Do this in the configuration file""" % CONFIG_ERROR
+Do this in the configuration file""" % CONFIG_ERROR)
             exit(1)
         if os.access(caller_binary, os.R_OK) == False:
-            print """%s
+            print ("""%s
 Cannot access GATK jar file (%s).
-It is either missing or not readable.""" % (CONFIG_ERROR, caller_binary)
+It is either missing or not readable.""" % (CONFIG_ERROR, caller_binary))
             exit(1)
         caller_cmd = [JAVA, "-jar", caller_binary, "-version"]
 
@@ -308,9 +308,9 @@ It is either missing or not readable.""" % (CONFIG_ERROR, caller_binary)
     # Checking Freebayes
     elif caller == "freebayes":
         if caller_binary == "":
-            print """%s
+            print ("""%s
 Freebayes path was not specified.
-Do this in the configuration file""" % CONFIG_ERROR
+Do this in the configuration file""" % CONFIG_ERROR)
             exit(1)
         caller_cmd = [caller_binary, "--version"]
     # ------------------------------------------
@@ -319,9 +319,9 @@ Do this in the configuration file""" % CONFIG_ERROR
         # ===================================
         # Testing samtools
         if SAMTL == "":
-            print """%s
+            print ("""%s
 SAMtools path was not specified.
-Do this in the configuration file""" % CONFIG_ERROR
+Do this in the configuration file""" % CONFIG_ERROR)
             exit(1)
 
         sam_cmd = [SAMTL, "--version"]
@@ -330,7 +330,7 @@ Do this in the configuration file""" % CONFIG_ERROR
         except Exception as e:
             # for line in sam_proc.stdout:
             #     print line.strip()
-            print """%s
+            print ("""%s
 Samtools error. Please check samtools path and installation.
 
 Command tested:
@@ -339,20 +339,20 @@ Command tested:
 Python error msg:
 %s
 
-""" % (CALLER_ERROR, SAMTL, e)
+""" % (CALLER_ERROR, SAMTL, e))
             exit(1)
 
         # ===================================
         # Testing VarScan itself
         if caller_binary == "":
-            print """%s
+            print ("""%s
 VarScan2 path was not specified.
-Do this in the configuration file""" % CONFIG_ERROR
+Do this in the configuration file""" % CONFIG_ERROR)
             exit(1)
         if os.access(caller_binary, os.R_OK) == False:
-            print """%s
+            print ("""%s
 Cannot access VarScan2 jar file (%s).
-It is either missing or not readable.""" % (CONFIG_ERROR, caller_binary)
+It is either missing or not readable.""" % (CONFIG_ERROR, caller_binary))
             exit(1)
         caller_cmd = [JAVA, "-jar", caller_binary]
 
@@ -362,7 +362,7 @@ It is either missing or not readable.""" % (CONFIG_ERROR, caller_binary)
         caller_proc = subprocess.check_call(caller_cmd, stderr=logwrite, stdout=logwrite)
     except Exception as e:
         logwrite.close()
-        print """%s
+        print ("""%s
 Caller check failed.
 
 Command tested:
@@ -376,7 +376,7 @@ See log file for system error msg:
 
 Please check the caller command or path to the binary.
 
-""" % (CALLER_ERROR, " ".join(caller_cmd), e, logfile)
+""" % (CALLER_ERROR, " ".join(caller_cmd), e, logfile))
         exit(1)
 
     # --------------------------------------------
@@ -386,11 +386,11 @@ Please check the caller command or path to the binary.
         fin.close()
 
         if caller == "gatk":
-            print "GATK version", version_line
+            print ("GATK version", version_line)
         elif caller == "freebayes":
-            print "Freebayes", version_line
+            print ("Freebayes", version_line)
         elif caller == "varscan":
-            print "\n"+version_line
+            print ("\n"+version_line)
 
     # --------------------------------------------
     return True
@@ -422,10 +422,10 @@ def get_bam_header(bam_file):
 def check_file_read(file_path, file_object_name, error_type, silent=False):
     if os.access(file_path, os.R_OK) == False:
         if not silent:
-            print """%s
+            print ("""%s
 Cannot access %s file (%s).
 It either does not exist or is not readable.
-""" % (error_type, file_object_name, file_path)
+""" % (error_type, file_object_name, file_path))
         return False
     else:
         return True
@@ -434,9 +434,9 @@ It either does not exist or is not readable.
 def check_file_write(file_path, file_object_name, error_type, silent=False):
     if os.access(file_path, os.W_OK) == False:
         if not silent:
-            print """%s
+            print ("""%s
 Specified path for %s (%s) is not writable.
-""" % (error_type, file_object_name, file_path)
+""" % (error_type, file_object_name, file_path))
         return False
     else:
         return True
@@ -444,7 +444,7 @@ Specified path for %s (%s) is not writable.
 
 
 def print_caller_failure_message(call_cmd, logfile_):
-    print """%s
+    print ("""%s
 Variant calling failed.
 
 Caller command:
@@ -452,7 +452,7 @@ Caller command:
 
 Check caller log: %s
 
-""" % (CALLER_ERROR, call_cmd, logfile_)
+""" % (CALLER_ERROR, call_cmd, logfile_))
 
 
 

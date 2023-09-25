@@ -152,7 +152,7 @@ var_ct = 0
 for var in invcf:
     # write SAM1
 
-    print var.CHROM, var.POS, var.REF, var.ALT
+    print (var.CHROM, var.POS, var.REF, var.ALT)
 
     SAM1_done = False
     SAM2_done = False
@@ -188,9 +188,9 @@ for var in invcf:
     if len(SAM1_reads) > 100 or len(SAM2_reads) > 100:
         continue
 
-    print "sample 1 writing %d reads" % len(SAM1_reads)
+    print ("sample 1 writing %d reads" % len(SAM1_reads))
     for ct, read in enumerate(SAM1_reads):
-        # print "%d/%d" % (ct+1, len(SAM1_reads))
+        # print ("%d/%d" % (ct+1, len(SAM1_reads)))
         sys.stdout.write("\b\b\b\b\b\b\b\b\b\b\b\b%d/%d" % (ct+1, len(SAM1_reads)))
         sys.stdout.flush()
 
@@ -211,12 +211,12 @@ for var in invcf:
                 sam1_out.write(change_RG(read2, "sample1") + "\n")
                 break
         if mate_found == False:
-            print "ERROR: Cannot find mate read"
+            print ("ERROR: Cannot find mate read")
             exit(1)
 
-    print "\b\b\b\b\b\b\b\b\b\b\b\bsample 2 writing %d reads" % len(SAM2_reads)
+    print ("\b\b\b\b\b\b\b\b\b\b\b\bsample 2 writing %d reads" % len(SAM2_reads))
     for ct, read in enumerate(SAM2_reads):
-        # print "%d/%d" % (ct+1, len(SAM2_reads))
+        # print ("%d/%d" % (ct+1, len(SAM2_reads)))
         sys.stdout.write("\b\b\b\b\b\b\b\b\b\b\b\b%d/%d" % (ct+1, len(SAM2_reads)))
         sys.stdout.flush()
 
@@ -232,11 +232,11 @@ for var in invcf:
                 sam2_out.write(change_RG(read2, "sample2") + "\n")
                 break
         if mate_found == False:
-            print "ERROR: Cannot find mate read"
+            print ("ERROR: Cannot find mate read")
             exit(1)
 
     var_ct += 1
-    print "\b\b\b\b\b\b\b\b\b\b\b\bwrote %d sites"  % var_ct
+    print ("\b\b\b\b\b\b\b\b\b\b\b\bwrote %d sites"  % var_ct)
     if var_ct >= VAR_N:
         break
 
