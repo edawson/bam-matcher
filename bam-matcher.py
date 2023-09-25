@@ -1170,7 +1170,7 @@ for i in [0,1]:
                 if args.verbose:
                     print (line)
                 bits = line.strip("\n").split("\t")
-                if int(bits[3]) < args.dp_threshold:
+                if int(bits[3]) < DP_THRESH:
                     continue
                 pup_out.write(line)
             sam_proc.communicate()
