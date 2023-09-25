@@ -273,7 +273,7 @@ Unknown config error.
 
 Python error message:
 %s
-""" (CONFIG_ERROR, e))
+""" % (CONFIG_ERROR, e))
         exit(1)
     # if all good, return value_
     return value_
