@@ -869,29 +869,29 @@ GENOTYPE CALLING
 
 m1 = md5()
 # bam1_path = os.path.abspath(BAM1)
-bam1_mtime = str(os.path.getmtime(BAM1))
-m1.update(BAM1)
-m1.update(str(NUMBER_OF_SNPS))
-m1.update(str(DP_THRESH))
+bam1_mtime = str(os.path.getmtime(BAM1)).encode('utf-8')
+m1.update(BAM1.encode('utf-8'))
+m1.update(str(NUMBER_OF_SNPS).encode('utf-8'))
+m1.update(str(DP_THRESH).encode('utf-8'))
 m1.update(bam1_mtime)
-m1.update(VCF_FILE)
-m1.update(bam1_ref)
-m1.update(REFERENCE)
+m1.update(VCF_FILE.encode('utf-8'))
+m1.update(bam1_ref.encode('utf-8'))
+m1.update(REFERENCE.encode('utf-8'))
 for line in get_bam_header(BAM1):
-    m1.update(line)
+    m1.update(line.encode('utf-8'))
 
 m2 = md5()
 # bam2_path = os.path.abspath(BAM2)
-bam2_mtime = str(os.path.getmtime(BAM2))
-m2.update(BAM2)
-m2.update(str(NUMBER_OF_SNPS))
-m2.update(str(DP_THRESH))
+bam2_mtime = str(os.path.getmtime(BAM2)).encode('utf-8')
+m2.update(BAM2.encode('utf-8'))
+m2.update(str(NUMBER_OF_SNPS).encode('utf-8'))
+m2.update(str(DP_THRESH).encode('utf-8'))
 m2.update(bam2_mtime)
-m2.update(VCF_FILE)
-m2.update(bam2_ref)
-m2.update(REFERENCE)
+m2.update(VCF_FILE.encode('utf-8'))
+m2.update(bam2_ref.encode('utf-8'))
+m2.update(REFERENCE.encode('utf-8'))
 for line in get_bam_header(BAM2):
-    m2.update(line)
+    m2.update(line.encode('utf-8'))
 
 bam1_cache_path = os.path.join(CACHE_DIR, m1.hexdigest())
 bam2_cache_path = os.path.join(CACHE_DIR, m2.hexdigest())
@@ -1163,7 +1163,7 @@ for i in [0,1]:
             sam_cmd = [SAMTOOLS, "mpileup", "-r", region_str, "-B", "-f", ref, in_bam]
             if args.verbose:
                 print ("pileup command:\n%s" % " ".join(sam_cmd))
-            sam_proc = subprocess.Popen(sam_cmd, stdout=subprocess.PIPE, stderr=pileup_log)
+            sam_proc = subprocess.Popen(sam_cmd, stdout=subprocess.PIPE, stderr=pileup_log, encoding="utf-8")
 
             # write samtools mpileup output
             for line in sam_proc.stdout:
