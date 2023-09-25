@@ -20,7 +20,7 @@ import sys
 import vcf
 import random
 import string
-import ConfigParser
+import configparser
 import shutil
 from Cheetah.Template import Template
 from hashlib import md5
@@ -216,7 +216,7 @@ else:
 if check_file_read(config_file, "config", CONFIG_ERROR) == False: exit(1)
 
 # Load config and check if all necessary bits are available
-config = ConfigParser.ConfigParser()
+config = configparser.ConfigParser()
 try:
     config.read(config_file)
 except ConfigParser.Error as e:

@@ -11,7 +11,7 @@ Moved methods from main script to here
 import gzip
 import vcf
 import os
-import ConfigParser
+import configparser
 import subprocess
 import pysam
 
@@ -255,7 +255,7 @@ def get_chrom_data_from_map(chrom_map_file):
 def fetch_config_value(config_obj, config_section, config_keyword):
     try:
         value_ = config_obj.get(config_section, config_keyword)
-    except ConfigParser.NoOptionError as e:
+    except configparser.NoOptionError as e:
         print ("""%s
 
 Missing keyword '%s' in configuration file.
