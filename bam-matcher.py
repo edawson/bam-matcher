@@ -1031,7 +1031,7 @@ for i in [0,1]:
         # fast-Freebayes, single intervals file
         if FAST_FREEBAYES:
             varcall_cmd = [FREEBAYES, "--fasta-reference", ref, "--targets",
-                           interval_file, "--no-indels", "--min-coverage",
+                           interval_file, "-i", "--min-coverage",
                            str(DP_THRESH)]
             varcall_cmd += ["--report-all-haplotype-alleles", "--report-monomorphic", in_bam]
             if args.verbose:
@@ -1069,7 +1069,7 @@ for i in [0,1]:
                 bits[2] = int(bits[2]) + 1
                 region_str = "%s:%d-%d" % (bits[0], bits[1], bits[2])
                 varcall_cmd = [FREEBAYES, "--fasta-reference", ref, "--region",
-                               region_str, "--no-indels", "--min-coverage",
+                               region_str, "-i", "--min-coverage",
                                str(DP_THRESH)]
                 varcall_cmd += ["--report-all-haplotype-alleles", "--report-monomorphic", in_bam]
                 caller_log.write("FREEBAYES COMMAND:\n" + " ".join(varcall_cmd))
