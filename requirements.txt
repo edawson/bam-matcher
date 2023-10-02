@@ -1,0 +1,5 @@
+Cheetah3==3.2.6.post1
+fisher==0.1.14
+matplotlib==3.8.0
+pysam==0.21.0
+PyVCF3==1.0.3
