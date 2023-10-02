@@ -154,6 +154,7 @@ def VCFtoTSV(invcf, outtsv, caller):
 
 # GENOTYPE COMPARISON FUNCTIONS
 def is_hom(gt):
+    print(gt)
     gt_ = gt.split("/")
     if gt_[0] == gt_[1]:
         return True

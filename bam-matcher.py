@@ -27,11 +27,6 @@ from hashlib import md5
 from fisher import pvalue
 from bammatcher_methods import *
 
-
-
-# EXPERIMENTAL METHODS
-# from bammatcher_exp import *
-
 #============================================================================
 def handle_args():
     parser = ArgumentParser(description="Compare two BAM files to see if \
@@ -117,15 +112,6 @@ def handle_args():
     parser_grp7.add_argument("--cache-dir",      "-CD", required=False,
                              help="Specify directory for cached data. Overrides configuration")
 
-    # Experimental features
-    parser_grp8 = parser.add_argument_group("EXPERIMENTAL")
-    parser_grp8.add_argument("--experimental", "-X", required=False,
-                             default=False, action="store_true",
-                             help="Enable experimental features")
-    parser_grp8.add_argument("--allele-freq",    "-AF", required=False,
-                             default=False, action="store_true",
-                             help="Plot variant allele frequency graphs")
-
     # optional, not in config
     parser.add_argument("--debug", "-d", required=False, action="store_true",
                         help="Debug mode. Temporary files are not removed")
@@ -173,27 +159,6 @@ Config template will be written to %s
 
 # okay to parse the arguments now
 args = handle_args()
-
-
-
-# EXPERIMENTAL METHODS
-if args.experimental:
-    from bammatcher_exp import *
-
-# if experimental is not enabled, need some error-catching
-if args.experimental == False:
-
-    # trying to generate AF graphs without --experimental
-    if args.allele_freq:
-        print ("""%s\nThe --allele-freq is an experimental feature,
-To use this feature, you must also select --experimental
-""" % ARGUMENT_ERROR)
-        sys.exit(1)
-
-    # trying to use SNP panel data without --experimental
-
-
-
 
 #-------------------------------------------------------------------------------
 # Some random-related stuff, this is for temp files
@@ -1683,38 +1648,6 @@ else:
     fout.write(std_report_str)
     print (std_report_str)
 fout.close()
-
-
-
-
-
-
-
-
-#===============================================================================
-# Experimental
-
-# generate allele frequency distribution
-
-# bin_count = 50
-# vaf_txt_fig = []
-# if args.allele_freq:
-#     for i in [0,1]:
-#         fig_out = REPORT_PATH + "_bam%d_vaf.png" % (i+1)
-#         bam_aflist, bam_afbins = count_AF_bins(tsv_list[i], bin_count)
-#         plot_VAF(bam_aflist, bin_count, fig_out, bam_list[i])
-#        aplot = plot_ascii_VAF(bam_aflist)
-
-
-
-
-
-
-
-
-
-
-
 
 #===============================================================================
 # house keeping
