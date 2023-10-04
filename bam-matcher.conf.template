@@ -12,13 +12,14 @@
 [VariantCallers]
 # file paths to variant callers and other binaries
 
-# This is the default caller to use (gatk, freebayes, or varscan)
+# This is the default caller to use (gatk3, gatk4, freebayes, or varscan)
 caller:    freebayes
 
 # These are paths (or commands) to the caller executables
-# full paths is always required for *.jar files (GATK and VarScan2)
+# full paths is always required for *.jar files (GATK3, GATK4 and VarScan2)
 # sometime you may need to specify full path to the binary (for freebayes, samtools and java)
-GATK:      GenomeAnalysisTK.jar
+gatk3:     GenomeAnalysisTK.jar
+gatk4:      
 freebayes: freebayes
 samtools:  samtools
 varscan:   VarScan.jar

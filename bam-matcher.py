@@ -72,8 +72,8 @@ def handle_args():
     parser_grp5 = parser.add_argument_group("CALLERS AND SETTINGS (will override config values)")
     parser_grp5.add_argument("--caller",         "-CL", required=False,
                              default="none",
-                             choices=('gatk', 'freebayes', 'varscan'),
-                             help="Specify which caller to use (default = 'gatk')")
+                             choices=('gatk3', 'gatk4', 'freebayes', 'varscan'),
+                             help="Specify which caller to use (default = 'gatk4')")
     parser_grp5.add_argument("--dp-threshold",   "-DP", required=False,
                              type=int, help="Minimum required depth for comparing variants")
     parser_grp5.add_argument("--number_of_snps", "-N", required=False,
@@ -202,7 +202,8 @@ Missing required section in config file: %s)
 #-------------------------------------------------------------------------------
 # setting variables using the config file
 CONFIG_CALLER  = fetch_config_value(config, "VariantCallers", "caller")
-GATK           = fetch_config_value(config, "VariantCallers", "GATK")
+GATK3          = fetch_config_value(config, "VariantCallers", "gatk3")
+GATK4          = fetch_config_value(config, "VariantCallers", "gatk4")
 FREEBAYES      = fetch_config_value(config, "VariantCallers", "freebayes")
 SAMTOOLS       = fetch_config_value(config, "VariantCallers", "samtools")
 VARSCAN        = fetch_config_value(config, "VariantCallers", "varscan")
@@ -358,10 +359,10 @@ if CALLER == "none":
 No default caller was specified in the configuration file nor at runtime.
 Will default to Freebayes.
 """)
-elif CALLER not in ["gatk", "freebayes", "varscan"]:
+elif CALLER not in ["gatk3", "gatk4", "freebayes", "varscan"]:
     print ("""%s
 Incorrect caller specified.
-The only values accepted for the caller parameter are: 'gatk', 'freebayes', and 'varscan'
+The only values accepted for the caller parameter are: 'gatk3', 'gatk4', 'freebayes', and 'varscan'
 """ % (CONFIG_ERROR))
     exit(1)
 
@@ -463,8 +464,8 @@ Use 'False' or 'True'""" % (CONFIG_ERROR, FAST_FREEBAYES))
                 sys.exit(1)
 
 #-------------------------------------------
-# GATK parameters
-if CALLER == "gatk":
+# GATK3 parameters
+if CALLER == "gatk3":
     # GATK_MEM
     if GATK_MEM == "":
         print ("""%s
@@ -878,8 +879,10 @@ if bam1_is_cached == False or bam2_is_cached==False:
         print ("%s\nJava command was not specified.\nDo this in the configuration file" % CONFIG_ERROR)
         sys.exit(1)
     caller_check_log = os.path.join(SCRATCH_DIR, "caller_check.log")
-    if CALLER == "gatk":
-        check_caller(CALLER, GATK,      JAVA, args.verbose, logfile=caller_check_log)
+    if CALLER == "gatk3":
+        check_caller(CALLER, GATK3,     JAVA, args.verbose, logfile=caller_check_log)
+    elif CALLER == "gatk4":
+        check_caller(CALLER, GATK4,     JAVA, args.verbose, logfile=caller_check_log)
     elif CALLER == "freebayes":
         check_caller(CALLER, FREEBAYES, JAVA, args.verbose, logfile=caller_check_log)
     elif CALLER == "varscan":
@@ -972,7 +975,7 @@ temp_files += pup_list
 
 # Variant calling is not done in a single step,
 # even though this is possible for some callers, because:
-# 1. If the sample names are the same, this causes problems for GATK
+# 1. If the sample names are the same, this causes problems for GATK3
 # 2. They may have been mapped to different reference files
 for i in [0,1]:
     if args.verbose:
@@ -994,10 +997,10 @@ for i in [0,1]:
     temp_files.append(caller_log_file)
     caller_log = open(caller_log_file, "w")
     # ----------------------------------------------------------
-    # Genotype calling with GATK
-    if CALLER == "gatk":
+    # Genotype calling with GATK3
+    if CALLER == "gatk3":
         varcall_cmd = [JAVA, "-jar", "-Xmx%dg" % GATK_MEM,
-                       "-XX:ParallelGCThreads=1", GATK, "-T",
+                       "-XX:ParallelGCThreads=1", GATK3, "-T",
                        "UnifiedGenotyper", "-R", ref, "-I", in_bam,
                        "-o", out_vcf]
         varcall_cmd += ["--output_mode", "EMIT_ALL_SITES", "-nt", str(GATK_NT),
@@ -1017,6 +1020,39 @@ for i in [0,1]:
 
         # check calling was successful
         if varcall_proc_returncode != 0:
+            print_caller_failure_message(" ".join(varcall_cmd), caller_log_file)
+            exit(1)
+        else:
+            if args.verbose:
+                print ("\nVariant calling successful.")
+
+    # ----------------------------------------------------------
+    # Genotype calling with GATK4
+    if CALLER == "gatk4":
+        varcall_cmd = [GATK4, "--java-options", "-Xmx%sg -XX:ParallelGCThreads=1" % GATK_MEM,
+                       "HaplotypeCaller", "-R", ref, "-I", in_bam,
+                       "-O", "%s.gz" % out_vcf]
+        varcall_cmd += ["-ERC", "BP_RESOLUTION", "--native-pair-hmm-threads", str(GATK_NT),
+                        "-L", interval_file]
+        if args.verbose:
+            print ("\nGATK variant-calling command (space in path not escaped here, but should be fine in actual call command):\n")
+            print (" ".join(varcall_cmd) + "\n")
+        varcall_proc = subprocess.Popen(varcall_cmd, stdout=subprocess.PIPE, stderr=caller_log)
+        varcall_proc.communicate()
+        varcall_proc_returncode = varcall_proc.returncode
+        varcall_bgzip_cmd = ["bgzip", "-d", "%s.gz" % out_vcf]
+        varcall_bgzip_proc = subprocess.Popen(varcall_bgzip_cmd, stdout=subprocess.PIPE, stderr=caller_log)
+        varcall_bgzip_proc.communicate()
+        varcall_bgzip_proc_returncode = varcall_bgzip_proc.returncode
+        caller_log.close()
+
+        if args.verbose:
+            fin = open(caller_log_file, "r")
+            for line in fin:
+                print (line.strip())
+
+        # check calling was successful
+        if varcall_proc_returncode != 0 or varcall_bgzip_proc_returncode != 0:
             print_caller_failure_message(" ".join(varcall_cmd), caller_log_file)
             exit(1)
         else:
