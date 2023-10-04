@@ -44,7 +44,7 @@ def sort_vcf_by_chrom_order(invcf, outvcf, ref_index):
     return
 
 # Convert variants VCF file to intervals for variant callers
-def convert_vcf_to_intervals(invcf, output, window, ntries, format="gatk", cmap=None):
+def convert_vcf_to_intervals(invcf, output, window, ntries, format="gatk4", cmap=None):
     vcf_read = vcf.Reader(open(invcf, "r"))
     fout = open(output, "w")
     n_written = 0
@@ -58,7 +58,7 @@ def convert_vcf_to_intervals(invcf, output, window, ntries, format="gatk", cmap=
             else:
                 chrom_ = cmap[var.CHROM]
 
-        if format == "gatk" or format == "varscan":
+        if format == "gatk3" or format == 'gatk4' or format == "varscan":
             start_pos = var.POS - window
             end_pos   = start_pos + window
             fout.write("%s:%d-%d\n" % (chrom_, start_pos, end_pos))
@@ -79,12 +79,12 @@ def convert_vcf_to_intervals(invcf, output, window, ntries, format="gatk", cmap=
     return
 
 # Convert VCF to TSV file
-# This is to replace GATK -T VariantsToTable, which is too slow...
+# This is to replace GATK3 -T VariantsToTable, which is too slow...
 def VCFtoTSV(invcf, outtsv, caller):
     fout = open(outtsv, "w")
     vcf_in = vcf.Reader(open(invcf, "r"))
     var_ct = 0
-    if caller == "gatk" or caller == "varscan":
+    if caller == "gatk3" or caller == "gatk4" or caller == "varscan":
         fields_to_extract = ["CHROM", "POS", "REF", "ALT", "QUAL", "DP", "AD", "GT"]
     elif caller == "freebayes":
         fields_to_extract = ["CHROM", "POS", "REF", "ALT", "QUAL", "DP", "AO", "GT"]
@@ -115,7 +115,10 @@ def VCFtoTSV(invcf, outtsv, caller):
                 dp_ = var.samples[0].data.DP
                 ro_ = var.samples[0].data.RO
                 ad_str = str(dp_ - ro_)
-            elif caller == "gatk":
+            elif caller == "gatk3":
+                dp_ = var.samples[0].data.DP
+                ad_str = "0"
+            elif caller == "gatk4":
                 dp_ = var.samples[0].data.DP
                 ad_str = "0"
             elif caller == "varscan":
@@ -124,16 +127,21 @@ def VCFtoTSV(invcf, outtsv, caller):
         else:
             alt_   = var.ALT[0]
             alt_str = "."
-            if alt_ != None:
+            if alt_ != None and str(alt_) != "<NON_REF>":
                 alt_str = alt_.sequence
-            if caller == "freebayes" or caller == "gatk":
+            if caller == "freebayes" or caller == "gatk3" or caller == "gatk4" and str(alt_) != "<NON_REF>":
                 dp_ = str(var.INFO["DP"])
-            else:
+            elif caller == "varscan":
                 dp_ = str(var.INFO["ADP"])
 
             gt_ = var.samples[0].gt_bases
 
-            if caller == "gatk":
+            if caller == "gatk3":
+                ad_ = var.samples[0]["AD"]
+                for a_ in ad_:
+                    ad_str += ",%d" % a_
+                ad_str = ad_str[1:]
+            elif caller == "gatk4":
                 ad_ = var.samples[0]["AD"]
                 for a_ in ad_:
                     ad_str += ",%d" % a_
@@ -290,19 +298,34 @@ def check_caller(caller, caller_binary, JAVA="java", verbose=False, SAMTL="samto
     caller_cmd = []
 
     # ------------------------------------------
-    # checking GATK
-    if caller == "gatk":
+    # checking GATK3
+    if caller == "gatk3":
         if caller_binary == "":
             print ("""%s
-GATK path was not specified.
+GATK3 path was not specified.
 Do this in the configuration file""" % CONFIG_ERROR)
             exit(1)
         if os.access(caller_binary, os.R_OK) == False:
             print ("""%s
-Cannot access GATK jar file (%s).
+Cannot access GATK3 jar file (%s).
 It is either missing or not readable.""" % (CONFIG_ERROR, caller_binary))
             exit(1)
         caller_cmd = [JAVA, "-jar", caller_binary, "-version"]
+
+    # ------------------------------------------
+    # checking GATK4
+    elif caller == "gatk4":
+        if caller_binary == "":
+            print ("""%s
+GATK4 path was not specified.
+Do this in the configuration file""" % CONFIG_ERROR)
+            exit(1)
+        if os.access(caller_binary, os.R_OK) == False:
+            print ("""%s
+Cannot access GATK4 wrapper (%s).
+It is either missing or not readable.""" % (CONFIG_ERROR, caller_binary))
+            exit(1)
+        caller_cmd = [caller_binary, "-version"]
 
     # -------------------------------------------
     # Checking Freebayes
@@ -385,8 +408,10 @@ Please check the caller command or path to the binary.
         version_line = fin.readline()
         fin.close()
 
-        if caller == "gatk":
-            print ("GATK version", version_line)
+        if caller == "gatk3":
+            print ("GATK3 version", version_line)
+        elif caller == "gatk4":
+            print ("GATK4 version", version_line)
         elif caller == "freebayes":
             print ("Freebayes", version_line)
         elif caller == "varscan":
@@ -473,13 +498,14 @@ CONFIG_TEMPLATE_STR = """# BAM-matcher configuration file
 [VariantCallers]
 # file paths to variant callers and other binaries
 
-# This is the default caller to use (gatk, freebayes, or varscan)
+# This is the default caller to use (gatk3, gatk4, freebayes, or varscan)
 caller:    freebayes
 
 # These are paths (or commands) to the caller executables
-# full paths is always required for *.jar files (GATK and VarScan2)
+# full paths is always required for *.jar files (GATK3, GATK4 and VarScan2)
 # sometime you may need to specify full path to the binary (for freebayes, samtools and java)
-GATK:      GenomeAnalysisTK.jar
+gatk3:     GenomeAnalysisTK.jar
+gatk4:     
 freebayes: freebayes
 samtools:  samtools
 varscan:   VarScan.jar
