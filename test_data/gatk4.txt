@@ -1,2 +1,2 @@
 # BAM1	 BAM2	 DP_thresh	 FracCommon	 Same	 Same_hom	 Same_het	 Different	 1het-2het	 1het-2hom	 1het-2sub	 1hom-2het	 1hom-2hom	 1sub-2het	 Conclusion
-/home/reimer/git/bam-matcher/test_data/sample1.bam	/home/reimer/git/bam-matcher/test_data/sample2.bam	15	0.592233	122	28	94	84	1	0	57	0	10	16	DIFFERENT
+/bam-matcher/test_data/sample1.bam	/bam-matcher/test_data/sample2.bam	15	0.592233	122	28	94	84	1	0	57	0	10	16	DIFFERENT
