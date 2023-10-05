@@ -23,25 +23,25 @@ jobs:
 
     - name: Download-Reference
       if: steps.cache-reference.outputs.cache-hit != 'true'
-      run: sudo apt-get update && sudo apt-get install -y tabix samtools && sudo mkdir /reference && sudo chmod 777 /reference && wget https://ftp.ensembl.org/pub/release-75//fasta/homo_sapiens/dna/Homo_sapiens.GRCh37.75.dna.primary_assembly.fa.gz -O /reference/Homo_sapiens.GRCh37.75.dna.primary_assembly.fa.gz && bgzip -d /reference/Homo_sapiens.GRCh37.75.dna.primary_assembly.fa.gz && samtools faidx /reference/Homo_sapiens.GRCh37.75.dna.primary_assembly.fa && samtools dict /reference/Homo_sapiens.GRCh37.75.dna.primary_assembly.fa > /reference/Homo_sapiens.GRCh37.75.dna.primary_assembly.dict
+      run: sudo apt-get update && sudo apt-get install -y tabix samtools && mkdir /home/runner/work/bam-matcher/reference && wget https://ftp.ensembl.org/pub/release-75//fasta/homo_sapiens/dna/Homo_sapiens.GRCh37.75.dna.primary_assembly.fa.gz -O /home/runner/work/bam-matcher/reference/Homo_sapiens.GRCh37.75.dna.primary_assembly.fa.gz && bgzip -d /home/runner/work/bam-matcher/reference/Homo_sapiens.GRCh37.75.dna.primary_assembly.fa.gz && samtools faidx /home/runner/work/bam-matcher/reference/Homo_sapiens.GRCh37.75.dna.primary_assembly.fa && samtools dict /home/runner/work/bam-matcher/reference/Homo_sapiens.GRCh37.75.dna.primary_assembly.fa > /home/runner/work/bam-matcher/reference/Homo_sapiens.GRCh37.75.dna.primary_assembly.dict
 
     - name: Build the Docker image
       run: docker build . --file Dockerfile --tag ghcr.io/buschlab/bam-matcher:latest --label maintainer="Niklas Reimer <n.reimer@uni-luebeck.de>"
 
     - name: Test VarScan
-      run: docker run --rm -v /reference:/ref:ro -v $(pwd)/test_data/ci.conf:/bam-matcher/ci.conf:ro -v $(pwd):/output ghcr.io/buschlab/bam-matcher:latest --bam1 test_data/sample1.bam --bam2 test_data/sample2.bam --config ci.conf -so --output /output/varscan.txt --caller varscan
+      run: docker run --rm -v /home/runner/work/bam-matcher/reference:/ref:ro -v $(pwd)/test_data/ci.conf:/bam-matcher/ci.conf:ro -v $(pwd):/output ghcr.io/buschlab/bam-matcher:latest --bam1 test_data/sample1.bam --bam2 test_data/sample2.bam --config ci.conf -so --output /output/varscan.txt --caller varscan
 
     - name: Verify VarScan
       run: cmp -s varscan.txt test_data/varscan.txt
 
     - name: Test GATK4
-      run: docker run --rm -v /reference:/ref:ro -v $(pwd)/test_data/ci.conf:/bam-matcher/ci.conf:ro -v $(pwd):/output ghcr.io/buschlab/bam-matcher:latest --bam1 test_data/sample1.bam --bam2 test_data/sample2.bam --config ci.conf -so --output /output/gatk4.txt --caller gatk4
+      run: docker run --rm -v /home/runner/work/bam-matcher/reference:/ref:ro -v $(pwd)/test_data/ci.conf:/bam-matcher/ci.conf:ro -v $(pwd):/output ghcr.io/buschlab/bam-matcher:latest --bam1 test_data/sample1.bam --bam2 test_data/sample2.bam --config ci.conf -so --output /output/gatk4.txt --caller gatk4
 
     - name: Verify GATK4
       run: cmp -s gatk4.txt test_data/gatk4.txt
 
     - name: Test Freebayes
-      run: docker run --rm -v /reference:/ref:ro -v $(pwd)/test_data/ci.conf:/bam-matcher/ci.conf:ro -v $(pwd):/output ghcr.io/buschlab/bam-matcher:latest --bam1 test_data/sample1.bam --bam2 test_data/sample2.bam --config ci.conf -so --output /output/freebayes.txt --caller freebayes
+      run: docker run --rm -v /home/runner/work/bam-matcher/reference:/ref:ro -v $(pwd)/test_data/ci.conf:/bam-matcher/ci.conf:ro -v $(pwd):/output ghcr.io/buschlab/bam-matcher:latest --bam1 test_data/sample1.bam --bam2 test_data/sample2.bam --config ci.conf -so --output /output/freebayes.txt --caller freebayes
 
     - name: Verify Freebayes
       run: cmp -s freebayes.txt test_data/freebayes.txt
