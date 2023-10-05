@@ -48,10 +48,12 @@ jobs:
 
     - name: Login to Docker registry
       uses: docker/login-action@v3
+      if: github.ref == 'refs/heads/py3'
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Upload Docker image
+      if: github.ref == 'refs/heads/py3'
       run: docker push ghcr.io/buschlab/bam-matcher:latest
