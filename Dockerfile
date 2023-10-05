@@ -1,4 +1,4 @@
-FROM python:3 AS builder
+FROM python:3.11
 
 RUN mkdir -p /etc/apt/keyrings
 RUN wget -O - https://packages.adoptium.net/artifactory/api/gpg/key/public | tee /etc/apt/keyrings/adoptium.asc
