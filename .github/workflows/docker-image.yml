@@ -18,7 +18,7 @@ jobs:
       id: cache-reference
       uses: actions/cache@v3
       with:
-        path: /reference
+        path: /home/runner/work/bam-matcher/reference
         key: reference
 
     - name: Download-Reference
@@ -47,7 +47,7 @@ jobs:
       run: cmp -s freebayes.txt test_data/freebayes.txt
 
     - name: Login to Docker registry
-      uses: docker/login-action@v2
+      uses: docker/login-action@v3
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
